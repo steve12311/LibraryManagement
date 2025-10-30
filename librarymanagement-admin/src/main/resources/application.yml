@@ -1,0 +1,39 @@
+server:
+  port: 8080
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/lb?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8
+    username: root
+    password: ***REMOVED***
+  data:
+    redis:
+      port: 6379
+      database: 0
+      password:
+      host: localhost
+lb:
+  name: "图书管理系统"
+  version: 1.0.0
+  captcha-type: char
+  captcha-expiration: 5
+token:
+  # 令牌自定义标识
+  header: Authorization
+  # 令牌密钥
+  secret: ***REMOVED***
+  # 令牌有效期（默认30分钟）
+  expireTime: 30
+# 用户配置
+user:
+  password:
+    # 密码最大错误次数
+    maxRetryCount: 5
+    # 密码锁定时间（默认10分钟）
+    lockTime: 10
+    # 在线最大设备数
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  mapper-locations: classpath*:mapper/**/*Mapper.xml
+  typeAliasesPackage: org.dwtech.**.entity
