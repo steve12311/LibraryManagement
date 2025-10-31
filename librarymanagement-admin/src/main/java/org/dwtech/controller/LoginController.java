@@ -1,9 +1,12 @@
 package org.dwtech.controller;
 
+import cn.hutool.core.bean.BeanUtil;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.dwtech.common.constant.Constants;
 import org.dwtech.common.core.entity.*;
+import org.dwtech.common.core.entity.dto.SysUserDto;
+import org.dwtech.common.core.entity.vo.UserInfoVo;
 import org.dwtech.framework.web.service.SysLoginService;
 import org.dwtech.framework.web.service.SysPermissionService;
 import org.dwtech.common.core.controller.BaseController;
@@ -11,6 +14,7 @@ import org.dwtech.common.utils.DateUtils;
 import org.dwtech.common.utils.SecurityUtils;
 import org.dwtech.framework.web.service.TokenService;
 import org.dwtech.system.service.SysConfigService;
+import org.dwtech.system.service.SysDeptService;
 import org.dwtech.system.service.SysMenuService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -29,13 +33,15 @@ public class LoginController extends BaseController {
     private final TokenService tokenService;
     private final SysConfigService sysConfigService;
     private final SysMenuService sysMenuService;
+    private final SysDeptService sysDeptService;
 
-    public LoginController(SysLoginService sysLoginService, SysPermissionService sysPermissionService, TokenService tokenService, SysConfigService sysConfigService, SysMenuService sysMenuService) {
+    public LoginController(SysLoginService sysLoginService, SysPermissionService sysPermissionService, TokenService tokenService, SysConfigService sysConfigService, SysMenuService sysMenuService, SysDeptService sysDeptService) {
         this.sysLoginService = sysLoginService;
         this.sysPermissionService = sysPermissionService;
         this.tokenService = tokenService;
         this.sysConfigService = sysConfigService;
         this.sysMenuService = sysMenuService;
+        this.sysDeptService = sysDeptService;
     }
 
     @PostMapping("/login")
@@ -49,10 +55,14 @@ public class LoginController extends BaseController {
 
     @GetMapping("/getinfo")
     public AjaxResult getInfo() {
+        UserInfoVo userInfoVo = new UserInfoVo();
         LoginUser loginUser = SecurityUtils.getLoginUser();
-        SysUser user = loginUser.getUser();
+        SysUserDto user = loginUser.getUser();
+        BeanUtil.copyProperties(user, userInfoVo);
+        userInfoVo.setDeptName(sysDeptService.selectDeptById(user.getDeptId()).getDeptName());
         // 角色集合
         Set<String> roles = sysPermissionService.getRolePermission(user);
+        userInfoVo.setRoles(roles);
         // 权限集合
         Set<String> permissions = sysPermissionService.getMenuPermissions(user);
         // 权限有变化，需要刷新
@@ -61,8 +71,7 @@ public class LoginController extends BaseController {
             tokenService.refreshToken(loginUser);
         }
         AjaxResult ajax = AjaxResult.success();
-        ajax.put("user", user);
-        ajax.put("roles", roles);
+        ajax.put("user", userInfoVo);
         ajax.put("permissions", permissions);
         ajax.put("isDefaultModifyPwd", initPasswordIsModify(user.getPwdUpdateDate()));
         ajax.put("isPasswordExpired", passwordIsExpiration(user.getPwdUpdateDate()));

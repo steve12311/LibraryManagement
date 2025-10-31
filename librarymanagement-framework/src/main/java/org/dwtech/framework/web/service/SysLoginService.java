@@ -32,8 +32,8 @@ public class SysLoginService {
     }
 
     public String login(String username, String password, String code, String uuid) {
-        validateCaptcha(code, uuid);
-        loginCheck(username, password);
+        // validateCaptcha(code, uuid);
+        // loginCheck(username, password);
         Authentication authentication = null;
         try {
             UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(username, password);

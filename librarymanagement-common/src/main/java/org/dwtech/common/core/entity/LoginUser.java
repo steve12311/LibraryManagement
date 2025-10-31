@@ -3,6 +3,7 @@ package org.dwtech.common.core.entity;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.dwtech.common.core.entity.dto.SysUserDto;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -72,17 +73,17 @@ public class LoginUser implements UserDetails {
     /**
      * 用户信息
      */
-    private SysUser user;
+    private SysUserDto user;
 
-    public LoginUser(SysUser user, Set<String> permissions) {
-        this.user = user;
+    public LoginUser(SysUserDto userDto, Set<String> permissions) {
+        this.user = userDto;
         this.permissions = permissions;
     }
 
-    public LoginUser(Long userId, Long deptId, SysUser user, Set<String> permissions) {
+    public LoginUser(Long userId, Long deptId, SysUserDto userDto, Set<String> permissions) {
         this.userId = userId;
         this.deptId = deptId;
-        this.user = user;
+        this.user = userDto;
         this.permissions = permissions;
     }
 

@@ -2,7 +2,7 @@ package org.dwtech.framework.web.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.dwtech.common.constant.CacheConstants;
-import org.dwtech.common.core.entity.SysUser;
+import org.dwtech.common.core.entity.dto.SysUserDto;
 import org.dwtech.common.core.redis.RedisCache;
 import org.dwtech.common.exception.ServiceException;
 import org.dwtech.common.utils.SecurityUtils;
@@ -38,7 +38,7 @@ public class SysPasswordService {
         }
     }
 
-    public void validate(SysUser user) {
+    public void validate(SysUserDto user) {
         Authentication usernamePasswordAuthenticationToken = AuthenticationContextHolder.getContext();
         String username = usernamePasswordAuthenticationToken.getName();
         String password = usernamePasswordAuthenticationToken.getCredentials().toString();
@@ -63,7 +63,7 @@ public class SysPasswordService {
         }
     }
 
-    public boolean matches(SysUser user, String rawPassword) {
+    public boolean matches(SysUserDto user, String rawPassword) {
         return SecurityUtils.matchesPassword(rawPassword, user.getPassword());
     }
 }

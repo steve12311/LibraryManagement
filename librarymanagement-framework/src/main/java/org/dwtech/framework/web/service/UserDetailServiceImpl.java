@@ -2,13 +2,12 @@ package org.dwtech.framework.web.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.dwtech.common.core.entity.LoginUser;
-import org.dwtech.common.core.entity.SysUser;
+import org.dwtech.common.core.entity.dto.SysUserDto;
 import org.dwtech.common.enums.UserStatus;
 import org.dwtech.common.exception.ServiceException;
 import org.dwtech.system.service.SysUserService;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -29,8 +28,8 @@ public class UserDetailServiceImpl implements UserDetailsService {
     }
 
     @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        SysUser user = sysUserService.selectUserByUserName(username);
+    public UserDetails loadUserByUsername(String username) {
+        SysUserDto user = sysUserService.selectUserByUserName(username);
         if (user == null) {
             log.info("登录用户：{} 不存在", username);
             throw new ServiceException("用户不存在");
@@ -45,7 +44,7 @@ public class UserDetailServiceImpl implements UserDetailsService {
         return createLoginUser(user);
     }
 
-    public UserDetails createLoginUser(SysUser user) {
+    public UserDetails createLoginUser(SysUserDto user) {
         return new LoginUser(user.getUserId(), user.getDeptId(), user, sysPermissionService.getMenuPermissions(user));
     }
 }

@@ -1,6 +1,7 @@
 package org.dwtech.framework.web.service;
 
-import org.dwtech.common.core.entity.SysUser;
+import org.dwtech.common.core.entity.dto.SysUserDto;
+import org.dwtech.common.utils.SecurityUtils;
 import org.dwtech.system.service.SysRoleService;
 import org.springframework.stereotype.Component;
 
@@ -15,9 +16,9 @@ public class SysPermissionService {
         this.sysRoleService = sysRoleService;
     }
 
-    public Set<String> getMenuPermissions(SysUser user) {
+    public Set<String> getMenuPermissions(SysUserDto user) {
         Set<String> perms = new HashSet<>();
-        if (user.isAdmin()) {
+        if (SecurityUtils.isAdmin(user.getUserId())) {
             perms.add("*:*:*");
         }
         return perms;
@@ -29,10 +30,10 @@ public class SysPermissionService {
      * @param user 用户信息
      * @return 角色权限信息
      */
-    public Set<String> getRolePermission(SysUser user) {
+    public Set<String> getRolePermission(SysUserDto user) {
         Set<String> roles = new HashSet<>();
         // 管理员拥有所有权限
-        if (user.isAdmin()) {
+        if (SecurityUtils.isAdmin(user.getUserId())) {
             roles.add("admin");
         } else {
             roles.addAll(sysRoleService.selectRolePermissionByUserId(user.getUserId()));

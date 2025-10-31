@@ -5,13 +5,19 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.dwtech.common.core.entity.Condition;
-import org.dwtech.common.core.entity.SysRole;
+import org.dwtech.common.core.entity.po.SysRolePo;
 
 import java.util.List;
 
 @Mapper
-public interface SysRoleMapper extends BaseMapper<SysRole> {
-    List<SysRole> selectRolePermissionByUserId(Long userId);
+public interface SysRoleMapper extends BaseMapper<SysRolePo> {
+    List<SysRolePo> selectRolePermissionByUserId(Long userId);
 
-    IPage<SysRole> selectRoleList(IPage<SysRole> page, @Param("sysRole") SysRole role, @Param("params") Condition condition);
+    IPage<SysRolePo> selectRoleList(IPage<SysRolePo> page, @Param("sysRole") SysRolePo role, @Param("params") Condition condition);
+
+    Integer insertRole(SysRolePo role);
+
+    Integer updateRole(SysRolePo rolePo);
+
+    Integer deleteRoleById(Long id);
 }
