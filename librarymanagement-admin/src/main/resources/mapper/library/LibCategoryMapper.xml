@@ -34,15 +34,23 @@
     <select id="selectLibCategoryList" parameterType="LibCategoryPo" resultMap="LibCategoryResult">
         <include refid="selectLibCategoryVo"/>
         <where>
-            <if test="libCategory.categoryId != null and libCategory.categoryId != 0">
+            <if test="categoryId != null and categoryId != 0">
                 and c.category_id = #{categoryId}
             </if>
-            <if test="libCategory.code != null and libCategory.code != ''">
+            <if test="code != null and code != ''">
                 and c.code = #{code}
             </if>
-            <if test="libCategory.categoryName != null and libCategory.categoryName != ''">
-                and c.category_name like concate('%',#{categoryName},'%')
+            <if test="categoryName != null and categoryName != ''">
+                and c.category_name like concat('%',#{categoryName},'%')
             </if>
         </where>
+    </select>
+
+    <select id="selectLibCategoryByIds" parameterType="Long" resultMap="LibCategoryResult">
+        <include refid="selectLibCategoryVo"/>
+        where category_id in
+        <foreach collection="array" item="categoryId" open="(" separator="," close=")">
+            #{categoryId}
+        </foreach>
     </select>
 </mapper>

@@ -1,9 +1,10 @@
 package org.dwtech.service;
 
-import com.baomidou.mybatisplus.core.metadata.IPage;
 import org.dwtech.common.core.entity.dto.LibCategoryDto;
 
+import java.util.List;
+
 public interface LibCategoryService {
-    IPage<LibCategoryDto> selectLibCategoryList(LibCategoryDto libCategoryDto);
-    IPage<LibCategoryDto> buildCategoryTree(IPage<LibCategoryDto> categoryDtoIPage);
+    List<LibCategoryDto> selectLibCategoryList(LibCategoryDto libCategoryDto);
+    List<LibCategoryDto> buildCategoryTree(List<LibCategoryDto> categoryDtoList);
 }

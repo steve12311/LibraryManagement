@@ -1,19 +1,15 @@
 package org.dwtech.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.dwtech.common.core.entity.dto.LibCategoryDto;
 import org.dwtech.common.core.entity.po.LibCategoryPo;
-import org.dwtech.common.utils.PageUtils;
 import org.dwtech.mapper.LibCategoryMapper;
 import org.dwtech.service.LibCategoryService;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class LibCategoryServiceImpl implements LibCategoryService {
@@ -24,61 +20,119 @@ public class LibCategoryServiceImpl implements LibCategoryService {
     }
 
     @Override
-    public IPage<LibCategoryDto> selectLibCategoryList(LibCategoryDto libCategoryDto) {
-        LibCategoryPo libCategoryPo = new LibCategoryPo();
-        BeanUtil.copyProperties(libCategoryDto, libCategoryPo);
-
-        Page<LibCategoryDto> page = new Page<>();
-        IPage<LibCategoryPo> libCategoryPoIPage = libCategoryMapper.selectLibCategoryList(new Page<>(PageUtils.getPageStart(), PageUtils.getPageSize()), libCategoryPo);
-        BeanUtil.copyProperties(libCategoryPoIPage, page);
-
+    public List<LibCategoryDto> selectLibCategoryList(LibCategoryDto libCategoryDto) {
         List<LibCategoryDto> libCategoryDtoList = new ArrayList<>();
-        libCategoryPoIPage.getRecords().forEach(item -> {
-            LibCategoryDto libCategoryDto1 = new LibCategoryDto();
-            BeanUtil.copyProperties(item, libCategoryDto1);
-            libCategoryDtoList.add(libCategoryDto1);
+        List<LibCategoryPo> libCategoryPoList = libCategoryMapper.selectLibCategoryList(BeanUtil.copyProperties(libCategoryDto, LibCategoryPo.class));
+        libCategoryPoList.forEach(item -> {
+            libCategoryDtoList.add(convertToDto(item));
         });
-        page.setRecords(libCategoryDtoList);
-        return page;
+
+        return libCategoryDtoList;
     }
 
     @Override
-    public IPage<LibCategoryDto> buildCategoryTree(IPage<LibCategoryDto> categoryDtoIPage) {
-        Page<LibCategoryDto> page = new Page<>();
-        List<LibCategoryDto> categorys = categoryDtoIPage.getRecords();
-
-        List<LibCategoryDto> treeCategorys = buildTree(categorys);
-
-        page.setRecords(treeCategorys);
-        page.setTotal(categoryDtoIPage.getTotal());
-        page.setSize(categoryDtoIPage.getSize());
-        page.setCurrent(categoryDtoIPage.getCurrent());
-        return page;
-    }
-
-    private List<LibCategoryDto> buildTree(List<LibCategoryDto> categorys) {
-        List<LibCategoryDto> treeList = new ArrayList<>();
-        Map<Long, LibCategoryDto> categoryMap = new HashMap<>();
-
-        for (LibCategoryDto libCategoryDto : categorys) {
-            categoryMap.put(libCategoryDto.getCategoryId(), libCategoryDto);
+    public List<LibCategoryDto> buildCategoryTree(List<LibCategoryDto> categoryDtoList) {
+        if (CollectionUtils.isEmpty(categoryDtoList)) {
+            return Collections.emptyList();
         }
 
-        for (LibCategoryDto libCategoryDto : categorys) {
-            Long parentId = libCategoryDto.getParentId();
-            if (parentId == 0) {
-                treeList.add(libCategoryDto);
-            } else {
-                LibCategoryDto parentCategory = categoryMap.get(parentId);
-                if (parentCategory != null) {
-                    if (parentCategory.getChildren() == null) {
-                        parentCategory.setChildren(new ArrayList<>());
-                    }
-                    parentCategory.getChildren().add(libCategoryDto);
-                }
+        // 补全缺失的父节点
+        List<LibCategoryDto> fullCategoryList = completeMissingParents(categoryDtoList);
+
+        // 构建父子关系映射
+        Map<Long, List<LibCategoryDto>> childrenMap = buildChildrenMap(fullCategoryList);
+
+        // 获取所有根节点（parentId = 0）
+        List<LibCategoryDto> rootNodes = fullCategoryList.stream()
+                .filter(dto -> dto.getParentId() == 0L)
+                .collect(Collectors.toList());
+
+        // 为每个根节点构建子树
+        for (LibCategoryDto rootNode : rootNodes) {
+            buildSubTree(rootNode, childrenMap);
+        }
+
+        return rootNodes;
+    }
+
+    /**
+     * 补全缺失的父节点
+     */
+    private List<LibCategoryDto> completeMissingParents(List<LibCategoryDto> categoryDtoList) {
+        Set<Long> existingIds = categoryDtoList.stream()
+                .map(LibCategoryDto::getCategoryId)
+                .collect(Collectors.toSet());
+
+        Set<Long> missingParentIds = new HashSet<>();
+
+        // 找出所有缺失的父节点ID
+        for (LibCategoryDto dto : categoryDtoList) {
+            Long parentId = dto.getParentId();
+            if (parentId != 0L && !existingIds.contains(parentId)) {
+                missingParentIds.add(parentId);
             }
         }
 
-        return treeList;
+        if (missingParentIds.isEmpty()) {
+            return new ArrayList<>(categoryDtoList);
+        }
+
+        // 从数据库查询缺失的父节点
+        Long[] missingIdsArray = missingParentIds.toArray(new Long[0]);
+        List<LibCategoryPo> missingParentsPo = libCategoryMapper.selectLibCategoryByIds(missingIdsArray);
+
+        // 使用Hutool进行PO到DTO的转换
+        List<LibCategoryDto> missingParentsDto = missingParentsPo.stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+
+        // 递归补全更高层级的父节点
+        List<LibCategoryDto> completedParents = completeMissingParents(missingParentsDto);
+
+        // 合并所有节点
+        List<LibCategoryDto> result = new ArrayList<>(categoryDtoList);
+        result.addAll(completedParents);
+        return result;
     }
+
+    /**
+     * 构建父子关系映射表
+     */
+    private Map<Long, List<LibCategoryDto>> buildChildrenMap(List<LibCategoryDto> categoryList) {
+        return categoryList.stream()
+                .collect(Collectors.groupingBy(LibCategoryDto::getParentId));
+    }
+
+    /**
+     * 递归构建子树
+     */
+    private void buildSubTree(LibCategoryDto parentNode, Map<Long, List<LibCategoryDto>> childrenMap) {
+        Long parentId = parentNode.getCategoryId();
+        List<LibCategoryDto> children = childrenMap.get(parentId);
+
+        if (children != null && !children.isEmpty()) {
+            // 为当前节点设置子节点
+            parentNode.setChildren(children);
+
+            // 递归处理每个子节点
+            for (LibCategoryDto child : children) {
+                buildSubTree(child, childrenMap);
+            }
+        } else {
+            // 如果没有子节点，设置为空列表
+            parentNode.setChildren(Collections.emptyList());
+        }
+    }
+
+    /**
+     * 使用Hutool进行PO转DTO
+     */
+    private LibCategoryDto convertToDto(LibCategoryPo po) {
+        // 使用Hutool的BeanUtil进行属性拷贝
+        LibCategoryDto dto = BeanUtil.copyProperties(po, LibCategoryDto.class);
+        // 确保children为null（因为传入的DTO列表要求children为null）
+        dto.setChildren(null);
+        return dto;
+    }
+
 }
