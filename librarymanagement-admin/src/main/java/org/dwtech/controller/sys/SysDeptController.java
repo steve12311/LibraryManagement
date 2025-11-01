@@ -15,7 +15,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
@@ -36,7 +35,7 @@ public class SysDeptController {
 
         List<SysDeptVo> sysDeptVoList = page.getRecords().stream()
                 .map(this::convertDeptDtoToVo)
-                .collect(Collectors.toList());
+                .toList();
 
         sysDeptVoPage.setRecords(sysDeptVoList);
         return AjaxResult.success(sysDeptVoPage);
@@ -72,7 +71,7 @@ public class SysDeptController {
         if (children != null && !children.isEmpty()) {
             List<SysDeptVo> childVos = children.stream()
                     .map(this::convertDeptDtoToVo)
-                    .collect(Collectors.toList());
+                    .toList();
             deptVo.setChildren(childVos);
         } else {
             // 如果children为null或空，设置为空列表

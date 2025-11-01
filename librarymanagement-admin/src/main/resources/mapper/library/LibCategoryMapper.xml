@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.dwtech.mapper.LibCategoryMapper">
+
+    <resultMap id="LibCategoryResult" type="LibCategoryPo">
+        <id property="categoryId" column="category_id"/>
+        <result property="code" column="code"/>
+        <result property="parentId" column="parent_id"/>
+        <result property="ancestors" column="ancestors"/>
+        <result property="categoryName" column="category_name"/>
+        <result property="createBy" column="create_by"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+
+    <sql id="selectLibCategoryVo">
+        select c.category_id,
+               c.code,
+               c.parent_id,
+               c.ancestors,
+               c.category_name,
+               c.create_by,
+               c.update_by,
+               c.create_time,
+               c.update_time,
+               c.remark
+        from lib_book_category c
+    </sql>
+
+    <select id="selectLibCategoryList" parameterType="LibCategoryPo" resultMap="LibCategoryResult">
+        <include refid="selectLibCategoryVo"/>
+        <where>
+            <if test="libCategory.categoryId != null and libCategory.categoryId != 0">
+                and c.category_id = #{categoryId}
+            </if>
+            <if test="libCategory.code != null and libCategory.code != ''">
+                and c.code = #{code}
+            </if>
+            <if test="libCategory.categoryName != null and libCategory.categoryName != ''">
+                and c.category_name like concate('%',#{categoryName},'%')
+            </if>
+        </where>
+    </select>
+</mapper>

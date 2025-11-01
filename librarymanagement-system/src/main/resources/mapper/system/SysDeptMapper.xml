@@ -53,16 +53,16 @@
         <include refid="selectDeptVo"/>
         where d.del_flag = '0'
         <if test="sysDept.deptId != null and sysDept.deptId != 0">
-            AND dept_id = #{sysDept.deptId}
+            AND d.dept_id = #{sysDept.deptId}
         </if>
         <if test="sysDept.parentId != null and sysDept.parentId != 0">
-            AND parent_id = #{sysDept.parentId}
+            AND d.parent_id = #{sysDept.parentId}
         </if>
         <if test="sysDept.deptName != null and sysDept.deptName != ''">
-            AND dept_name like concat('%', #{sysDept.deptName}, '%')
+            AND d.dept_name like concat('%', #{sysDept.deptName}, '%')
         </if>
         <if test="sysDept.status != null and sysDept.status != ''">
-            AND status = #{sysDept.status}
+            AND d.status = #{sysDept.status}
         </if>
         <!-- 数据范围过滤 -->
         order by d.parent_id, d.order_num
