@@ -5,10 +5,10 @@ import org.dwtech.common.core.entity.SysMenu;
 import org.dwtech.common.utils.SecurityUtils;
 import org.dwtech.common.utils.StringUtils;
 import org.dwtech.system.mapper.SysMenuMapper;
-import org.dwtech.common.core.entity.RouterVo;
+import org.dwtech.common.core.entity.vo.RouterVo;
 import org.dwtech.system.service.SysMenuService;
 import org.springframework.stereotype.Service;
-import org.dwtech.common.core.entity.MetaVo;
+import org.dwtech.common.core.entity.vo.MetaVo;
 
 import java.util.ArrayList;
 import java.util.LinkedList;

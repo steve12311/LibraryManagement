@@ -1,4 +1,4 @@
-package org.dwtech.common.core.entity;
+package org.dwtech.common.core.entity.vo;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;

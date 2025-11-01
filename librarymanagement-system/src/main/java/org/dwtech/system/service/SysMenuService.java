@@ -1,7 +1,7 @@
 package org.dwtech.system.service;
 
 import org.dwtech.common.core.entity.SysMenu;
-import org.dwtech.common.core.entity.RouterVo;
+import org.dwtech.common.core.entity.vo.RouterVo;
 
 import java.util.List;
 
