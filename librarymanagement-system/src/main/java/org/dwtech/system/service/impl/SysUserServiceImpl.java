@@ -88,28 +88,28 @@ public class SysUserServiceImpl implements SysUserService {
     public boolean checkUserNameUnique(SysUserDto sysUserDto) {
         SysUserPo sysUserPo = new SysUserPo();
         sysUserPo.setUserName(sysUserDto.getUserName());
-        return sysUserMapper.hasUser(sysUserPo) == 1;
+        return sysUserMapper.hasUser(sysUserPo) >= 1;
     }
 
     @Override
     public boolean checkUserPhonenumberUnique(SysUserDto sysUserDto) {
         SysUserPo sysUserPo = new SysUserPo();
         sysUserPo.setPhonenumber(sysUserDto.getPhonenumber());
-        return sysUserMapper.hasUser(sysUserPo) == 1;
+        return sysUserMapper.hasUser(sysUserPo) >= 1;
     }
 
     @Override
     public boolean checkUserEmailUnique(SysUserDto sysUserDto) {
         SysUserPo sysUserPo = new SysUserPo();
         sysUserPo.setEmail(sysUserDto.getEmail());
-        return sysUserMapper.hasUser(sysUserPo) == 1;
+        return sysUserMapper.hasUser(sysUserPo) >= 1;
     }
 
     @Override
     public boolean hasUserById(SysUserDto sysUserDto) {
         SysUserPo sysUserPo = new SysUserPo();
         sysUserPo.setUserId(sysUserDto.getUserId());
-        return sysUserMapper.hasUser(sysUserPo) == 1;
+        return sysUserMapper.hasUser(sysUserPo) >= 1;
     }
 
     @Override
