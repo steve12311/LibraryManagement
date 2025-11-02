@@ -27,9 +27,7 @@ public class SysDeptServiceImpl implements SysDeptService {
 
     @Override
     public SysDeptDto selectDeptById(Long deptId) {
-        SysDeptDto sysDeptDto = new SysDeptDto();
-        BeanUtil.copyProperties(sysDeptMapper.selectDeptById(deptId), sysDeptDto);
-        return sysDeptDto;
+        return BeanUtil.copyProperties(sysDeptMapper.selectDeptById(deptId), SysDeptDto.class);
     }
 
     @Override
@@ -39,9 +37,7 @@ public class SysDeptServiceImpl implements SysDeptService {
         }
         List<SysDeptDto> sysDeptDtoList = new ArrayList<>();
         sysDeptMapper.selectDeptByIds(ids).forEach(sysDeptPo -> {
-            SysDeptDto sysDeptDto = new SysDeptDto();
-            BeanUtil.copyProperties(sysDeptPo, sysDeptDto);
-            sysDeptDtoList.add(sysDeptDto);
+            sysDeptDtoList.add(BeanUtil.copyProperties(sysDeptPo, SysDeptDto.class));
         });
         return sysDeptDtoList;
     }
@@ -76,16 +72,15 @@ public class SysDeptServiceImpl implements SysDeptService {
 
     @Override
     public Integer insertDept(SysDeptDto sysDept) {
-        SysDeptPo sysDeptPo = new SysDeptPo();
-        BeanUtil.copyProperties(sysDept, sysDeptPo);
+        SysDeptPo sysDeptPo = BeanUtil.copyProperties(sysDept, SysDeptPo.class);
         sysDeptPo.setCreateBy(SecurityUtils.getUsername());
         return sysDeptMapper.insertDept(sysDeptPo);
     }
 
     @Override
     public Integer updateDept(SysDeptDto sysDept) {
-        SysDeptPo sysDeptPo = new SysDeptPo();
-        BeanUtil.copyProperties(sysDept, sysDeptPo);
+        SysDeptPo sysDeptPo = BeanUtil.copyProperties(sysDept, SysDeptPo.class);
+        sysDeptPo.setUpdateBy(SecurityUtils.getUsername());
         return sysDeptMapper.updateDept(sysDeptPo);
     }
 

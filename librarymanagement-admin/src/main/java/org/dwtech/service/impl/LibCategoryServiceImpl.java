@@ -1,8 +1,10 @@
 package org.dwtech.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import org.apache.commons.lang3.ArrayUtils;
 import org.dwtech.common.core.entity.dto.LibCategoryDto;
 import org.dwtech.common.core.entity.po.LibCategoryPo;
+import org.dwtech.common.utils.SecurityUtils;
 import org.dwtech.mapper.LibCategoryMapper;
 import org.dwtech.service.LibCategoryService;
 import org.springframework.stereotype.Service;
@@ -53,6 +55,30 @@ public class LibCategoryServiceImpl implements LibCategoryService {
         }
 
         return rootNodes;
+    }
+
+    @Override
+    public Integer insertLibCategory(LibCategoryDto libCategoryDto) {
+        LibCategoryPo libCategoryPo = BeanUtil.copyProperties(libCategoryDto, LibCategoryPo.class);
+        libCategoryPo.setCreateBy(SecurityUtils.getUsername());
+        return libCategoryMapper.insertLibCategory(libCategoryPo);
+    }
+
+    @Override
+    public Integer updateLibCategory(LibCategoryDto libCategoryDto) {
+        LibCategoryPo libCategoryPo = BeanUtil.copyProperties(libCategoryDto, LibCategoryPo.class);
+        libCategoryPo.setUpdateBy(SecurityUtils.getUsername());
+        return libCategoryMapper.updateLibCategory(libCategoryPo);
+    }
+
+    @Override
+    public Integer deleteLibCategory(Long[] ids) {
+        if (ArrayUtils.isEmpty(ids)) {
+            return 0;
+        } else if (ids.length == 1) {
+            return libCategoryMapper.deleteLibCategoryById(ids[0]);
+        }
+        return 0;
     }
 
     /**

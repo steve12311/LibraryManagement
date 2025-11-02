@@ -36,18 +36,13 @@ public class SysRoleServiceImpl implements SysRoleService {
 
     @Override
     public IPage<SysRoleDto> selectRoleList(SysRoleDto role) {
-        SysRolePo rolePo = new SysRolePo();
-        BeanUtil.copyProperties(role, rolePo);
-
         Page<SysRoleDto> page = new Page<>();
-        IPage<SysRolePo> sysUserPoIPage = sysRoleMapper.selectRoleList(new Page<>(PageUtils.getPageStart(), PageUtils.getPageStart()), rolePo, PageUtils.getCondition());
+        IPage<SysRolePo> sysUserPoIPage = sysRoleMapper.selectRoleList(new Page<>(PageUtils.getPageStart(), PageUtils.getPageStart()), BeanUtil.copyProperties(role, SysRolePo.class), PageUtils.getCondition());
         BeanUtil.copyProperties(sysUserPoIPage, page);
 
         List<SysRoleDto> sysRoleDtoList = new ArrayList<>();
         sysUserPoIPage.getRecords().forEach(sysUserPo -> {
-            SysRoleDto sysRoleDto = new SysRoleDto();
-            BeanUtil.copyProperties(sysUserPo, sysRoleDto);
-            sysRoleDtoList.add(sysRoleDto);
+            sysRoleDtoList.add(BeanUtil.copyProperties(sysUserPo, SysRoleDto.class));
         });
         page.setRecords(sysRoleDtoList);
         return page;
@@ -55,16 +50,14 @@ public class SysRoleServiceImpl implements SysRoleService {
 
     @Override
     public Integer insertRole(SysRoleDto role) {
-        SysRolePo rolePo = new SysRolePo();
-        BeanUtil.copyProperties(role, rolePo);
+        SysRolePo rolePo = BeanUtil.copyProperties(role, SysRolePo.class);
         rolePo.setCreateBy(SecurityUtils.getUsername());
         return sysRoleMapper.insertRole(rolePo);
     }
 
     @Override
     public Integer updateRole(SysRoleDto role) {
-        SysRolePo rolePo = new SysRolePo();
-        BeanUtil.copyProperties(role, rolePo);
+        SysRolePo rolePo = BeanUtil.copyProperties(role, SysRolePo.class);
         rolePo.setUpdateBy(SecurityUtils.getUsername());
         return sysRoleMapper.updateRole(rolePo);
     }

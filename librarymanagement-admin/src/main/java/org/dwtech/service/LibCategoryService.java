@@ -6,5 +6,12 @@ import java.util.List;
 
 public interface LibCategoryService {
     List<LibCategoryDto> selectLibCategoryList(LibCategoryDto libCategoryDto);
+
     List<LibCategoryDto> buildCategoryTree(List<LibCategoryDto> categoryDtoList);
+
+    Integer insertLibCategory(LibCategoryDto libCategoryDto);
+
+    Integer updateLibCategory(LibCategoryDto libCategoryDto);
+
+    Integer deleteLibCategory(Long[] ids);
 }

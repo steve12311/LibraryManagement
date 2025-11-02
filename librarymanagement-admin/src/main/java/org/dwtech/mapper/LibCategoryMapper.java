@@ -11,4 +11,10 @@ public interface LibCategoryMapper extends BaseMapper<LibCategoryPo> {
     List<LibCategoryPo> selectLibCategoryList(LibCategoryPo libCategory);
 
     List<LibCategoryPo> selectLibCategoryByIds(Long[] categoryIds);
+
+    Integer insertLibCategory(LibCategoryPo libCategoryPo);
+
+    Integer updateLibCategory(LibCategoryPo libCategoryPo);
+
+    Integer deleteLibCategoryById(Long id);
 }

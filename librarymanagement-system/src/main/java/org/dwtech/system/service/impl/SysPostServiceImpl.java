@@ -25,18 +25,13 @@ public class SysPostServiceImpl implements SysPostService {
 
     @Override
     public IPage<SysPostDto> selectPostList(SysPostDto sysPostDto) {
-        SysPostPo sysPostPo = new SysPostPo();
-        BeanUtil.copyProperties(sysPostDto, sysPostPo);
-
         Page<SysPostDto> page = new Page<>();
-        IPage<SysPostPo> sysPostPoIPage = sysPostMapper.selectPostList(new Page<>(PageUtils.getPageStart(), PageUtils.getPageSize()), sysPostPo);
+        IPage<SysPostPo> sysPostPoIPage = sysPostMapper.selectPostList(new Page<>(PageUtils.getPageStart(), PageUtils.getPageSize()), BeanUtil.copyProperties(sysPostDto, SysPostPo.class));
         BeanUtil.copyProperties(sysPostPoIPage, page);
 
         List<SysPostDto> sysPostDtoList = new ArrayList<>();
         sysPostPoIPage.getRecords().forEach(sysPostPo1 -> {
-            SysPostDto sysPostDto1 = new SysPostDto();
-            BeanUtil.copyProperties(sysPostPo1, sysPostDto1);
-            sysPostDtoList.add(sysPostDto1);
+            sysPostDtoList.add(BeanUtil.copyProperties(sysPostPo1, SysPostDto.class));
         });
         page.setRecords(sysPostDtoList);
         return page;
@@ -44,24 +39,21 @@ public class SysPostServiceImpl implements SysPostService {
 
     @Override
     public boolean checkPostNameUnique(SysPostDto sysPostDto) {
-        SysPostPo sysPostPo = new SysPostPo();
-        BeanUtil.copyProperties(sysPostDto, sysPostPo);
+        SysPostPo sysPostPo = BeanUtil.copyProperties(sysPostDto, SysPostPo.class);
         sysPostPo.setPostName(sysPostDto.getPostName());
         return sysPostMapper.hasPost(sysPostPo) >= 1;
     }
 
     @Override
     public Integer insertPost(SysPostDto postDto) {
-        SysPostPo sysPostPo = new SysPostPo();
-        BeanUtil.copyProperties(postDto, sysPostPo);
+        SysPostPo sysPostPo = BeanUtil.copyProperties(postDto, SysPostPo.class);
         sysPostPo.setCreateBy(SecurityUtils.getUsername());
         return sysPostMapper.insertPost(sysPostPo);
     }
 
     @Override
     public Integer updatePost(SysPostDto sysPostDto) {
-        SysPostPo sysPostPo = new SysPostPo();
-        BeanUtil.copyProperties(sysPostDto, sysPostPo);
+        SysPostPo sysPostPo = BeanUtil.copyProperties(sysPostDto, SysPostPo.class);
         sysPostPo.setUpdateBy(SecurityUtils.getUsername());
         return sysPostMapper.updatePost(sysPostPo);
     }

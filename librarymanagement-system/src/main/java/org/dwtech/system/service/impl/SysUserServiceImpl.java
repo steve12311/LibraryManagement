@@ -34,8 +34,7 @@ public class SysUserServiceImpl implements SysUserService {
 
     @Override
     public Integer updateUser(SysUserDto sysUserDto) {
-        SysUserPo sysUserPo = new SysUserPo();
-        BeanUtil.copyProperties(sysUserDto, sysUserPo);
+        SysUserPo sysUserPo = BeanUtil.copyProperties(sysUserDto, SysUserPo.class);
         sysUserPo.setUpdateBy(SecurityUtils.getUsername());
         return sysUserMapper.updateUser(sysUserPo);
     }
@@ -47,18 +46,13 @@ public class SysUserServiceImpl implements SysUserService {
 
     @Override
     public IPage<SysUserDto> selectUserList(SysUserDto sysUserDto) {
-        SysUserPo sysUserPo = new SysUserPo();
-        BeanUtil.copyProperties(sysUserDto, sysUserPo);
-
         Page<SysUserDto> page = new Page<>();
-        IPage<SysUserPo> sysUserPoIPage = sysUserMapper.selectUserList(new Page<>(PageUtils.getPageStart(), PageUtils.getPageSize()), sysUserPo, PageUtils.getCondition());
+        IPage<SysUserPo> sysUserPoIPage = sysUserMapper.selectUserList(new Page<>(PageUtils.getPageStart(), PageUtils.getPageSize()), BeanUtil.copyProperties(sysUserDto, SysUserPo.class), PageUtils.getCondition());
         BeanUtil.copyProperties(sysUserPoIPage, page);
 
         List<SysUserDto> sysUserDtoList = new ArrayList<>();
         sysUserPoIPage.getRecords().forEach(record -> {
-            SysUserDto sysUserDto1 = new SysUserDto();
-            BeanUtil.copyProperties(record, sysUserDto1);
-            sysUserDtoList.add(sysUserDto1);
+            sysUserDtoList.add(BeanUtil.copyProperties(record, SysUserDto.class));
         });
         page.setRecords(sysUserDtoList);
         return page;
@@ -66,10 +60,8 @@ public class SysUserServiceImpl implements SysUserService {
 
     @Override
     public Integer insertUser(SysUserDto sysUserDto) {
-        String createBy = SecurityUtils.getLoginUser().getUsername();
-        SysUserPo sysUserPo = new SysUserPo();
-        BeanUtil.copyProperties(sysUserDto, sysUserPo);
-        sysUserPo.setCreateBy(createBy);
+        SysUserPo sysUserPo = BeanUtil.copyProperties(sysUserDto, SysUserPo.class);
+        sysUserPo.setCreateBy(SecurityUtils.getLoginUser().getUsername());
         sysUserPo.setPassword(SecurityUtils.encryptPassword(sysUserDto.getPassword()));
         return sysUserMapper.insertUser(sysUserPo);
     }

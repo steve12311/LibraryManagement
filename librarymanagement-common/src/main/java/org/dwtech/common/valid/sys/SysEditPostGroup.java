@@ -1,4 +1,4 @@
-package org.dwtech.common.valid;
+package org.dwtech.common.valid.sys;
 
 public interface SysEditPostGroup {
 }

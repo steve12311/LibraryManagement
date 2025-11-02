@@ -3,8 +3,8 @@ package org.dwtech.common.core.entity.dto;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
-import org.dwtech.common.valid.SysAddPostGroup;
-import org.dwtech.common.valid.SysEditPostGroup;
+import org.dwtech.common.valid.sys.SysAddPostGroup;
+import org.dwtech.common.valid.sys.SysEditPostGroup;
 
 import java.io.Serial;
 import java.io.Serializable;

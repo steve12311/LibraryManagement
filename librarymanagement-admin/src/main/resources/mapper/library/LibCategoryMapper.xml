@@ -53,4 +53,46 @@
             #{categoryId}
         </foreach>
     </select>
+
+    <insert id="insertLibCategory" parameterType="LibCategoryPo">
+        insert into lib_book_category(
+        <if test="categoryId != null and categoryId != 0">category_id,</if>
+        <if test="code != null and code != ''">code,</if>
+        <if test="parentId != null and parentId != 0">parent_id,</if>
+        <if test="ancestors != null and ancestors != ''">ancestors,</if>
+        <if test="categoryName != null and categoryName != ''">category_name,</if>
+        <if test="createBy != null and createBy != ''">create_by,</if>
+        <if test="remark != null and remark != ''">remark,</if>
+        create_time
+        )values (
+        <if test="categoryId != null and categoryId != 0">#{categoryId},</if>
+        <if test="code != null and code != ''">#{code},</if>
+        <if test="parentId != null and parentId != 0">#{parentId},</if>
+        <if test="ancestors != null and ancestors != ''">#{ancestors},</if>
+        <if test="categoryName != null and categoryName != ''">#{categoryName},</if>
+        <if test="createBy != null and createBy != ''">#{createBy},</if>
+        <if test="remark != null and remark != ''">#{remark},</if>
+        sysdate()
+        )
+    </insert>
+
+    <update id="updateLibCategory" parameterType="LibCategoryPo">
+        update lib_book_category
+        <set>
+            <if test="code != null and code != ''">code = #{code},</if>
+            <if test="parentId != null and parentId != 0">parent_id = #{parent_id},</if>
+            <if test="ancestors != null and ancestors != ''">ancestors = #{ancestors},</if>
+            <if test="categoryName != null and categoryName != ''">category_name = #{categoryName},</if>
+            <if test="remark != null and remark != ''">remark = #{remark},</if>
+            <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+            update_time = sysdate()
+        </set>
+        where category_id = #{categoryId}
+    </update>
+
+    <delete id="deleteLibCategoryById" parameterType="Long">
+        delete
+        from lib_book_category
+        where category_id = #{categoryId}
+    </delete>
 </mapper>

@@ -4,10 +4,11 @@ import cn.hutool.core.bean.BeanUtil;
 import org.dwtech.common.core.entity.AjaxResult;
 import org.dwtech.common.core.entity.dto.LibCategoryDto;
 import org.dwtech.common.core.entity.vo.LibCategoryVo;
+import org.dwtech.common.valid.LibAddCategoryGroup;
+import org.dwtech.common.valid.LibEditCategoryGroup;
 import org.dwtech.service.LibCategoryService;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,10 +26,23 @@ public class LibCategoryController {
     public AjaxResult getLibCategory(LibCategoryDto libCategoryDto) {
         List<LibCategoryDto> libCategoryDtoTree = libCategoryService.buildCategoryTree(libCategoryService.selectLibCategoryList(libCategoryDto));
         List<LibCategoryVo> libCategoryTree = new ArrayList<>();
-        libCategoryDtoTree.forEach(item -> {
-            libCategoryTree.add(convertToVo(item));
-        });
+        libCategoryDtoTree.forEach(item -> libCategoryTree.add(convertToVo(item)));
         return AjaxResult.success(libCategoryTree);
+    }
+
+    @PostMapping
+    public AjaxResult addLibCategory(@Validated(LibAddCategoryGroup.class) @RequestBody LibCategoryDto libCategoryDto) {
+        return AjaxResult.success(libCategoryService.insertLibCategory(libCategoryDto));
+    }
+
+    @PutMapping
+    public AjaxResult editLibCategory(@Validated(LibEditCategoryGroup.class) @RequestBody LibCategoryDto libCategoryDto) {
+        return AjaxResult.success(libCategoryService.updateLibCategory(libCategoryDto));
+    }
+
+    @DeleteMapping("/{categoryIds}")
+    public AjaxResult deleteLibCategory(@PathVariable("categoryIds") Long[] categoryIds) {
+        return AjaxResult.success(libCategoryService.deleteLibCategory(categoryIds));
     }
 
     /**
