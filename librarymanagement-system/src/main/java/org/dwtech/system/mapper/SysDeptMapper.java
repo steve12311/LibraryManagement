@@ -1,7 +1,6 @@
 package org.dwtech.system.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.baomidou.mybatisplus.core.metadata.IPage;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.dwtech.common.core.entity.Condition;
@@ -11,7 +10,7 @@ import java.util.List;
 
 @Mapper
 public interface SysDeptMapper extends BaseMapper<SysDeptPo> {
-    IPage<SysDeptPo> selectDeptList(IPage<SysDeptPo> page, @Param("sysDept") SysDeptPo sysDept, @Param("params") Condition condition);
+    List<SysDeptPo> selectDeptList(@Param("sysDept") SysDeptPo sysDept, @Param("params") Condition condition);
 
     SysDeptPo selectDeptById(Long deptId);
 

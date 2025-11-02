@@ -1,8 +1,6 @@
 package org.dwtech.system.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.dwtech.common.core.entity.dto.SysDeptDto;
@@ -12,8 +10,10 @@ import org.dwtech.common.utils.SecurityUtils;
 import org.dwtech.system.mapper.SysDeptMapper;
 import org.dwtech.system.service.SysDeptService;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -47,37 +47,31 @@ public class SysDeptServiceImpl implements SysDeptService {
     }
 
     @Override
-    public IPage<SysDeptDto> selectDeptList(SysDeptDto sysDept) {
-        SysDeptPo sysDeptPo = new SysDeptPo();
-        BeanUtil.copyProperties(sysDept, sysDeptPo);
-
-        Page<SysDeptDto> sysDeptDtoPage = new Page<>();
-        IPage<SysDeptPo> sysDeptPoIPage = sysDeptMapper.selectDeptList(new Page<>(PageUtils.getPageStart(), PageUtils.getPageSize()), sysDeptPo, PageUtils.getCondition());
-        BeanUtil.copyProperties(sysDeptPoIPage, sysDeptDtoPage);
-
+    public List<SysDeptDto> selectDeptList(SysDeptDto sysDept) {
         List<SysDeptDto> sysDeptDtoList = new ArrayList<>();
-        sysDeptPoIPage.getRecords().forEach(sysDeptPo1 -> {
-            SysDeptDto sysDeptDto = new SysDeptDto();
-            BeanUtil.copyProperties(sysDeptPo1, sysDeptDto);
-            sysDeptDtoList.add(sysDeptDto);
-        });
-        sysDeptDtoPage.setRecords(sysDeptDtoList);
-        return sysDeptDtoPage;
+        List<SysDeptPo> sysDeptPoList = sysDeptMapper.selectDeptList(BeanUtil.copyProperties(sysDept, SysDeptPo.class), PageUtils.getCondition());
+        sysDeptPoList.forEach(sysDeptPo -> sysDeptDtoList.add(convertToDto(sysDeptPo)));
+        return sysDeptDtoList;
     }
 
     @Override
-    public IPage<SysDeptDto> buildDeptTree(IPage<SysDeptDto> deptList) {
-        Page<SysDeptDto> page = new Page<>();
-        List<SysDeptDto> depts = deptList.getRecords();
+    public List<SysDeptDto> buildDeptTree(List<SysDeptDto> deptDtoList) {
+        if (CollectionUtils.isEmpty(deptDtoList)) {
+            return Collections.emptyList();
+        }
 
-        // 构建部门树
-        List<SysDeptDto> treeDepts = buildTree(depts);
+        List<SysDeptDto> fullSysDeptDtoList = completeMissingParents(deptDtoList);
+        Map<Long, List<SysDeptDto>> childrenMap = buildChildrenMap(fullSysDeptDtoList);
 
-        page.setRecords(treeDepts);
-        page.setTotal(deptList.getTotal());
-        page.setSize(deptList.getSize());
-        page.setCurrent(deptList.getCurrent());
-        return page;
+        List<SysDeptDto> rootNodes = fullSysDeptDtoList.stream()
+                .filter(dto -> dto.getParentId() == 0L)
+                .toList();
+
+        for (SysDeptDto rootNode : rootNodes) {
+            buildSubTree(rootNode, childrenMap);
+        }
+
+        return rootNodes;
     }
 
     @Override
@@ -105,52 +99,61 @@ public class SysDeptServiceImpl implements SysDeptService {
         return 0;
     }
 
-    private List<SysDeptDto> buildTree(List<SysDeptDto> deptList) {
-        List<SysDeptDto> treeList = new ArrayList<>();
-        Map<Long, SysDeptDto> deptMap = new HashMap<>();
+    private List<SysDeptDto> completeMissingParents(List<SysDeptDto> sysDeptDtoList) {
+        Set<Long> existingIds = sysDeptDtoList.stream()
+                .map(SysDeptDto::getDeptId)
+                .collect(Collectors.toSet());
 
-        // 将所有部门存入Map，key为deptId
-        for (SysDeptDto dept : deptList) {
-            deptMap.put(dept.getDeptId(), dept);
-        }
+        Set<Long> missingParentIds = new HashSet<>();
 
-        // 遍历部门列表，构建树形结构
-        for (SysDeptDto dept : deptList) {
-            Long parentId = dept.getParentId();
-            if (parentId == 0) {
-                // 根节点直接添加到树列表
-                treeList.add(dept);
-            } else {
-                // 找到父节点，将当前部门添加到父节点的children中
-                SysDeptDto parentDept = deptMap.get(parentId);
-                if (parentDept != null) {
-                    if (parentDept.getChildren() == null) {
-                        parentDept.setChildren(new ArrayList<>());
-                    }
-                    parentDept.getChildren().add(dept);
-                }
+        for (SysDeptDto dto : sysDeptDtoList) {
+            Long parentId = dto.getParentId();
+            if (parentId != 0L && !existingIds.contains(parentId)) {
+                missingParentIds.add(parentId);
             }
         }
 
-        // 对树形结构进行排序（按orderNum）
-        sortTree(treeList);
+        if (missingParentIds.isEmpty()) {
+            return new ArrayList<>(sysDeptDtoList);
+        }
 
-        return treeList;
+        Long[] missingIdsArray = missingParentIds.toArray(new Long[0]);
+        List<SysDeptPo> missingParentsPo = sysDeptMapper.selectDeptByIds(missingIdsArray);
+
+        List<SysDeptDto> missingParentsDto = missingParentsPo.stream()
+                .map(this::convertToDto)
+                .toList();
+
+        List<SysDeptDto> completedParents = completeMissingParents(missingParentsDto);
+
+        List<SysDeptDto> result = new ArrayList<>(sysDeptDtoList);
+        result.addAll(completedParents);
+        return result;
     }
 
-    private void sortTree(List<SysDeptDto> treeList) {
-        if (treeList == null || treeList.isEmpty()) {
-            return;
-        }
+    private Map<Long, List<SysDeptDto>> buildChildrenMap(List<SysDeptDto> sysDeptList) {
+        return sysDeptList.stream()
+                .collect(Collectors.groupingBy(SysDeptDto::getParentId));
+    }
 
-        // 对当前层级排序
-        treeList.sort(Comparator.comparingInt(SysDeptDto::getOrderNum));
+    private void buildSubTree(SysDeptDto parentNode, Map<Long, List<SysDeptDto>> childrenMap) {
+        Long parentId = parentNode.getDeptId();
+        List<SysDeptDto> children = childrenMap.get(parentId);
 
-        // 递归对子节点排序
-        for (SysDeptDto dept : treeList) {
-            if (dept.getChildren() != null && !dept.getChildren().isEmpty()) {
-                sortTree(dept.getChildren());
+        if (children != null && !children.isEmpty()) {
+            parentNode.setChildren(children);
+
+            for (SysDeptDto child : children) {
+                buildSubTree(child, childrenMap);
             }
+        } else {
+            parentNode.setChildren(Collections.emptyList());
         }
+    }
+
+    private SysDeptDto convertToDto(SysDeptPo deptPo) {
+        SysDeptDto sysDeptDto = BeanUtil.copyProperties(deptPo, SysDeptDto.class);
+        sysDeptDto.setChildren(null);
+        return sysDeptDto;
     }
 }

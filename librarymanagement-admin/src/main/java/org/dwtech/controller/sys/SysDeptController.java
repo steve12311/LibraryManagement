@@ -1,8 +1,6 @@
 package org.dwtech.controller.sys;
 
 import cn.hutool.core.bean.BeanUtil;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.extern.slf4j.Slf4j;
 import org.dwtech.common.core.entity.AjaxResult;
 import org.dwtech.common.core.entity.dto.SysDeptDto;
@@ -14,6 +12,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
@@ -29,16 +28,10 @@ public class SysDeptController {
     @GetMapping("/list")
     @PreAuthorize(value = "@yz.hasPermit('system:dept:list')")
     public AjaxResult getDeptList(SysDeptDto sysDept) {
-        IPage<SysDeptDto> page = sysDeptService.buildDeptTree(sysDeptService.selectDeptList(sysDept));
-        Page<SysDeptVo> sysDeptVoPage = new Page<>();
-        BeanUtil.copyProperties(page, sysDeptVoPage);
-
-        List<SysDeptVo> sysDeptVoList = page.getRecords().stream()
-                .map(this::convertDeptDtoToVo)
-                .toList();
-
-        sysDeptVoPage.setRecords(sysDeptVoList);
-        return AjaxResult.success(sysDeptVoPage);
+        List<SysDeptDto> sysDeptDtoTree = sysDeptService.buildDeptTree(sysDeptService.selectDeptList(sysDept));
+        List<SysDeptVo> sysDeptTree = new ArrayList<>();
+        sysDeptDtoTree.forEach(item -> sysDeptTree.add(convertToVo(item)));
+        return AjaxResult.success(sysDeptTree);
     }
 
     @PostMapping
@@ -60,24 +53,9 @@ public class SysDeptController {
     }
 
     /**
-     * 递归将单个部门DTO转换为VO
+     * 部门DTO转换为VO
      */
-    private SysDeptVo convertDeptDtoToVo(SysDeptDto deptDto) {
-        SysDeptVo deptVo = new SysDeptVo();
-        BeanUtil.copyProperties(deptDto, deptVo);
-
-        // 递归处理子部门
-        List<SysDeptDto> children = deptDto.getChildren();
-        if (children != null && !children.isEmpty()) {
-            List<SysDeptVo> childVos = children.stream()
-                    .map(this::convertDeptDtoToVo)
-                    .toList();
-            deptVo.setChildren(childVos);
-        } else {
-            // 如果children为null或空，设置为空列表
-            deptVo.setChildren(null);
-        }
-
-        return deptVo;
+    private SysDeptVo convertToVo(SysDeptDto dto) {
+        return BeanUtil.copyProperties(dto, SysDeptVo.class);
     }
 }

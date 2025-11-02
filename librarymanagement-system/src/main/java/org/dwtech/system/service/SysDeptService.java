@@ -1,6 +1,5 @@
 package org.dwtech.system.service;
 
-import com.baomidou.mybatisplus.core.metadata.IPage;
 import org.dwtech.common.core.entity.dto.SysDeptDto;
 
 import java.util.List;
@@ -10,9 +9,9 @@ public interface SysDeptService {
 
     List<SysDeptDto> selectDeptByIds(Long[] ids);
 
-    IPage<SysDeptDto> selectDeptList(SysDeptDto sysDept);
+    List<SysDeptDto> selectDeptList(SysDeptDto sysDept);
 
-    IPage<SysDeptDto> buildDeptTree(IPage<SysDeptDto> deptList);
+    List<SysDeptDto> buildDeptTree(List<SysDeptDto> deptList);
 
     Integer insertDept(SysDeptDto sysDept);
 

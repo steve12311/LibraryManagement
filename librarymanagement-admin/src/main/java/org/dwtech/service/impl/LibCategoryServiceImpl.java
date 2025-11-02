@@ -45,7 +45,7 @@ public class LibCategoryServiceImpl implements LibCategoryService {
         // 获取所有根节点（parentId = 0）
         List<LibCategoryDto> rootNodes = fullCategoryList.stream()
                 .filter(dto -> dto.getParentId() == 0L)
-                .collect(Collectors.toList());
+                .toList();
 
         // 为每个根节点构建子树
         for (LibCategoryDto rootNode : rootNodes) {
@@ -84,7 +84,7 @@ public class LibCategoryServiceImpl implements LibCategoryService {
         // 使用Hutool进行PO到DTO的转换
         List<LibCategoryDto> missingParentsDto = missingParentsPo.stream()
                 .map(this::convertToDto)
-                .collect(Collectors.toList());
+                .toList();
 
         // 递归补全更高层级的父节点
         List<LibCategoryDto> completedParents = completeMissingParents(missingParentsDto);
