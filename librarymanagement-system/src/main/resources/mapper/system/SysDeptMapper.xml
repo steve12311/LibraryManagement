@@ -41,14 +41,6 @@
         where d.del_flag = '0' and d.dept_id = #{deptId}
     </select>
 
-    <select id="selectDeptByIds" parameterType="Long">
-        <include refid="selectDeptVo"/>
-        where d.dept_id in
-        <foreach collection="array" item="deptId" open="(" separator="," close=")">
-            #{deptId}
-        </foreach>
-    </select>
-
     <select id="selectDeptList" parameterType="SysDeptPo" resultMap="SysDeptResult">
         <include refid="selectDeptVo"/>
         where d.del_flag = '0'

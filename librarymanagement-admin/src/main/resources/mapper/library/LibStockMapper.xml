@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.dwtech.mapper.LibStockMapper">
+    <resultMap id="LibStockResult" type="LibBookStockDao">
+        <id property="bookId" column="book_id"/>
+        <result property="isbn" column="isbn"/>
+        <result property="price" column="price"/>
+        <result property="bookName" column="book_name"/>
+        <result property="bookImage" column="book_image"/>
+        <result property="author" column="author"/>
+        <result property="publishId" column="publish_id"/>
+        <result property="publishName" column="publish_name"/>
+        <result property="publishTime" column="publish_time"/>
+        <result property="categoryId" column="category_id"/>
+        <result property="categoryName" column="category_name"/>
+        <result property="stockNumber" column="stock_number"/>
+        <result property="currentNumber" column="current_number"/>
+        <result property="createBy" column="create_by"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+
+    <sql id="selectStockVo">
+        select bk.book_id,
+               bk.isbn,
+               bk.price,
+               bk.book_name,
+               bk.book_image,
+               bk.author,
+               bk.publish_id,
+               bk.category_id,
+               bk.publish_time,
+               bp.publish_name,
+               bc.category_name,
+               bs.stock_number,
+               bs.current_number,
+               bs.create_by,
+               bs.create_time,
+               bs.update_by,
+               bs.update_time,
+               bs.remark
+        from lib_book bk
+                 left join lib_book_publish bp on bp.publish_id = bk.publish_id
+                 left join lib_book_category bc on bc.category_id = bk.category_id
+                 left join lib_book_stock bs on bs.book_id = bk.book_id
+    </sql>
+
+    <select id="selectStockList" parameterType="LibBookStockDto" resultMap="LibStockResult">
+        <include refid="selectStockVo"/>
+        <where>
+            <if test="libBookStockDao.bookId != null and libBookStockDao.bookId != 0">and book_id = #{bookId}</if>
+            <if test="libBookStockDao.isbn != null and libBookStockDao.isbn != ''">and isbn = #{isbn}</if>
+            <if test="libBookStockDao.price != null and libBookStockDao.price != 0">and price = #{price}</if>
+            <if test="libBookStockDao.bookName != null and libBookStockDao.bookName !=''">and book_name = #{bookName}
+            </if>
+            <if test="libBookStockDao.bookImage != null and libBookStockDao.bookImage != ''">and book_image =
+                #{bookImage}
+            </if>
+            <if test="libBookStockDao.author != null and libBookStockDao.author != ''">and author = #{author}</if>
+            <if test="libBookStockDao.publishId != null and libBookStockDao.publishId != 0">and publish_id =
+                #{publishId}
+            </if>
+            <if test="libBookStockDao.publishTime != null and libBookStockDao.publishTime != ''">and publish_time =
+                #{publishTime}
+            </if>
+            <if test="libBookStockDao.categoryId != null and libBookStockDao.categoryId != 0">and category_id =
+                #{categoryId}
+            </if>
+            <if test="libBookStockDao.stockNumber != null">and stock_number = #{stockNumber}</if>
+            <if test="libBookStockDao.currentNumber != null">and current_number = #{currentNumber}</if>
+            <if test="libBookStockDao.createTime != null and libBookStockDao.createTime != ''">and create_time =
+                #{createTime}
+            </if>
+            <if test="libBookStockDao.updateTime != null and libBookStockDao.updateTime != ''">and update_time =
+                #{updateTime}
+            </if>
+            <if test="libBookStockDao.remark != null and libBookStockDao.remark != ''">and remark = #{remark}</if>
+        </where>
+    </select>
+
+    <select id="selectStockListByBookIds" parameterType="Long">
+        <include refid="selectStockVo"/>
+        where bk.book_id in
+        <foreach collection="array" item="bookId" open="(" separator="," close=")">
+            #{bookId}
+        </foreach>
+    </select>
+</mapper>

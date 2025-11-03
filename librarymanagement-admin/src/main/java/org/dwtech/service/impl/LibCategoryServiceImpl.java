@@ -22,10 +22,18 @@ public class LibCategoryServiceImpl implements LibCategoryService {
     }
 
     @Override
+    public List<LibCategoryDto> selectLibCategoryByIds(Long[] ids) {
+        List<LibCategoryDto> libCategoryDtos = new ArrayList<>();
+        libCategoryMapper.selectLibCategoryByIds(ids).forEach(libCategory -> {
+            libCategoryDtos.add(convertToDto(libCategory));
+        });
+        return libCategoryDtos;
+    }
+
+    @Override
     public List<LibCategoryDto> selectLibCategoryList(LibCategoryDto libCategoryDto) {
         List<LibCategoryDto> libCategoryDtoList = new ArrayList<>();
-        List<LibCategoryPo> libCategoryPoList = libCategoryMapper.selectLibCategoryList(BeanUtil.copyProperties(libCategoryDto, LibCategoryPo.class));
-        libCategoryPoList.forEach(item -> {
+        libCategoryMapper.selectLibCategoryList(BeanUtil.copyProperties(libCategoryDto, LibCategoryPo.class)).forEach(item -> {
             libCategoryDtoList.add(convertToDto(item));
         });
 

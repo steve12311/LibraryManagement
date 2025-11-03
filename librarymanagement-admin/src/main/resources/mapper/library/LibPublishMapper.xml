@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.dwtech.mapper.LibPublishMapper">
+    <resultMap id="LibPublishResult" type="LibPublishPo">
+
+    </resultMap>
+    <sql id="selectPublishVo">
+        select publish_id,
+               publish_name,
+               address,
+               phonenumber,
+               address_code,
+               create_by,
+               create_time,
+               update_by,
+               update_time,
+               remark
+        from lib_book_publish
+    </sql>
+    <select id="selectPublishByIds" parameterType="Long" resultMap="LibPublishResult">
+        <include refid="selectPublishVo"/>
+        where publish_id in
+        <foreach collection="array" item="publishId" open="(" separator="," close=")">
+            #{publishId}
+        </foreach>
+    </select>
+</mapper>
