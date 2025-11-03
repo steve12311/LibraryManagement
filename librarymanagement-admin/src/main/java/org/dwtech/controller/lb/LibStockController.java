@@ -9,12 +9,11 @@ import org.dwtech.common.core.entity.dto.LibBookStockDto;
 import org.dwtech.common.core.entity.dto.LibCategoryDto;
 import org.dwtech.common.core.entity.dto.LibPublishDto;
 import org.dwtech.common.core.entity.vo.LibBookStockVo;
+import org.dwtech.common.enums.StockType;
 import org.dwtech.service.LibCategoryService;
 import org.dwtech.service.LibPublishService;
 import org.dwtech.service.LibStockService;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -76,5 +75,10 @@ public class LibStockController extends BaseController {
         });
         page.setRecords(bookStockVoList);
         return AjaxResult.success(page);
+    }
+
+    @PostMapping
+    public AjaxResult stockManage(@RequestParam("type") String type, @RequestBody LibBookStockDto libBookStockDto) {
+        return AjaxResult.success(libStockService.updateStock(StockType.valueOf(type.toUpperCase()), libBookStockDto));
     }
 }

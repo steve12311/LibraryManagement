@@ -89,4 +89,67 @@
             #{bookId}
         </foreach>
     </select>
+
+    <select id="selectStockByIsbn" parameterType="String">
+        <include refid="selectStockVo"/>
+        where bk.isbn = #{isbn}
+    </select>
+
+    <insert id="insertStock" parameterType="LibBookStockDto">
+        insert into lib_book(
+        <if test="bookId != null and bookId != 0">book_id,</if>
+        <if test="isbn != null and isbn != ''">isbn,</if>
+        <if test="bookName != null and bookName != ''">book_name,</if>
+        <if test="price != null and price != 0">price,</if>
+        <if test="bookImage != null and bookImage != ''">book_image,</if>
+        <if test="author != null and author != ''">author,</if>
+        <if test="publishId != null and publishId != 0">publish_id,</if>
+        <if test="categoryId != null and categoryId != 0">category_id,</if>
+        <if test="publishTime != null and publishTime != ''">publish_time,</if>
+        <if test="createBy != null and createBy != ''">create_by,</if>
+        <if test="remark != null and remark != ''">remark,</if>
+        create_time
+        )values (
+        <if test="bookId != null and bookId != 0">#{bookId},</if>
+        <if test="isbn != null and isbn != ''">#{isbn},</if>
+        <if test="bookName != null and bookName != ''">#{bookName},</if>
+        <if test="price != null and price != 0">#{price},</if>
+        <if test="bookImage != null and bookImage != ''">#{bookImage},</if>
+        <if test="author != null and author != ''">#{author},</if>
+        <if test="publishId != null and publishId != 0">#{publishId},</if>
+        <if test="categoryId != null and categoryId != 0">#{categoryId},</if>
+        <if test="publishTime != null and publishTime != ''">#{publishTime},</if>
+        <if test="createBy != null and createBy != ''">#{createBy},</if>
+        <if test="remark != null and remark != ''">#{remark},</if>
+        sysdate()
+        );
+        insert into lib_book_stock(
+        <if test="stockId != null and stock != 0">stock_id,</if>
+        book_id,
+        <if test="stockNumber != null and stockNumber != 0">stock_number,</if>
+        <if test="currentNumber != null and currentNumber != 0">current_number,</if>
+        <if test="createBy != null and createBy != ''">create_by,</if>
+        <if test="remark != null and remark != ''">remark,</if>
+        create_time
+        )values(
+        <if test="stockId != null and stock != 0">stock_id,</if>
+        (select book_id from lib_book where isbn = #{isbn}),
+        <if test="stockNumber != null and stockNumber != 0">stock_number,</if>
+        <if test="currentNumber != null and currentNumber != 0">current_number,</if>
+        <if test="createBy != null and createBy != ''">create_by,</if>
+        <if test="remark != null and remark != ''">remark,</if>
+        sysdate()
+        )
+    </insert>
+
+    <update id="updateStock">
+        update lib_book_stock
+        <set>
+            <if test="stockNumber != null">stock_number = #{stockNumber},</if>
+            current_number = #{currentNumber},
+            <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+            update_time = sysdate()
+        </set>
+        where book_id = (select book_id from lib_book where isbn = #{isbn})
+    </update>
 </mapper>

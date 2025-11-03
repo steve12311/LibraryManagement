@@ -14,4 +14,10 @@ public interface LibStockMapper extends BaseMapper<LibBookStockDao> {
     IPage<LibBookStockDao> selectStockList(IPage<LibBookStockDao> page, @Param("libBookStockDao") LibBookStockDao libBookStockDao);
 
     List<LibBookStockDao> selectStockListByBookIds(Long[] ids);
+
+    LibBookStockDao selectStockByIsbn(String isbn);
+
+    Integer insertStock(LibBookStockDao libBookStockDao);
+
+    Integer updateStock(LibBookStockDao libBookStockDao);
 }
