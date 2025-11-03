@@ -7,8 +7,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.dwtech.common.core.entity.AjaxResult;
 import org.dwtech.common.core.entity.dto.SysRoleDto;
 import org.dwtech.common.core.entity.vo.SysRoleVo;
-import org.dwtech.common.valid.sys.SysAddRoleGroup;
-import org.dwtech.common.valid.sys.SysEditRoleGroup;
+import org.dwtech.common.valid.AddGroup;
+import org.dwtech.common.valid.EditGroup;
 import org.dwtech.system.service.SysRoleService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
@@ -46,13 +46,13 @@ public class SysRoleController {
 
     @PostMapping
     @PreAuthorize(value = "@yz.hasPermit('system:role:add')")
-    public AjaxResult addRole(@Validated(SysAddRoleGroup.class) @RequestBody SysRoleDto role) {
+    public AjaxResult addRole(@Validated(AddGroup.class) @RequestBody SysRoleDto role) {
         return AjaxResult.success(sysRoleService.insertRole(role));
     }
 
     @PutMapping
     @PreAuthorize(value = "@yz.hasPermit('system:role:edit')")
-    public AjaxResult editRole(@Validated(SysEditRoleGroup.class) @RequestBody SysRoleDto role) {
+    public AjaxResult editRole(@Validated(EditGroup.class) @RequestBody SysRoleDto role) {
         return AjaxResult.success(sysRoleService.updateRole(role));
     }
 

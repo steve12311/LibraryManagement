@@ -10,8 +10,8 @@ import org.dwtech.common.core.entity.dto.SysDeptDto;
 import org.dwtech.common.core.entity.dto.SysUserDto;
 import org.dwtech.common.core.entity.vo.SysUserVo;
 import org.dwtech.common.exception.NotValidException;
-import org.dwtech.common.valid.sys.SysAddUserGroup;
-import org.dwtech.common.valid.sys.SysEditUserGroup;
+import org.dwtech.common.valid.AddGroup;
+import org.dwtech.common.valid.EditGroup;
 import org.dwtech.system.service.SysDeptService;
 import org.dwtech.system.service.SysUserService;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -68,7 +68,7 @@ public class SysUserController extends BaseController {
 
     @PostMapping
     @PreAuthorize(value = "@yz.hasPermit('system:user:add')")
-    public AjaxResult addUser(@Validated(SysAddUserGroup.class) @RequestBody SysUserDto sysUserDto) {
+    public AjaxResult addUser(@Validated(AddGroup.class) @RequestBody SysUserDto sysUserDto) {
         if (sysUserService.checkUserNameUnique(sysUserDto)) {
             throw new NotValidException(String.format("用户名：%s 已存在", sysUserDto.getUserName()));
         }
@@ -84,7 +84,7 @@ public class SysUserController extends BaseController {
 
     @PutMapping
     @PreAuthorize(value = "@yz.hasPermit('system:user:edit')")
-    public AjaxResult editUser(@Validated(SysEditUserGroup.class) @RequestBody SysUserDto sysUserDto) {
+    public AjaxResult editUser(@Validated(EditGroup.class) @RequestBody SysUserDto sysUserDto) {
         if (!sysUserService.hasUserById(sysUserDto)) {
             throw new NotValidException(String.format("用户Id：%d 不存在", sysUserDto.getUserId()));
         }

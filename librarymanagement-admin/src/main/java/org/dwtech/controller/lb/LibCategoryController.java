@@ -4,8 +4,8 @@ import cn.hutool.core.bean.BeanUtil;
 import org.dwtech.common.core.entity.AjaxResult;
 import org.dwtech.common.core.entity.dto.LibCategoryDto;
 import org.dwtech.common.core.entity.vo.LibCategoryVo;
-import org.dwtech.common.valid.LibAddCategoryGroup;
-import org.dwtech.common.valid.LibEditCategoryGroup;
+import org.dwtech.common.valid.AddGroup;
+import org.dwtech.common.valid.EditGroup;
 import org.dwtech.service.LibCategoryService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -31,12 +31,12 @@ public class LibCategoryController {
     }
 
     @PostMapping
-    public AjaxResult addLibCategory(@Validated(LibAddCategoryGroup.class) @RequestBody LibCategoryDto libCategoryDto) {
+    public AjaxResult addLibCategory(@Validated(AddGroup.class) @RequestBody LibCategoryDto libCategoryDto) {
         return AjaxResult.success(libCategoryService.insertLibCategory(libCategoryDto));
     }
 
     @PutMapping
-    public AjaxResult editLibCategory(@Validated(LibEditCategoryGroup.class) @RequestBody LibCategoryDto libCategoryDto) {
+    public AjaxResult editLibCategory(@Validated(EditGroup.class) @RequestBody LibCategoryDto libCategoryDto) {
         return AjaxResult.success(libCategoryService.updateLibCategory(libCategoryDto));
     }
 

@@ -5,8 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.dwtech.common.core.entity.AjaxResult;
 import org.dwtech.common.core.entity.dto.SysDeptDto;
 import org.dwtech.common.core.entity.vo.SysDeptVo;
-import org.dwtech.common.valid.sys.SysAddDeptGroup;
-import org.dwtech.common.valid.sys.SysEditDeptGroup;
+import org.dwtech.common.valid.AddGroup;
+import org.dwtech.common.valid.EditGroup;
 import org.dwtech.system.service.SysDeptService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
@@ -36,13 +36,13 @@ public class SysDeptController {
 
     @PostMapping
     @PreAuthorize(value = "@yz.hasPermit('system:dept:add')")
-    public AjaxResult addDept(@Validated(SysAddDeptGroup.class) @RequestBody SysDeptDto sysDept) {
+    public AjaxResult addDept(@Validated(AddGroup.class) @RequestBody SysDeptDto sysDept) {
         return AjaxResult.success(sysDeptService.insertDept(sysDept));
     }
 
     @PutMapping
     @PreAuthorize(value = "@yz.hasPermit('system:dept:edit')")
-    public AjaxResult editDept(@Validated(SysEditDeptGroup.class) @RequestBody SysDeptDto sysDept) {
+    public AjaxResult editDept(@Validated(EditGroup.class) @RequestBody SysDeptDto sysDept) {
         return AjaxResult.success(sysDeptService.updateDept(sysDept));
     }
 

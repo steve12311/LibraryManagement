@@ -6,6 +6,7 @@
     <resultMap id="LibPublishResult" type="LibPublishPo">
 
     </resultMap>
+
     <sql id="selectPublishVo">
         select publish_id,
                publish_name,
@@ -19,6 +20,7 @@
                remark
         from lib_book_publish
     </sql>
+
     <select id="selectPublishByIds" parameterType="Long" resultMap="LibPublishResult">
         <include refid="selectPublishVo"/>
         where publish_id in
@@ -26,4 +28,70 @@
             #{publishId}
         </foreach>
     </select>
+
+    <select id="selectPublishList" parameterType="LibPublishPo" resultMap="LibPublishResult">
+        <include refid="selectPublishVo"/>
+        <where>
+            <if test="libPublishPo.publishId != null and libPublishPo.publishId != 0">and publish_id =
+                #{libPublishPo.publishId}
+            </if>
+            <if test="libPublishPo.publishName != null and libPublishPo.publishName != ''">and publish_name like
+                concat('%',#{libPublishPo.publishName},'%')
+            </if>
+            <if test="libPublishPo.address != null and libPublishPo.address != ''">and address like
+                concat('%',#{libPublishPo.address},'%')
+            </if>
+            <if test="libPublishPo.phonenumber != null and libPublishPo.phonenumber != ''">and phonenumber like
+                concat('%',#{libPublishPo.phonenumber},'%')
+            </if>
+            <if test="libPublishPo.addressCode != null and libPublishPo.addressCode != ''">and address_code like
+                concat('%',#{libPublishPo.addressCode},'%')
+            </if>
+            <if test="libPublishPo.remark != null and libPublishPo.remark != ''">and remark like
+                concat('%',#{libPublishPo.remark},'%')
+            </if>
+        </where>
+    </select>
+
+    <insert id="insertPublish" parameterType="LibPublishPo">
+        insert into lib_book_publish(
+        <if test="publishId != null and publishId != 0">publish_id,</if>
+        <if test="publishName != null and publishName != ''">publish_name,</if>
+        <if test="address != null and address != ''">address,</if>
+        <if test="phonenumber != null and phonenumber != ''">phonenumber,</if>
+        <if test="addressCode != null and addressCode !=''">address_code,</if>
+        <if test="createBy != null and createBy != ''">create_by,</if>
+        <if test="remark != null and remark != ''">remark,</if>
+        create_time
+        )
+        values (
+        <if test="publishId != null and publishId != 0">#{publishId},</if>
+        <if test="publishName != null and publishName != ''">#{publishName},</if>
+        <if test="address != null and address != ''">#{address},</if>
+        <if test="phonenumber != null and phonenumber != ''">#{phonenumber},</if>
+        <if test="addressCode != null and addressCode !=''">#{addressCode},</if>
+        <if test="createBy != null and createBy != ''">#{createBy},</if>
+        <if test="remark != null and remark != ''">#{remark},</if>
+        sysdate()
+        )
+    </insert>
+
+    <update id="updatePublish" parameterType="LibPublishPo">
+        update lib_book_publish
+        <set>
+            <if test="publishName != null and publishName != ''">publish_name = #{publishName},</if>
+            <if test="address != null and address != ''">address = #{address},</if>
+            <if test="phonenumber != null and phonenumber != ''">phonenumber = #{phonenumber},</if>
+            <if test="addressCode != null and addressCode !=''">address_code = #{addressCode},</if>
+            <if test="updateBy != null and updateBy !=''">update_by = #{updateBy},</if>
+            update_time = sysdate()
+        </set>
+        where publish_id = #{publishId}
+    </update>
+
+    <delete id="deletePublish" parameterType="Long">
+        delete
+        from lib_book_publish
+        where publish_id = #{publishId}
+    </delete>
 </mapper>

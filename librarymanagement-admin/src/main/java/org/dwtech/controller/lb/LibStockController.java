@@ -51,8 +51,10 @@ public class LibStockController extends BaseController {
                 .filter(Objects::nonNull)
                 .distinct()
                 .toArray(Long[]::new);
+
         List<LibCategoryDto> libCategoryDtos = libCategoryService.selectLibCategoryByIds(categoryIds);
         List<LibPublishDto> libPublishDtos = libPublishService.selectPublishByIds(publishIds);
+
         Map<Long, String> publishMap = libPublishDtos.stream()
                 .collect(Collectors.toMap(
                         LibPublishDto::getPublishId,
@@ -63,6 +65,7 @@ public class LibStockController extends BaseController {
                         LibCategoryDto::getCategoryId,
                         LibCategoryDto::getCategoryName
                 ));
+
         List<LibBookStockVo> bookStockVoList = new ArrayList<>();
         libBookStockDtoList.getRecords().forEach(item -> {
             LibBookStockVo libBookStockVo = new LibBookStockVo();

@@ -3,8 +3,8 @@ package org.dwtech.common.core.entity.dto;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
-import org.dwtech.common.valid.sys.SysAddUserGroup;
-import org.dwtech.common.valid.sys.SysEditUserGroup;
+import org.dwtech.common.valid.AddGroup;
+import org.dwtech.common.valid.EditGroup;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -17,7 +17,7 @@ public class SysUserDto implements Serializable {
     /**
      * 用户ID
      */
-    @NotNull(groups = SysEditUserGroup.class, message = "用户ID不能为空")
+    @NotNull(groups = EditGroup.class, message = "用户ID不能为空")
     private Long userId;
     /**
      * 部门ID
@@ -26,7 +26,7 @@ public class SysUserDto implements Serializable {
     /**
      * 用户账号
      */
-    @NotBlank(groups = SysAddUserGroup.class, message = "用户名不能为空")
+    @NotBlank(groups = AddGroup.class, message = "用户名不能为空")
     private String userName;
     /**
      * 用户昵称
@@ -51,7 +51,7 @@ public class SysUserDto implements Serializable {
     /**
      * 密码
      */
-    @NotBlank(groups = SysAddUserGroup.class, message = "密码不能为空")
+    @NotBlank(groups = AddGroup.class, message = "密码不能为空")
     private String password;
     /**
      * 账号状态（0正常 1停用）

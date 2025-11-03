@@ -3,8 +3,8 @@ package org.dwtech.controller.sys;
 import org.dwtech.common.core.entity.AjaxResult;
 import org.dwtech.common.core.entity.dto.SysPostDto;
 import org.dwtech.common.exception.NotValidException;
-import org.dwtech.common.valid.sys.SysAddPostGroup;
-import org.dwtech.common.valid.sys.SysEditPostGroup;
+import org.dwtech.common.valid.AddGroup;
+import org.dwtech.common.valid.EditGroup;
 import org.dwtech.system.service.SysPostService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
@@ -27,7 +27,7 @@ public class SysPostController {
 
     @PostMapping
     @PreAuthorize(value = "@yz.hasPermit('system:post:add')")
-    public AjaxResult addPost(@Validated(SysAddPostGroup.class) @RequestBody SysPostDto sysPostDto) {
+    public AjaxResult addPost(@Validated(AddGroup.class) @RequestBody SysPostDto sysPostDto) {
         if (sysPostService.checkPostNameUnique(sysPostDto)) {
             throw new NotValidException(String.format("岗位：%s 已存在", sysPostDto.getPostName()));
         }
@@ -36,7 +36,7 @@ public class SysPostController {
 
     @PutMapping
     @PreAuthorize(value = "@yz.hasPermit('system:post:edit')")
-    public AjaxResult editPost(@Validated(SysEditPostGroup.class) @RequestBody SysPostDto sysPostDto) {
+    public AjaxResult editPost(@Validated(EditGroup.class) @RequestBody SysPostDto sysPostDto) {
         return AjaxResult.success(sysPostService.updatePost(sysPostDto));
     }
 
