@@ -3,16 +3,16 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-
     <groupId>org.dwtech</groupId>
-    <artifactId>librarymanagement</artifactId>
+    <artifactId>ManagementSystem</artifactId>
     <version>1.0.0</version>
     <packaging>pom</packaging>
+
     <modules>
-        <module>librarymanagement-admin</module>
-        <module>librarymanagement-framework</module>
-        <module>librarymanagement-system</module>
-        <module>librarymanagement-common</module>
+        <module>managementsystem-admin</module>
+        <module>managementsystem-common</module>
+        <module>managementsystem-framework</module>
+        <module>managementsystem-system</module>
     </modules>
 
     <properties>
@@ -23,7 +23,7 @@
         <kaptcha.version>2.3.3</kaptcha.version>
         <mysql-jdbc>9.4.0</mysql-jdbc>
         <mybatis-plus.version>3.5.14</mybatis-plus.version>
-        <librarymanagement.version>1.0.0</librarymanagement.version>
+        <managementsystem.version>1.0.0</managementsystem.version>
         <lombok.version>1.18.42</lombok.version>
         <commons-lang3.version>3.19.0</commons-lang3.version>
         <jjwt.version>0.13.0</jjwt.version>
@@ -31,6 +31,11 @@
         <servlet-api.version>6.1.0</servlet-api.version>
         <fastjson.version>2.0.59</fastjson.version>
         <jackson.version>3.0.1</jackson.version>
+        <ip2region.version>2.7.0</ip2region.version>
+        <hutool.version>5.8.34</hutool.version>
+        <mapstruct.version>1.6.3</mapstruct.version>
+        <spring-ai.version>1.1.0</spring-ai.version>
+        <milvus.version>2.5.14</milvus.version>
     </properties>
 
     <dependencyManagement>
@@ -40,6 +45,14 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-dependencies</artifactId>
                 <version>${spring-boot.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.springframework.ai</groupId>
+                <artifactId>spring-ai-bom</artifactId>
+                <version>${spring-ai.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -56,6 +69,13 @@
                 <artifactId>mysql-connector-j</artifactId>
                 <version>${mysql-jdbc}</version>
             </dependency>
+
+            <dependency>
+                <groupId>io.milvus</groupId>
+                <artifactId>milvus-sdk-java</artifactId>
+                <version>${milvus.version}</version>
+            </dependency>
+
 
             <dependency>
                 <groupId>com.baomidou</groupId>
@@ -94,6 +114,13 @@
                 <version>${commons-lang3.version}</version>
             </dependency>
 
+
+            <dependency>
+                <groupId>cn.hutool</groupId>
+                <artifactId>hutool-all</artifactId>
+                <version>${hutool.version}</version>
+            </dependency>
+
             <!-- Token生成与解析-->
             <dependency>
                 <groupId>io.jsonwebtoken</groupId>
@@ -101,11 +128,11 @@
                 <version>${jjwt.version}</version>
             </dependency>
 
-            <!-- 解析客户端操作系统、浏览器等 -->
+            <!-- IP 转省市区 -->
             <dependency>
-                <groupId>eu.bitwalker</groupId>
-                <artifactId>UserAgentUtils</artifactId>
-                <version>${userAgentUtils.version}</version>
+                <groupId>org.lionsoul</groupId>
+                <artifactId>ip2region</artifactId>
+                <version>${ip2region.version}</version>
             </dependency>
 
             <!-- servlet包 -->
@@ -117,20 +144,33 @@
 
             <dependency>
                 <groupId>org.dwtech</groupId>
-                <artifactId>librarymanagement-framework</artifactId>
-                <version>${librarymanagement.version}</version>
+                <artifactId>managementsystem-framework</artifactId>
+                <version>${managementsystem.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>org.dwtech</groupId>
-                <artifactId>librarymanagement-common</artifactId>
-                <version>${librarymanagement.version}</version>
+                <artifactId>managementsystem-common</artifactId>
+                <version>${managementsystem.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>org.dwtech</groupId>
-                <artifactId>librarymanagement-system</artifactId>
-                <version>${librarymanagement.version}</version>
+                <artifactId>managementsystem-system</artifactId>
+                <version>${managementsystem.version}</version>
+            </dependency>
+
+            <!-- MapStruct 对象映射 -->
+            <dependency>
+                <groupId>org.mapstruct</groupId>
+                <artifactId>mapstruct</artifactId>
+                <version>${mapstruct.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.mapstruct</groupId>
+                <artifactId>mapstruct-processor</artifactId>
+                <version>${mapstruct.version}</version>
             </dependency>
 
         </dependencies>
