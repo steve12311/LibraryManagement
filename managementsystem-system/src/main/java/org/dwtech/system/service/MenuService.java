@@ -16,4 +16,8 @@ public interface MenuService {
     List<RouteVO> listCurrentUserRoutes();
 
     MenuForm getMenuForm(Long id);
+
+    boolean saveMenu(MenuForm menuForm);
+
+    boolean deleteMenu(List<Long> ids);
 }

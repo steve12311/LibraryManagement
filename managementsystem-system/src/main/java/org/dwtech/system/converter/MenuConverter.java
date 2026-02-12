@@ -22,5 +22,16 @@ public interface MenuConverter {
     })
     PermitForm toPermitForm(MenuPO entity);
 
+    @Mappings({
+            @Mapping(target = "name", source = "label"),
+            @Mapping(target = "perm", source = "value"),
+            @Mapping(target = "type", expression = "java(org.dwtech.common.enmus.MenuTypeEnum.BUTTON.getValue())")
+    })
+    MenuPO toPo(PermitForm permitForm);
+
+    List<MenuPO> toPos(List<PermitForm> permitForms);
+
     List<PermitForm> toPermitForms(List<MenuPO> entities);
+
+    MenuPO toPo(MenuForm menuForm);
 }

@@ -4,33 +4,33 @@ server:
 spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/ms?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8
-    username: root
+    url: jdbc:mysql://***REMOVED***:3306/ms?zeroDateTimeBehavior=convertToNull&useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&autoReconnect=true&allowMultiQueries=true
+    username: ms
     password: ***REMOVED***
   data:
     redis:
       port: 6379
       database: 0
-      password:
-      host: localhost
+      password: ***REMOVED***
+      host: ***REMOVED***
   ai:
     deepseek:
       api-key: ***REMOVED***
     ollama:
       base-url: http://localhost:11434
       embedding:
-          model: nomic-embed-text:latest
+          model: nomic-embed-text-v2-moe
 
 milvus:
   uri: http://***REMOVED***:19530
   username: root
-  password: ***REMOVED***
+  password: Milvus
   vector-dim: 768
   collection-name: bookKeyWords
 
 # 验证码配置
 captcha:
-  # 验证码类型 circle-圆圈干扰验证码|gif-Gif验证码|line-干扰线验证码|shear-扭曲干扰验证码
+  # 验证码类型 circle-圆圈干扰验证码|gif-验证码|line-干扰线验证码|shear-扭曲干扰验证码
   type: circle
   # 验证码宽度
   width: 120

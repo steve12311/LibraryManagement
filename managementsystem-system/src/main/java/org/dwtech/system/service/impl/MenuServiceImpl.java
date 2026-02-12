@@ -5,6 +5,7 @@ import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
@@ -22,6 +23,7 @@ import org.dwtech.common.utils.SecurityUtils;
 import org.dwtech.system.converter.MenuConverter;
 import org.dwtech.system.mapper.MenuMapper;
 import org.dwtech.system.service.MenuService;
+import org.dwtech.system.service.RoleMenuService;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -31,6 +33,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class MenuServiceImpl extends ServiceImpl<MenuMapper, MenuPO> implements MenuService {
     private final MenuConverter menuConverter;
+    private final RoleMenuService roleMenuService;
 
     @Override
     public List<MenuVO> listMenus(MenuQuery queryParams) {
@@ -64,7 +67,7 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, MenuPO> implements 
     @Override
     public List<Option<Long>> listMenuOptions(boolean onlyParent) {
         List<MenuPO> menuList = this.list(new LambdaQueryWrapper<MenuPO>()
-                .in(onlyParent, MenuPO::getType, MenuTypeEnum.CATALOG.getValue(), MenuTypeEnum.MENU.getValue())
+                .in(onlyParent, MenuPO::getType, MenuTypeEnum.CATALOG.getValue())
                 .orderByAsc(MenuPO::getSort)
         );
         return buildMenuOptions(SystemConstants.ROOT_NODE_ID, menuList);
@@ -124,6 +127,123 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, MenuPO> implements 
 //        }
 
         return formData;
+    }
+
+    @Override
+    public boolean saveMenu(MenuForm menuForm) {
+
+        Integer menuType = menuForm.getType();
+
+        if (MenuTypeEnum.CATALOG.getValue().equals(menuType)) {  // 如果是目录
+            String path = menuForm.getRoutePath();
+            if (menuForm.getParentId() == 0 && !path.startsWith("/")) {
+                menuForm.setRoutePath("/" + path); // 一级目录需以 / 开头
+            }
+            menuForm.setComponent("Layout");
+        } else if (MenuTypeEnum.EXTLINK.getValue().equals(menuType)) {
+            // 外链菜单组件设置为 null
+            menuForm.setComponent(null);
+        }
+
+        if (Objects.equals(menuForm.getParentId(), menuForm.getId())) {
+            throw new RuntimeException("父级菜单不能为当前菜单");
+        }
+
+        MenuPO menu = menuConverter.toPo(menuForm);
+        String treePath = generateMenuTreePath(menuForm.getParentId());
+        menu.setTreePath(treePath);
+
+        // 新增类型为菜单时候 路由名称唯一
+        if (MenuTypeEnum.MENU.getValue().equals(menuType)) {
+            Assert.isFalse(this.exists(new LambdaQueryWrapper<MenuPO>()
+                    .eq(MenuPO::getRouteName, menu.getRouteName())
+                    .ne(menuForm.getId() != null, MenuPO::getId, menuForm.getId())
+            ), "路由名称已存在");
+            if (Objects.equals(menuForm.getParentId(), SystemConstants.ROOT_NODE_ID)) {
+                throw new RuntimeException("菜单类型不能为顶级菜单");
+            }
+        } else {
+            // 其他类型时 给路由名称赋值为空
+            menu.setRouteName(null);
+        }
+        boolean result = saveOrUpdateMenu(menu, menuForm.getPerms());
+        if (result) {
+            // 编辑刷新角色权限缓存
+            if (menuForm.getId() != null) {
+                roleMenuService.refreshRolePermsCache();
+            }
+        }
+        // 修改菜单如果有子菜单，则更新子菜单的树路径
+        updateChildrenTreePath(menu.getId(), treePath);
+        return result;
+    }
+
+    @Override
+    public boolean deleteMenu(List<Long> ids) {
+        if (CollectionUtil.isEmpty(ids)) {
+            return false;
+        }
+
+        boolean result = this.removeBatchByIds(ids);
+
+        // 刷新角色权限缓存
+        if (result) {
+            roleMenuService.refreshRolePermsCache();
+        }
+        return result;
+    }
+
+
+    private boolean saveOrUpdateMenu(MenuPO menu, List<PermitForm> permitForms) {
+        if (MenuTypeEnum.MENU.getValue().equals(menu.getType())) {
+            List<MenuPO> permit = menuConverter.toPos(permitForms);
+            List<MenuPO> oldPermit = this.list(new LambdaQueryWrapper<MenuPO>()
+                    .eq(MenuPO::getParentId, menu.getId())
+                    .eq(MenuPO::getType, MenuTypeEnum.BUTTON.getValue())
+            );
+            List<Long> oldIds = oldPermit.stream().map(MenuPO::getId).toList();
+            this.removeBatchByIds(oldIds);
+            this.saveBatch(permit);
+        }
+        menu.setPerm(null);
+        return this.saveOrUpdate(menu);
+    }
+
+    /**
+     * 更新子菜单树路径
+     *
+     * @param id       当前菜单ID
+     * @param treePath 当前菜单树路径
+     */
+    private void updateChildrenTreePath(Long id, String treePath) {
+        List<MenuPO> children = this.list(new LambdaQueryWrapper<MenuPO>().eq(MenuPO::getParentId, id));
+        if (CollectionUtil.isNotEmpty(children)) {
+            // 子菜单的树路径等于父菜单的树路径加上父菜单ID
+            String childTreePath = treePath + "," + id;
+            this.update(new LambdaUpdateWrapper<MenuPO>()
+                    .eq(MenuPO::getParentId, id)
+                    .set(MenuPO::getTreePath, childTreePath)
+            );
+            for (MenuPO child : children) {
+                // 递归更新子菜单
+                updateChildrenTreePath(child.getId(), childTreePath);
+            }
+        }
+    }
+
+    /**
+     * 路径生成
+     *
+     * @param parentId 父ID
+     * @return 父节点路径以英文逗号(, )分割，eg: 1,2,3
+     */
+    private String generateMenuTreePath(Long parentId) {
+        if (SystemConstants.ROOT_NODE_ID.equals(parentId)) {
+            return String.valueOf(parentId);
+        } else {
+            MenuPO parent = this.getById(parentId);
+            return parent != null ? parent.getTreePath() + "," + parent.getId() : null;
+        }
     }
 
     /**

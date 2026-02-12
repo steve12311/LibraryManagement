@@ -1,6 +1,8 @@
 package org.dwtech.controller.sys;
 
+import io.swagger.v3.oas.annotations.Parameter;
 import lombok.RequiredArgsConstructor;
+import org.dwtech.common.annontation.RepeatSubmit;
 import org.dwtech.common.core.entity.Result;
 import org.dwtech.common.core.entity.dto.Option;
 import org.dwtech.common.core.entity.form.MenuForm;
@@ -44,5 +46,31 @@ public class MenuController {
     public Result<MenuForm> getMenuForm(@PathVariable("id") Long id) {
         MenuForm menu = menuService.getMenuForm(id);
         return Result.success(menu);
+    }
+
+    @PostMapping
+    @PreAuthorize("@ss.hasPerm('sys:menu:add')")
+    @RepeatSubmit
+    public Result<?> addMenu(@RequestBody MenuForm menuForm) {
+        boolean result = menuService.saveMenu(menuForm);
+        return Result.judge(result);
+    }
+
+    @PutMapping(value = "/{id}")
+    @PreAuthorize("@ss.hasPerm('sys:menu:edit')")
+    public Result<?> updateMenu(
+            @RequestBody MenuForm menuForm
+    ) {
+        boolean result = menuService.saveMenu(menuForm);
+        return Result.judge(result);
+    }
+
+    @DeleteMapping("/{ids}")
+    @PreAuthorize("@ss.hasPerm('sys:menu:delete')")
+    public Result<?> deleteMenu(
+            @PathVariable("ids") @Parameter(description = "菜单ID，多个以英文(,)分割") List<Long> ids
+    ) {
+        boolean result = menuService.deleteMenu(ids);
+        return Result.judge(result);
     }
 }
