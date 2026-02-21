@@ -1,24 +1,23 @@
 package org.dwtech.framework.ai;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.dwtech.common.exception.BusinessException;
 import org.dwtech.common.service.MilvusService;
+import org.dwtech.framework.ai.tools.DateTimeTools;
+import org.dwtech.framework.ai.tools.StockTools;
+import org.dwtech.framework.ai.tools.VectorTools;
+import org.dwtech.system.service.StockService;
+import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
+import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.deepseek.DeepSeekChatModel;
-import org.springframework.ai.embedding.EmbeddingOptions;
-import org.springframework.ai.embedding.EmbeddingRequest;
-import org.springframework.ai.embedding.EmbeddingResponse;
 import org.springframework.ai.ollama.OllamaEmbeddingModel;
 import org.springframework.stereotype.Service;
-
-import java.util.*;
+import reactor.core.publisher.Flux;
 
 @Slf4j
 @Service
@@ -27,43 +26,76 @@ public class AISearchService {
     private final DeepSeekChatModel deepSeekChatModel;
     private final OllamaEmbeddingModel ollamaEmbeddingModel;
     private final MilvusService milvusService;
-    private final String sysText = """
-            你是一个图书搜索专家，请根据用户的搜索意图，生成相关的搜索关键词列表。
-                                用户想要搜索关于"%s"的书籍，请考虑以下方面：
-                                1. 同义词和近义词
-                                2. 相关技术栈和框架
-                                3. 相关的概念和术语
-                                4. 常见的书籍命名方式
-            
-                                请返回一个JSON数组，只包含10个相关的搜索关键词，不能多可以少，按相关性从高到低排序。
-                                只返回JSON数组，不要有其他文字说明。
-            
-                                示例：["Java", "JDK", "JVM", "Spring", "Spring Boot", "Hibernate", "MyBatis", "Java编程", "Java核心", "多线程", "设计模式", "微服务", "分布式"]
-            """;
+    private final StockService stockService;
+    private final ChatMemory chatMemory;
 
-    public Set<String> expandSearchKeywords(String originalQuery) {
-        ChatResponse res = deepSeekChatModel.call(new Prompt(new SystemMessage(sysText), new UserMessage(originalQuery)));
-        String jsonString = res.getResult().getOutput().getText();
-        ObjectMapper mapper = new ObjectMapper();
-        List<String> keywords;
-        try {
-            keywords = mapper.readValue(jsonString, new TypeReference<>() {
-            });
-        } catch (JsonProcessingException e) {
-            throw new BusinessException(e.getMessage());
-        }
-        List<float[]> vector = new ArrayList<>();
-        log.info(keywords.toString());
-        keywords.forEach(keyword -> {
-            EmbeddingResponse vectorData = ollamaEmbeddingModel.call(new EmbeddingRequest(
-                    Collections.singletonList(keyword),
-                    EmbeddingOptions.builder()
-                            .build()
-            ));
-            vector.add(vectorData.getResult().getOutput());
-        });
+    public Flux<ChatResponse> expandSearchKeywords(String originalQuery, Long conversationId) {
+        // 构建提示词
+        SystemMessage sysPrompt = buildSystemPrompt();
+        UserMessage userPrompt = buildUserPrompt(originalQuery);
+        Prompt prompt = Prompt.builder()
+                .messages(sysPrompt, userPrompt)
+                .build();
+        ChatClient chatClient = ChatClient.builder(deepSeekChatModel)
+                .defaultAdvisors(MessageChatMemoryAdvisor.builder(chatMemory).build())
+                .build();
+        // 调用模型
+        return chatClient
+                .prompt(prompt)
+                .tools(
+                        new DateTimeTools(),
+                        new VectorTools(ollamaEmbeddingModel, milvusService),
+                        new StockTools(stockService)
+                )
+                .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, conversationId))
+                .stream()
+                .chatResponse();
+    }
 
-        return milvusService.searchVectors(vector);
+    private SystemMessage buildSystemPrompt() {
+        return SystemMessage.builder()
+                .text("""
+                        你是一个专业的图书馆智能助手，请根据用户的搜索需求推荐馆藏书籍。
+                        
+                        请严格按照以下步骤为用户推荐书籍：
+                        
+                        1. 深入理解用户需求：
+                           - 分析用户想了解的主题领域
+                           - 考虑不同的知识层次和学习目标
+                           - 思考相关联的知识点和扩展阅读
+                        
+                        2. 使用工具精准搜索：
+                           - 必须调用向量搜索工具查询图书馆实际馆藏
+                           - 重点查找用户感兴趣领域的具体书目
+                           - 验证书籍在馆状态和可借阅情况
+                        
+                        3. 提供专业推荐：
+                           - 优先推荐馆藏中确实存在的书籍
+                           - 按主题相关性、权威性和实用性排序
+                           - 为每本书提供简要介绍和适合人群
+                        
+                        4. 回答规范：
+                           - 使用清晰的Markdown格式
+                           - 按类别或难度分级展示推荐
+                           - 标明具体书名、作者和简介
+                           - 如相关书籍较少，可推荐相近主题
+                        
+                        重要原则：
+                        - 只推荐图书馆实际拥有的书籍
+                        - 提供准确的馆藏信息和借阅建议
+                        - 保持专业、耐心的服务态度
+                        - 如无相关馆藏，请诚恳说明并建议替代方案
+                        
+                        目标：帮助用户在图书馆找到最合适的阅读资源，提升学习和研究效率。
+                        """)
+                .build();
+    }
+
+
+    private UserMessage buildUserPrompt(String originalQuery) {
+        return UserMessage.builder()
+                .text(originalQuery)
+                .build();
     }
 
 }

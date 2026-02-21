@@ -1,0 +1,21 @@
+package org.dwtech.framework.config;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
+@Configuration
+public class WebMvcConfig implements WebMvcConfigurer {
+
+    @Value("${oss.local.storage-path}")
+    private String storagePath;
+
+    @Override
+    public void addResourceHandlers(ResourceHandlerRegistry registry) {
+        // 将本地存储路径映射为Web可访问的路径
+        registry.addResourceHandler("/api/v1/files/uploads/**")
+                .addResourceLocations("file:" + storagePath);
+    }
+}
+
