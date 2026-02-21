@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.dwtech.system.mapper.PublishMapper">
+    <sql id="publishView">
+        SELECT id,
+               name,
+               country,
+               province,
+               city,
+               area,
+               area_detail,
+               telephone,
+               postal_code,
+               email,
+               create_time
+        FROM lib_publish
+        WHERE is_deleted = 0
+    </sql>
+    <select id="getPublishPage" resultType="org.dwtech.common.core.entity.po.PublishPO">
+        <include refid="publishView"/>
+        <where>
+            <if test="queryParams.field != null and queryParams.field != '' and queryParams.keyword != null and queryParams.keyword != ''">
+                <choose>
+                    <when test="queryParams.field == 'publishName'">
+                        AND name LIKE CONCAT('%',#{queryParams.keyword},'%')
+                    </when>
+                    <when test="queryParams.field == 'address'">
+                        AND (
+                        province LIKE CONCAT('%',#{queryParams.keyword},'%')
+                        OR city LIKE CONCAT('%',#{queryParams.keyword},'%')
+                        OR area LIKE CONCAT('%',#{queryParams.keyword},'%')
+                        OR area_detail LIKE CONCAT('%',#{queryParams.keyword},'%')
+                        )
+                    </when>
+                </choose>
+            </if>
+        </where>
+    </select>
+</mapper>
