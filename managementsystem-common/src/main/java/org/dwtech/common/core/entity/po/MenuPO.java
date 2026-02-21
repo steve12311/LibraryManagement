@@ -3,19 +3,12 @@ package org.dwtech.common.core.entity.po;
 import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
 
 /**
  * 菜单实体
- *
- * @author Ray.Hao
- * @since 2023/3/6
  */
 @EqualsAndHashCode(callSuper = true)
 @TableName("sys_menu")
-@Getter
-@Setter
 @Data
 public class MenuPO extends BasePO {
     /**

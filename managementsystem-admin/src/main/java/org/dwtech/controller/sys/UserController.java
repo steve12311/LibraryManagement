@@ -3,6 +3,7 @@ package org.dwtech.controller.sys;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.dwtech.common.annontation.RepeatSubmit;
 import org.dwtech.common.core.entity.PageResult;
 import org.dwtech.common.core.entity.Result;
 import org.dwtech.common.core.entity.dto.Option;
@@ -31,6 +32,7 @@ public class UserController {
     }
 
     @PostMapping
+    @RepeatSubmit
     @PreAuthorize("@ss.hasPerm('sys:user:add')")
     public Result<?> saveUser(@RequestBody @Valid UserForm formData) {
         boolean result = userService.saveUser(formData);

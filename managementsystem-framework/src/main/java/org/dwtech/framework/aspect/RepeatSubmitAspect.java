@@ -15,8 +15,8 @@ import org.dwtech.common.constant.SecurityConstants;
 import org.dwtech.common.enmus.ResultCode;
 import org.dwtech.common.exception.BusinessException;
 import org.dwtech.common.utils.IPUtils;
-import org.redisson.Redisson;
 import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -29,7 +29,7 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 @Slf4j
 public class RepeatSubmitAspect {
-    private final Redisson redisson;
+    private final RedissonClient redissonClient;
 
     /**
      * 防重复提交切点
@@ -46,7 +46,7 @@ public class RepeatSubmitAspect {
         String lockKey = buildLockKey();
 
         int expire = repeatSubmit.expire();
-        RLock lock = redisson.getLock(lockKey);
+        RLock lock = redissonClient.getLock(lockKey);
 
         boolean locked = lock.tryLock(0, expire, TimeUnit.SECONDS);
         if (!locked) {

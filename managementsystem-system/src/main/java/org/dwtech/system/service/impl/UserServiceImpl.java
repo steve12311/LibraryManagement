@@ -5,7 +5,6 @@ import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -77,7 +76,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserPO> implements 
     public boolean saveUser(UserForm formData) {
         String username = formData.getUsername();
 
-        long count = this.count(new LambdaQueryWrapper<UserPO>().eq(UserPO::getUsername, username));
+        long count = this.count(this.lambdaQuery().eq(UserPO::getUsername, username));
         Assert.isTrue(count == 0, "用户名已存在");
 
         // 实体转换 form->po
@@ -104,7 +103,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserPO> implements 
 
         String username = userForm.getUsername();
 
-        long count = this.count(new LambdaQueryWrapper<UserPO>()
+        long count = this.count(
+                this.lambdaQuery()
                 .eq(UserPO::getUsername, username)
                 .ne(UserPO::getId, userId)
         );
@@ -170,7 +170,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserPO> implements 
         if (StrUtil.isBlank(password)) {
             password = SystemConstants.DEFAULT_PASSWORD;
         }
-        return this.update(new LambdaUpdateWrapper<UserPO>()
+        return this.update(
+                this.lambdaUpdate()
                 .eq(UserPO::getId, userId)
                 .set(UserPO::getPassword, passwordEncoder.encode(password))
         );
@@ -178,7 +179,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserPO> implements 
 
     @Override
     public boolean updateUserStatus(Long userId, Integer status) {
-        return this.update(new LambdaUpdateWrapper<UserPO>()
+        return this.update(
+                this.lambdaUpdate()
                 .eq(UserPO::getId, userId)
                 .set(UserPO::getStatus, status));
     }
@@ -204,7 +206,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserPO> implements 
             throw new BusinessException("新密码和确认密码不一致");
         }
 
-        boolean result = this.update(new LambdaUpdateWrapper<UserPO>()
+        boolean result = this.update(
+                this.lambdaUpdate()
                 .eq(UserPO::getId, userId)
                 .set(UserPO::getPassword, passwordEncoder.encode(formData.getNewPassword()))
         );
@@ -219,7 +222,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserPO> implements 
 
     @Override
     public List<Option<String>> listUserOptions() {
-        List<UserPO> list = this.list(new LambdaQueryWrapper<UserPO>()
+        List<UserPO> list = this.list(
+                this.lambdaQuery()
                 .eq(UserPO::getStatus, 1)
         );
         return userConverter.toOptions(list);
