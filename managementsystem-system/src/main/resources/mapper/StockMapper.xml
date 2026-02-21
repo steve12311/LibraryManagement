@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.dwtech.system.mapper.StockMapper">
+    <sql id="stockView">
+        SELECT b.isbn,
+               b.cover,
+               b.name,
+               b.intro,
+               b.author,
+               b.press_id,
+               p.name AS press_name,
+               b.publish_time,
+               b.category_id,
+               b.price,
+               c.name AS category_name,
+               s.stock,
+               s.current_stock,
+               s.create_time,
+               s.update_time
+        FROM lib_book AS b
+                 LEFT JOIN lib_stock AS s ON s.isbn = b.isbn
+                 LEFT JOIN lib_publish AS p ON p.id = b.press_id
+                 LEFT JOIN lib_category AS c ON c.id = b.category_id
+    </sql>
+    <select id="getStockPage" resultType="org.dwtech.common.core.entity.bo.StockBO">
+        <include refid="stockView"/>
+        <where>
+            <if test="queryParams.field != null and queryParams.field != '' and queryParams.keyword != null and queryParams.keyword != ''">
+                AND b.${queryParams.field} LIKE CONCAT('%',#{queryParams.keyword},'%')
+            </if>
+        </where>
+    </select>
+    <select id="getStockByExacts" resultType="org.dwtech.common.core.entity.bo.StockBO">
+        <include refid="stockView"/>
+        <choose>
+            <when test="isbns != null and isbns.size() > 0">
+                WHERE b.isbn IN
+                <foreach item="isbn" open="(" close=")" separator="," collection="isbns">
+                    #{isbn}
+                </foreach>
+            </when>
+        </choose>
+    </select>
+</mapper>

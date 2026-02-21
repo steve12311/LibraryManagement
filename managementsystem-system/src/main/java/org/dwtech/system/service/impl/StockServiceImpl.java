@@ -1,0 +1,88 @@
+package org.dwtech.system.service.impl;
+
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.dwtech.common.core.entity.bo.StockBO;
+import org.dwtech.common.core.entity.form.StockForm;
+import org.dwtech.common.core.entity.po.BookPO;
+import org.dwtech.common.core.entity.po.StockPO;
+import org.dwtech.common.core.entity.query.StockPageQuery;
+import org.dwtech.common.core.entity.vo.StockPageVO;
+import org.dwtech.system.converter.StockConverter;
+import org.dwtech.system.mapper.StockMapper;
+import org.dwtech.system.service.BookService;
+import org.dwtech.system.service.StockService;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class StockServiceImpl extends ServiceImpl<StockMapper, StockPO> implements StockService {
+    private final StockConverter stockConverter;
+    private final BookService bookService;
+
+    @Override
+    public IPage<StockPageVO> getStockPage(StockPageQuery queryParams) {
+        log.info("获取书籍分页：{}", queryParams);
+        // 参数构建
+        int pageNum = queryParams.getPageNum();
+        int pageSize = queryParams.getPageSize();
+        Page<StockBO> page = new Page<>(pageNum, pageSize);
+
+        Page<StockBO> stockPage = this.baseMapper.getStockPage(page, queryParams);
+
+        return stockConverter.toPageVo(stockPage);
+    }
+
+    @Override
+    public List<StockPageVO> getStockByExacts(List<String> isbns) {
+        log.info("查询书籍信息：{}", isbns);
+        List<StockBO> stockList = this.baseMapper.getStockByExacts(isbns);
+        return stockConverter.toListVo(stockList);
+    }
+
+    @Override
+    @Transactional
+    public boolean addStock(StockForm stockForm) {
+        log.info("书籍入库开始：{}", stockForm);
+        StockBO stockBo = stockConverter.toBo(stockForm);
+
+        StockPO stock = stockConverter.toPo(stockBo);
+        StockPO nowStock = this.baseMapper.selectById(stock.getId());
+        if (nowStock != null) {
+            stock.setStock(nowStock.getStock() + stock.getStock());
+            stock.setCurrentStock(nowStock.getCurrentStock() + stock.getStock());
+        }
+        this.baseMapper.insertOrUpdate(stock);
+        log.info("书籍入库步骤一完成：{}", stock);
+
+        BookPO book = stockConverter.toBookPo(stockBo);
+        bookService.saveOrUpdate(book);
+        log.info("书籍入库步骤二完成：{}", book);
+
+        return true;
+    }
+
+    @Override
+    @Transactional
+    public boolean outStock(StockForm stockForm) {
+        log.info("书籍出库开始：{}", stockForm);
+        StockPO stockPo = stockConverter.toPo(stockForm);
+        // 出库数量不能大于当前剩余数量
+        StockPO nowStock = this.baseMapper.selectById(stockPo.getId());
+        if (stockPo.getStock() > nowStock.getCurrentStock()) {
+            throw new RuntimeException("出库数量不能大于当前剩余数量");
+        }
+        stockPo.setStock(nowStock.getStock() - stockPo.getStock());
+        stockPo.setCurrentStock(nowStock.getCurrentStock() - stockPo.getStock());
+        this.baseMapper.updateById(stockPo);
+        log.info("书籍出库完成：{}", stockPo);
+        return true;
+    }
+}
