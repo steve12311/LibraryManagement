@@ -1,10 +1,13 @@
 package org.dwtech.system.converter;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import org.dwtech.common.core.entity.dto.Option;
 import org.dwtech.common.core.entity.form.PublishForm;
 import org.dwtech.common.core.entity.po.PublishPO;
 import org.dwtech.common.core.entity.vo.PublishPageVO;
 import org.mapstruct.*;
+
+import java.util.List;
 
 @Mapper(componentModel = "spring")
 public interface PublishConverter {
@@ -71,4 +74,12 @@ public interface PublishConverter {
     PublishForm toForm(PublishPO publish);
 
     PublishPO toPo(PublishForm publish);
+
+    @Mappings({
+            @Mapping(source = "name", target = "label"),
+            @Mapping(source = "id", target = "value")
+    })
+    Option<Long> toOption(PublishPO publish);
+
+    List<Option<Long>> toOptions(List<PublishPO> list);
 }

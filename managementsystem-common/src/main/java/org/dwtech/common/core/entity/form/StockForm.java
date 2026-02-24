@@ -1,6 +1,8 @@
 package org.dwtech.common.core.entity.form;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -18,6 +20,7 @@ public class StockForm {
     private Date publishTime;
     private Long categoryId;
     private BigDecimal price;
-    @NotBlank(message = "库存不能为空")
+    @NotNull(message = "库存不能为空")
+    @PositiveOrZero(message = "库存必须为非负数")
     private Integer stock;
 }

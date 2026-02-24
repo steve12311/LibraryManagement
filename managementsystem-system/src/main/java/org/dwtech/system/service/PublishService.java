@@ -2,6 +2,7 @@ package org.dwtech.system.service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import jakarta.validation.Valid;
+import org.dwtech.common.core.entity.dto.Option;
 import org.dwtech.common.core.entity.form.PublishForm;
 import org.dwtech.common.core.entity.query.PublishPageQuery;
 import org.dwtech.common.core.entity.vo.PublishPageVO;
@@ -16,4 +17,8 @@ public interface PublishService {
     boolean savePublish(@Valid PublishForm publishForm);
 
     boolean deletePublish(List<Long> ids);
+
+    List<Option<Long>> getPublishOptions();
+
+    boolean updatePublish(@Valid PublishForm publishForm);
 }

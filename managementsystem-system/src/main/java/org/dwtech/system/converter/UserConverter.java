@@ -3,6 +3,7 @@ package org.dwtech.system.converter;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.dwtech.common.core.entity.bo.UserBO;
+import org.dwtech.common.core.entity.dto.Avatar;
 import org.dwtech.common.core.entity.dto.Option;
 import org.dwtech.common.core.entity.form.UserForm;
 import org.dwtech.common.core.entity.po.UserPO;
@@ -11,6 +12,7 @@ import org.dwtech.common.core.entity.vo.UserPageVO;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
+import org.mapstruct.Named;
 
 import java.util.List;
 
@@ -32,9 +34,15 @@ public interface UserConverter {
 
     @Mappings({
             @Mapping(target = "label", source = "nickname"),
-            @Mapping(target = "value", source = "id")
+            @Mapping(target = "value", source = "id"),
+            @Mapping(target = "avatar", source = "avatar", qualifiedByName = "toAvatar")
     })
     Option<String> toOption(UserPO po);
+
+    @Named("toAvatar")
+    default Avatar toAvatar(String avatar) {
+        return new Avatar(avatar == null ? "" : avatar);
+    }
 
     List<Option<String>> toOptions(List<UserPO> list);
 }

@@ -2,12 +2,16 @@ package org.dwtech.system.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
+import org.dwtech.common.core.entity.dto.Option;
 import org.dwtech.common.core.entity.form.BookForm;
+import org.dwtech.common.service.MilvusService;
 import org.dwtech.system.converter.BookConverter;
 import org.dwtech.system.mapper.BookMapper;
 import org.dwtech.common.core.entity.po.BookPO;
 import org.dwtech.system.service.BookService;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -15,14 +19,20 @@ public class BookServiceImpl extends ServiceImpl<BookMapper, BookPO> implements 
     private final BookConverter bookConverter;
 
     @Override
-    public boolean updateBook(BookForm bookForm) {
+    public boolean saveOrUpdateBook(BookForm bookForm) {
         BookPO bookPo = bookConverter.toPo(bookForm);
-        return this.updateById(bookPo);
+        return this.saveOrUpdate(bookPo);
     }
 
     @Override
     public BookForm getBookByIsbn(String isbn) {
-        BookPO book = this.baseMapper.selectById(isbn);
+        BookPO book = this.getById(isbn);
         return bookConverter.toForm(book);
+    }
+
+    @Override
+    public List<Option<Long>> listBookOptions() {
+        List<BookPO> list = this.list();
+        return bookConverter.toOptions(list);
     }
 }

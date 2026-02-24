@@ -6,6 +6,8 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
+import org.dwtech.common.constant.SystemConstants;
+import org.dwtech.common.core.entity.dto.Option;
 import org.dwtech.common.core.entity.po.CategoryPO;
 import org.dwtech.common.core.entity.query.CategoryQuery;
 import org.dwtech.common.core.entity.vo.CategoryVO;
@@ -14,6 +16,7 @@ import org.dwtech.system.mapper.CategoryMapper;
 import org.dwtech.system.service.CategoryService;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -57,6 +60,15 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, CategoryPO>
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public List<Option<Long>> getCategoryOptions() {
+        List<CategoryPO> list = this.list(new LambdaQueryWrapper<CategoryPO>()
+                .eq(CategoryPO::getVisible, true)
+                .orderByAsc(CategoryPO::getSort)
+        );
+        return buildCategoryOptions(SystemConstants.ROOT_NODE_ID, list);
+    }
+
     private List<CategoryVO> buildCategoryTree(Long parentId, List<CategoryPO> categories) {
         return CollectionUtil.emptyIfNull(categories)
                 .stream()
@@ -67,5 +79,22 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, CategoryPO>
                     categoryVO.setChildren(children);
                     return categoryVO;
                 }).toList();
+    }
+
+    private List<Option<Long>> buildCategoryOptions(Long parentId, List<CategoryPO> categories) {
+        List<Option<Long>> categoryOptions = new ArrayList<>();
+
+        for (CategoryPO category : categories) {
+            if (category.getParentId().equals(parentId)) {
+                Option<Long> option = new Option<>(category.getId(), category.getName());
+                List<Option<Long>> children = buildCategoryOptions(category.getId(), categories);
+                if (!children.isEmpty()) {
+                    option.setChildren(children);
+                }
+                categoryOptions.add(option);
+            }
+        }
+
+        return categoryOptions;
     }
 }

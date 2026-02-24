@@ -16,4 +16,10 @@ public interface StockService {
     boolean addStock(@Valid StockForm stockForm);
 
     boolean outStock(@Valid StockForm stockForm);
+
+    boolean borrowOut(StockForm stockForm);
+
+    boolean borrowEnter(StockForm stockForm);
+
+    StockForm getStockFormData(String isbn);
 }

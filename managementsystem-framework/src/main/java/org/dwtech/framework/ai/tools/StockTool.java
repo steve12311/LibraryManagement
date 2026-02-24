@@ -9,7 +9,7 @@ import org.springframework.ai.tool.annotation.Tool;
 import java.util.List;
 
 @RequiredArgsConstructor
-public class StockTools {
+public class StockTool {
     private final StockService stockService;
     @Tool(description = "通过ISBN码查询书籍库存")
     Result<List<StockPageVO>> findBookStockByISBNS(List<String> isbns) {

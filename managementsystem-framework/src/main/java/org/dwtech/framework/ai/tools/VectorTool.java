@@ -8,22 +8,24 @@ import org.springframework.ai.embedding.EmbeddingRequest;
 import org.springframework.ai.embedding.EmbeddingResponse;
 import org.springframework.ai.ollama.OllamaEmbeddingModel;
 import org.springframework.ai.tool.annotation.Tool;
+import org.springframework.stereotype.Component;
 
 import java.util.*;
 
 @Slf4j
+@Component
 @RequiredArgsConstructor
-public class VectorTools {
+public class VectorTool {
     private final OllamaEmbeddingModel ollamaEmbeddingModel;
     private final MilvusService milvusService;
 
     @Tool(description = "通过关键词搜索书库，返回相关书籍对应的ISBN码")
-    Set<String> searchVectors(List<String> keywords) {
+    public Set<String> searchVectors(List<String> keywords) {
         List<float[]> vectors = getVectors(keywords);
         return milvusService.searchVectors(vectors);
     }
 
-    List<float[]> getVectors(List<String> keywords) {
+    public List<float[]> getVectors(List<String> keywords) {
         log.info("关键词{}", keywords.toString());
         List<float[]> vector = new ArrayList<>();
         keywords.forEach(keyword -> {

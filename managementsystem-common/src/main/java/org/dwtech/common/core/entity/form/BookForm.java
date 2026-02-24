@@ -1,6 +1,5 @@
 package org.dwtech.common.core.entity.form;
 
-import com.google.type.Decimal;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 

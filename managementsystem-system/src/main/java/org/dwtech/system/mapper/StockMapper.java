@@ -15,4 +15,6 @@ public interface StockMapper extends BaseMapper<StockPO> {
     Page<StockBO> getStockPage(Page<StockBO> page, @Param("queryParams") StockPageQuery queryParams);
 
     List<StockBO> getStockByExacts(@Param("isbns") List<String> isbns);
+
+    StockBO selectStockById(String isbn);
 }

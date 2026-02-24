@@ -223,7 +223,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserPO> implements 
     @Override
     public List<Option<String>> listUserOptions() {
         List<UserPO> list = this.list(
-                this.lambdaQuery()
+                new LambdaQueryWrapper<UserPO>()
                 .eq(UserPO::getStatus, 1)
         );
         return userConverter.toOptions(list);

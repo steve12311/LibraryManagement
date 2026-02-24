@@ -43,4 +43,10 @@
             </when>
         </choose>
     </select>
+    <select id="selectStockById" resultType="org.dwtech.common.core.entity.bo.StockBO">
+        <include refid="stockView"/>
+        <where>
+            AND b.isbn = #{isbn}
+        </where>
+    </select>
 </mapper>

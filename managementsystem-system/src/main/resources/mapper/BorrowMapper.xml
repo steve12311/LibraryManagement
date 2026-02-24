@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.dwtech.system.mapper.BorrowMapper">
+    <sql id="borrowView">
+        SELECT bw.id,
+               bw.isbn,
+               bw.book_name,
+               bw.return_time,
+               bw.reality_return_time,
+               bw.user_id,
+               u.nickname,
+               u.avatar,
+               u.username
+        FROM lib_borrow AS bw
+                 LEFT JOIN sys_user AS u ON u.id = bw.user_id
+    </sql>
+    <select id="getBorrowPage" resultType="org.dwtech.common.core.entity.bo.BorrowBO">
+        <include refid="borrowView"/>
+        <where>
+            <if test="queryParams.field != null and queryParams.field != '' and queryParams.keyword != null and queryParams.keyword != ''">
+                <choose>
+                    <when test="queryParams.field == 'status'">
+                        <choose>
+                            <!-- 0: 已归还 -->
+                            <when test="queryParams.keyword == 0">
+                                AND bw.reality_return_time IS NOT NULL
+                            </when>
+
+                            <!-- 1: 借阅中（未归还且未超期） -->
+                            <when test="queryParams.keyword == 1">
+                                AND bw.reality_return_time IS NULL
+                                AND bw.return_time &gt;= NOW()
+                            </when>
+
+                            <!-- 2: 已逾期（未归还且已超过应还时间） -->
+                            <when test="queryParams.keyword == 2">
+                                AND bw.reality_return_time IS NULL
+                                AND bw.return_time &lt; NOW()
+                            </when>
+                        </choose>
+                    </when>
+                    <when test="queryParams.field == 'username'">
+                        AND u.username LIKE CONCAT('%', #{queryParams.keyword}, '%')
+                    </when>
+                    <when test="queryParams.field == 'isbn'">
+                        AND bw.isbn LIKE CONCAT('%', #{queryParams.keyword}, '%')
+                    </when>
+                </choose>
+            </if>
+        </where>
+    </select>
+
+</mapper>

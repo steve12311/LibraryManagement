@@ -2,24 +2,21 @@ package org.dwtech.common.core.entity.po;
 
 import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 
-import java.io.Serial;
-import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.Date;
 
 @Data
-@TableName("lib_stock")
-public class StockPO implements Serializable {
-    @Serial
-    private static final long serialVersionUID = 1L;
-    @TableId
+@TableName("lib_borrow")
+public class BorrowPO {
+    private String id;
     private String isbn;
-    private Integer stock;
-    private Integer currentStock;
+    private String bookName;
+    private Long userId;
+    private Date returnTime;
+    private Date realityReturnTime;
     /**
      * 创建时间
      */

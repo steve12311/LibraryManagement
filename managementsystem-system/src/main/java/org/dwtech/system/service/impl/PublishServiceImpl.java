@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
+import org.dwtech.common.core.entity.dto.Option;
 import org.dwtech.common.core.entity.form.PublishForm;
 import org.dwtech.common.core.entity.po.PublishPO;
 import org.dwtech.common.core.entity.query.PublishPageQuery;
@@ -50,5 +51,17 @@ public class PublishServiceImpl extends ServiceImpl<PublishMapper, PublishPO> im
     public boolean deletePublish(List<Long> ids) {
         Assert.isTrue(ArrayUtil.isNotEmpty(ids), "删除的出版社数据为空");
         return this.removeByIds(ids);
+    }
+
+    @Override
+    public List<Option<Long>> getPublishOptions() {
+        List<PublishPO> list = this.list();
+        return publishConverter.toOptions(list);
+    }
+
+    @Override
+    public boolean updatePublish(PublishForm publishForm) {
+        PublishPO publish = publishConverter.toPo(publishForm);
+        return this.updateById(publish);
     }
 }

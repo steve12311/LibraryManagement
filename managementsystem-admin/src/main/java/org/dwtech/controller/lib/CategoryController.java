@@ -2,6 +2,7 @@ package org.dwtech.controller.lib;
 
 import lombok.RequiredArgsConstructor;
 import org.dwtech.common.core.entity.Result;
+import org.dwtech.common.core.entity.dto.Option;
 import org.dwtech.common.core.entity.query.CategoryQuery;
 import org.dwtech.common.core.entity.vo.CategoryVO;
 import org.dwtech.system.service.CategoryService;
@@ -21,5 +22,11 @@ public class CategoryController {
     public Result<List<CategoryVO>> getCategory(CategoryQuery queryParams) {
         List<CategoryVO> categoryList = categoryService.listMenus(queryParams);
         return Result.success(categoryList);
+    }
+
+    @GetMapping("/options")
+    public Result<List<Option<Long>>> getOptions() {
+        List<Option<Long>> list = categoryService.getCategoryOptions();
+        return Result.success(list);
     }
 }

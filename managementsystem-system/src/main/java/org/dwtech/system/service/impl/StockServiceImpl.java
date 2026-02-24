@@ -54,18 +54,21 @@ public class StockServiceImpl extends ServiceImpl<StockMapper, StockPO> implemen
         StockBO stockBo = stockConverter.toBo(stockForm);
 
         StockPO stock = stockConverter.toPo(stockBo);
-        StockPO nowStock = this.baseMapper.selectById(stock.getId());
+        StockPO nowStock = this.getById(stock.getIsbn());
         if (nowStock != null) {
-            stock.setStock(nowStock.getStock() + stock.getStock());
             stock.setCurrentStock(nowStock.getCurrentStock() + stock.getStock());
+            stock.setStock(nowStock.getStock() + stock.getStock());
+        } else {
+            stock.setCurrentStock(stock.getStock());
         }
-        this.baseMapper.insertOrUpdate(stock);
+        this.saveOrUpdate(stock);
         log.info("书籍入库步骤一完成：{}", stock);
 
-        BookPO book = stockConverter.toBookPo(stockBo);
-        bookService.saveOrUpdate(book);
-        log.info("书籍入库步骤二完成：{}", book);
-
+        if (nowStock == null) {
+            BookPO book = stockConverter.toBookPo(stockBo);
+            bookService.saveOrUpdate(book);
+            log.info("书籍入库步骤二完成：{}", book);
+        }
         return true;
     }
 
@@ -75,14 +78,51 @@ public class StockServiceImpl extends ServiceImpl<StockMapper, StockPO> implemen
         log.info("书籍出库开始：{}", stockForm);
         StockPO stockPo = stockConverter.toPo(stockForm);
         // 出库数量不能大于当前剩余数量
-        StockPO nowStock = this.baseMapper.selectById(stockPo.getId());
+        StockPO nowStock = this.getById(stockPo.getIsbn());
         if (stockPo.getStock() > nowStock.getCurrentStock()) {
             throw new RuntimeException("出库数量不能大于当前剩余数量");
         }
-        stockPo.setStock(nowStock.getStock() - stockPo.getStock());
-        stockPo.setCurrentStock(nowStock.getCurrentStock() - stockPo.getStock());
-        this.baseMapper.updateById(stockPo);
+
+        nowStock.setStock(nowStock.getStock() - stockPo.getStock());
+        nowStock.setCurrentStock(nowStock.getCurrentStock() - stockPo.getStock());
+        this.saveOrUpdate(nowStock);
+
         log.info("书籍出库完成：{}", stockPo);
         return true;
+    }
+
+    @Override
+    @Transactional
+    public boolean borrowOut(StockForm stockForm) {
+        log.info("书籍出借库存开始：{}", stockForm);
+        StockPO stockPo = stockConverter.toPo(stockForm);
+        StockPO nowStock = this.getById(stockPo.getIsbn());
+        if (stockPo.getStock() > nowStock.getCurrentStock()) {
+            throw new RuntimeException("书籍数量不足");
+        }
+
+        nowStock.setCurrentStock(nowStock.getCurrentStock() - stockPo.getStock());
+        this.saveOrUpdate(nowStock);
+
+        log.info("书籍出借出库完成：{}", stockPo);
+        return true;
+    }
+
+    @Override
+    public boolean borrowEnter(StockForm stockForm) {
+        log.info("书籍还书库存开始：{}", stockForm);
+        StockPO stockPo = stockConverter.toPo(stockForm);
+        StockPO nowStock = this.getById(stockPo.getIsbn());
+        nowStock.setCurrentStock(nowStock.getCurrentStock() + stockPo.getStock());
+
+        this.saveOrUpdate(nowStock);
+        log.info("书籍还书入库完成：{}", stockPo);
+        return true;
+    }
+
+    @Override
+    public StockForm getStockFormData(String isbn) {
+        StockBO stock = this.baseMapper.selectStockById(isbn);
+        return stockConverter.toForm(stock);
     }
 }

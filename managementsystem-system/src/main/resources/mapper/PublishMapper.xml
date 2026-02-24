@@ -20,8 +20,8 @@
     </sql>
     <select id="getPublishPage" resultType="org.dwtech.common.core.entity.po.PublishPO">
         <include refid="publishView"/>
-        <where>
-            <if test="queryParams.field != null and queryParams.field != '' and queryParams.keyword != null and queryParams.keyword != ''">
+        <choose>
+            <when test="queryParams.field != null and queryParams.field != '' and queryParams.keyword != null and queryParams.keyword != ''">
                 <choose>
                     <when test="queryParams.field == 'publishName'">
                         AND name LIKE CONCAT('%',#{queryParams.keyword},'%')
@@ -35,7 +35,7 @@
                         )
                     </when>
                 </choose>
-            </if>
-        </where>
+            </when>
+        </choose>
     </select>
 </mapper>

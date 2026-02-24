@@ -2,11 +2,6 @@ package org.dwtech.framework.ai;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.dwtech.common.service.MilvusService;
-import org.dwtech.framework.ai.tools.DateTimeTools;
-import org.dwtech.framework.ai.tools.StockTools;
-import org.dwtech.framework.ai.tools.VectorTools;
-import org.dwtech.system.service.StockService;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
@@ -15,7 +10,6 @@ import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.deepseek.DeepSeekChatModel;
-import org.springframework.ai.ollama.OllamaEmbeddingModel;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 
@@ -24,9 +18,7 @@ import reactor.core.publisher.Flux;
 @RequiredArgsConstructor
 public class AISearchService {
     private final DeepSeekChatModel deepSeekChatModel;
-    private final OllamaEmbeddingModel ollamaEmbeddingModel;
-    private final MilvusService milvusService;
-    private final StockService stockService;
+    private final ToolsLoader toolsLoader;
     private final ChatMemory chatMemory;
 
     public Flux<ChatResponse> expandSearchKeywords(String originalQuery, Long conversationId) {
@@ -42,11 +34,7 @@ public class AISearchService {
         // 调用模型
         return chatClient
                 .prompt(prompt)
-                .tools(
-                        new DateTimeTools(),
-                        new VectorTools(ollamaEmbeddingModel, milvusService),
-                        new StockTools(stockService)
-                )
+                .tools(toolsLoader.getAllTools().toArray(new Object[0]))
                 .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, conversationId))
                 .stream()
                 .chatResponse();

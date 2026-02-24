@@ -9,34 +9,55 @@ import org.dwtech.common.core.entity.Result;
 import org.dwtech.common.core.entity.form.StockForm;
 import org.dwtech.common.core.entity.query.StockPageQuery;
 import org.dwtech.common.core.entity.vo.StockPageVO;
+import org.dwtech.common.service.MilvusService;
+import org.dwtech.common.utils.PrepareMilvusJson;
+import org.dwtech.framework.ai.tools.VectorTool;
 import org.dwtech.system.service.StockService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/stock")
 public class StockController {
     private final StockService stockService;
+    private final MilvusService milvusService;
+    private final VectorTool vectorTool;
+    private final PrepareMilvusJson prepareMilvusJson;
 
-    @GetMapping
+    @GetMapping("/page")
     public PageResult<StockPageVO> getStockPage(@Valid StockPageQuery queryParams) {
         IPage<StockPageVO> result = stockService.getStockPage(queryParams);
         return PageResult.success(result);
     }
 
+    @GetMapping("/{isbn}")
+    public Result<StockForm> getStock(@PathVariable("isbn") String isbn) {
+        StockForm result = stockService.getStockFormData(isbn);
+        return Result.success(result);
+    }
+
     @PostMapping
     @RepeatSubmit
     @PreAuthorize("@ss.hasPerm('sys:stock:entry')")
-    public Result<?> addStock(@Valid StockForm stockForm) {
+    public Result<?> addStock(@Valid @RequestBody StockForm stockForm) {
         boolean result = stockService.addStock(stockForm);
+        if (stockForm.getIntro() != null && !stockForm.getIntro().isEmpty()) {
+            List<float[]> vector = vectorTool.getVectors(List.of(stockForm.getIntro()));
+            if (vector == null || vector.isEmpty()) {
+                return Result.failed("向量为空");
+            }
+            milvusService.insertVectors(prepareMilvusJson.prepareInsertJson(stockForm.getIsbn(), vector.getFirst()));
+        }
         return Result.judge(result);
     }
 
     @PutMapping
     @RepeatSubmit
     @PreAuthorize("@ss.hasPerm('sys:stock:out')")
-    public Result<?> outStock(@Valid StockForm stockForm) {
+    public Result<?> outStock(@Valid @RequestBody StockForm stockForm) {
         boolean result = stockService.outStock(stockForm);
         return Result.judge(result);
     }

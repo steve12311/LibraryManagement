@@ -33,4 +33,6 @@ public interface StockConverter {
     Page<StockPageVO> toPageVo(Page<StockBO> bo);
 
     List<StockPageVO> toListVo(List<StockBO> bo);
+
+    StockForm toForm(StockBO stock);
 }

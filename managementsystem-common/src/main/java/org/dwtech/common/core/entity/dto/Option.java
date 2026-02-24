@@ -14,6 +14,8 @@ public class Option<T> {
 
     private String tag;
 
+    private Avatar avatar;
+
     private List<Option<T>> children;
 
     public Option(T value, String label) {
@@ -31,5 +33,11 @@ public class Option<T> {
         this.value = value;
         this.label = label;
         this.tag = tag;
+    }
+
+    public Option(T value, String label, Avatar avatar) {
+        this.value = value;
+        this.label = label;
+        this.avatar = avatar;
     }
 }
