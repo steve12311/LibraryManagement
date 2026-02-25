@@ -6,10 +6,10 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.dwtech.common.annontation.DataPermission;
 import org.dwtech.common.core.entity.UserAuthCredentials;
-import org.dwtech.common.core.entity.bo.UserBO;
-import org.dwtech.common.core.entity.form.UserForm;
-import org.dwtech.common.core.entity.po.UserPO;
-import org.dwtech.common.core.entity.query.UserPageQuery;
+import org.dwtech.system.model.bo.UserBO;
+import org.dwtech.system.model.form.UserForm;
+import org.dwtech.system.model.entity.UserPO;
+import org.dwtech.system.model.query.UserPageQuery;
 
 @Mapper
 public interface UserMapper extends BaseMapper<UserPO> {

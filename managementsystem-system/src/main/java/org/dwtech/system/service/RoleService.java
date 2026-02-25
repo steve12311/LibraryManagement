@@ -2,10 +2,10 @@ package org.dwtech.system.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import jakarta.validation.Valid;
-import org.dwtech.common.core.entity.dto.Option;
-import org.dwtech.common.core.entity.form.RoleForm;
-import org.dwtech.common.core.entity.query.RolePageQuery;
-import org.dwtech.common.core.entity.vo.RolePageVO;
+import org.dwtech.common.model.Option;
+import org.dwtech.system.model.form.RoleForm;
+import org.dwtech.system.model.query.RolePageQuery;
+import org.dwtech.system.model.vo.RolePageVO;
 
 import java.util.List;
 import java.util.Set;

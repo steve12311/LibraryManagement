@@ -1,10 +1,10 @@
 package org.dwtech.system.service;
 
-import org.dwtech.common.core.entity.dto.Option;
-import org.dwtech.common.core.entity.form.MenuForm;
-import org.dwtech.common.core.entity.query.MenuQuery;
-import org.dwtech.common.core.entity.vo.MenuVO;
-import org.dwtech.common.core.entity.vo.RouteVO;
+import org.dwtech.common.model.Option;
+import org.dwtech.system.model.form.MenuForm;
+import org.dwtech.system.model.query.MenuQuery;
+import org.dwtech.system.model.vo.MenuVO;
+import org.dwtech.system.model.vo.RouteVO;
 
 import java.util.List;
 

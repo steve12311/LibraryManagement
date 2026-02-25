@@ -1,9 +1,9 @@
 package org.dwtech.system.converter;
 
-import org.dwtech.common.core.entity.form.MenuForm;
-import org.dwtech.common.core.entity.form.PermitForm;
-import org.dwtech.common.core.entity.po.MenuPO;
-import org.dwtech.common.core.entity.vo.MenuVO;
+import org.dwtech.system.model.form.MenuForm;
+import org.dwtech.system.model.form.PermitForm;
+import org.dwtech.system.model.entity.MenuPO;
+import org.dwtech.system.model.vo.MenuVO;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;

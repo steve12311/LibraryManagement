@@ -2,15 +2,15 @@ package org.dwtech.system.converter;
 
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import org.dwtech.common.core.entity.bo.UserBO;
-import org.dwtech.common.core.entity.dto.Avatar;
-import org.dwtech.common.core.entity.dto.Option;
-import org.dwtech.common.core.entity.form.UserForm;
-import org.dwtech.common.core.entity.form.UserProfileForm;
-import org.dwtech.common.core.entity.po.UserPO;
-import org.dwtech.common.core.entity.vo.CurrentUserVO;
-import org.dwtech.common.core.entity.vo.UserPageVO;
-import org.dwtech.common.core.entity.vo.UserProfileVO;
+import org.dwtech.system.model.bo.UserBO;
+import org.dwtech.common.model.Avatar;
+import org.dwtech.common.model.Option;
+import org.dwtech.system.model.form.UserForm;
+import org.dwtech.system.model.form.UserProfileForm;
+import org.dwtech.system.model.entity.UserPO;
+import org.dwtech.system.model.vo.CurrentUserVO;
+import org.dwtech.system.model.vo.UserPageVO;
+import org.dwtech.system.model.vo.UserProfileVO;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;

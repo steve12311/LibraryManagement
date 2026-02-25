@@ -1,10 +1,10 @@
 package org.dwtech.system.converter;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import org.dwtech.common.core.entity.dto.Option;
-import org.dwtech.common.core.entity.form.RoleForm;
-import org.dwtech.common.core.entity.po.RolePO;
-import org.dwtech.common.core.entity.vo.RolePageVO;
+import org.dwtech.common.model.Option;
+import org.dwtech.system.model.form.RoleForm;
+import org.dwtech.system.model.entity.RolePO;
+import org.dwtech.system.model.vo.RolePageVO;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;

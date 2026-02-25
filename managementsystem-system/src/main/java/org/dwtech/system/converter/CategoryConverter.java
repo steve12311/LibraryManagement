@@ -1,8 +1,8 @@
 package org.dwtech.system.converter;
 
-import org.dwtech.common.core.entity.dto.Option;
-import org.dwtech.common.core.entity.po.CategoryPO;
-import org.dwtech.common.core.entity.vo.CategoryVO;
+import org.dwtech.common.model.Option;
+import org.dwtech.system.model.entity.CategoryPO;
+import org.dwtech.system.model.vo.CategoryVO;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;

@@ -16,7 +16,7 @@
     </resultMap>
 
     <!-- 用户表单信息映射 -->
-    <resultMap id="UserFormMap" type="org.dwtech.common.core.entity.form.UserForm">
+    <resultMap id="UserFormMap" type="org.dwtech.system.model.form.UserForm">
         <id property="id" column="id" jdbcType="BIGINT"/>
         <result property="username" column="username" jdbcType="VARCHAR"/>
         <result property="nickname" column="nickname" jdbcType="VARCHAR"/>
@@ -48,7 +48,7 @@
         WHERE t1.username = #{username}
           AND t1.is_deleted = 0
     </select>
-    <select id="getUserPage" resultType="org.dwtech.common.core.entity.bo.UserBO">
+    <select id="getUserPage" resultType="org.dwtech.system.model.bo.UserBO">
         SELECT
         u.id,
         u.username,
@@ -140,7 +140,7 @@
         WHERE id = #{userId}
           AND is_deleted = 0
     </select>
-    <select id="getUserProfile" resultType="org.dwtech.common.core.entity.bo.UserBO">
+    <select id="getUserProfile" resultType="org.dwtech.system.model.bo.UserBO">
         SELECT u.id,
                u.username,
                u.nickname,

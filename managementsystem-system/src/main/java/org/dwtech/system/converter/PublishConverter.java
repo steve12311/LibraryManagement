@@ -1,10 +1,10 @@
 package org.dwtech.system.converter;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import org.dwtech.common.core.entity.dto.Option;
-import org.dwtech.common.core.entity.form.PublishForm;
-import org.dwtech.common.core.entity.po.PublishPO;
-import org.dwtech.common.core.entity.vo.PublishPageVO;
+import org.dwtech.common.model.Option;
+import org.dwtech.system.model.form.PublishForm;
+import org.dwtech.system.model.entity.PublishPO;
+import org.dwtech.system.model.vo.PublishPageVO;
 import org.mapstruct.*;
 
 import java.util.List;

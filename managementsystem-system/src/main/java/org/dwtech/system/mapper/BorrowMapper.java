@@ -4,9 +4,9 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
-import org.dwtech.common.core.entity.bo.BorrowBO;
-import org.dwtech.common.core.entity.po.BorrowPO;
-import org.dwtech.common.core.entity.query.BorrowPageQuery;
+import org.dwtech.system.model.bo.BorrowBO;
+import org.dwtech.system.model.entity.BorrowPO;
+import org.dwtech.system.model.query.BorrowPageQuery;
 
 @Mapper
 public interface BorrowMapper extends BaseMapper<BorrowPO> {

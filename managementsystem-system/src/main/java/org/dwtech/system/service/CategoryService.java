@@ -1,10 +1,10 @@
 package org.dwtech.system.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import org.dwtech.common.core.entity.dto.Option;
-import org.dwtech.common.core.entity.po.CategoryPO;
-import org.dwtech.common.core.entity.query.CategoryQuery;
-import org.dwtech.common.core.entity.vo.CategoryVO;
+import org.dwtech.common.model.Option;
+import org.dwtech.system.model.entity.CategoryPO;
+import org.dwtech.system.model.query.CategoryQuery;
+import org.dwtech.system.model.vo.CategoryVO;
 
 import java.util.List;
 

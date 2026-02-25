@@ -1,10 +1,10 @@
 package org.dwtech.system.converter;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import org.dwtech.common.core.entity.bo.BorrowBO;
-import org.dwtech.common.core.entity.form.BorrowForm;
-import org.dwtech.common.core.entity.po.BorrowPO;
-import org.dwtech.common.core.entity.vo.BorrowVO;
+import org.dwtech.system.model.bo.BorrowBO;
+import org.dwtech.system.model.form.BorrowForm;
+import org.dwtech.system.model.entity.BorrowPO;
+import org.dwtech.system.model.vo.BorrowVO;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;

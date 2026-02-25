@@ -1,7 +1,7 @@
 package org.dwtech.framework.auth.service;
 
 import org.dwtech.common.core.entity.AuthenticationToken;
-import org.dwtech.common.core.entity.vo.CaptchaVO;
+import org.dwtech.auth.model.vo.CaptchaVO;
 
 public interface AuthService {
     CaptchaVO getCaptcha();

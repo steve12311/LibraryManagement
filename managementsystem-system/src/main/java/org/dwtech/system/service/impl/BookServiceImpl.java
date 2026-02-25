@@ -2,12 +2,12 @@ package org.dwtech.system.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
-import org.dwtech.common.core.entity.dto.Option;
-import org.dwtech.common.core.entity.form.BookForm;
+import org.dwtech.common.model.Option;
+import org.dwtech.system.model.form.BookForm;
 import org.dwtech.common.service.MilvusService;
 import org.dwtech.system.converter.BookConverter;
 import org.dwtech.system.mapper.BookMapper;
-import org.dwtech.common.core.entity.po.BookPO;
+import org.dwtech.system.model.entity.BookPO;
 import org.dwtech.system.service.BookService;
 import org.springframework.stereotype.Service;
 

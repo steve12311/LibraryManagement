@@ -4,7 +4,7 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="org.dwtech.system.mapper.RoleMenuMapper">
     <!-- 权限和拥有权限的角色的映射 -->
-    <resultMap id="PremRolesMap" type="org.dwtech.common.core.entity.bo.RolePermsBO">
+    <resultMap id="PremRolesMap" type="org.dwtech.system.model.bo.RolePermsBO">
         <result property="roleCode" column="role_code"/>
         <collection property="perms" ofType="string" javaType="java.util.Set">
             <result column="perm"/>

@@ -2,7 +2,7 @@ package org.dwtech.framework.ai.tools;
 
 import lombok.RequiredArgsConstructor;
 import org.dwtech.common.core.entity.Result;
-import org.dwtech.common.core.entity.vo.StockPageVO;
+import org.dwtech.system.model.vo.StockPageVO;
 import org.dwtech.system.service.StockService;
 import org.springframework.ai.tool.annotation.Tool;
 

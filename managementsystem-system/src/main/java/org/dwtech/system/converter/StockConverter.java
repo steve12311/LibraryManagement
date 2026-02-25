@@ -1,11 +1,11 @@
 package org.dwtech.system.converter;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import org.dwtech.common.core.entity.bo.StockBO;
-import org.dwtech.common.core.entity.form.StockForm;
-import org.dwtech.common.core.entity.po.BookPO;
-import org.dwtech.common.core.entity.po.StockPO;
-import org.dwtech.common.core.entity.vo.StockPageVO;
+import org.dwtech.system.model.bo.StockBO;
+import org.dwtech.system.model.form.StockForm;
+import org.dwtech.system.model.entity.BookPO;
+import org.dwtech.system.model.entity.StockPO;
+import org.dwtech.system.model.vo.StockPageVO;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;

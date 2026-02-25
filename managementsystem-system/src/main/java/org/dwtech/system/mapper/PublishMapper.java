@@ -4,8 +4,8 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
-import org.dwtech.common.core.entity.po.PublishPO;
-import org.dwtech.common.core.entity.query.PublishPageQuery;
+import org.dwtech.system.model.entity.PublishPO;
+import org.dwtech.system.model.query.PublishPageQuery;
 
 @Mapper
 public interface PublishMapper extends BaseMapper<PublishPO> {

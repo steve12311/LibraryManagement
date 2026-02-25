@@ -1,9 +1,9 @@
 package org.dwtech.system.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import org.dwtech.common.core.entity.dto.Option;
-import org.dwtech.common.core.entity.form.BookForm;
-import org.dwtech.common.core.entity.po.BookPO;
+import org.dwtech.common.model.Option;
+import org.dwtech.system.model.form.BookForm;
+import org.dwtech.system.model.entity.BookPO;
 
 import java.util.List;
 

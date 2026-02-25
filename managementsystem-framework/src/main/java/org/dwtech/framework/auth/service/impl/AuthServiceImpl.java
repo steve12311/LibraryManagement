@@ -12,7 +12,7 @@ import org.dwtech.common.constant.RedisConstants;
 import org.dwtech.common.constant.SecurityConstants;
 import org.dwtech.common.core.entity.AuthenticationToken;
 import org.dwtech.common.enmus.CaptchaTypeEnum;
-import org.dwtech.common.core.entity.vo.CaptchaVO;
+import org.dwtech.auth.model.vo.CaptchaVO;
 import org.dwtech.common.enmus.ResultCode;
 import org.dwtech.common.exception.BusinessException;
 import org.dwtech.common.utils.SecurityUtils;

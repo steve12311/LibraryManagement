@@ -1,7 +1,7 @@
 package org.dwtech.system.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import org.dwtech.common.core.entity.po.RoleMenuPO;
+import org.dwtech.system.model.entity.RoleMenuPO;
 
 import java.util.List;
 import java.util.Set;

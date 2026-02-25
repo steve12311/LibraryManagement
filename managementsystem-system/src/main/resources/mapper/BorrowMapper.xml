@@ -16,7 +16,7 @@
         FROM lib_borrow AS bw
                  LEFT JOIN sys_user AS u ON u.id = bw.user_id
     </sql>
-    <select id="getBorrowPage" resultType="org.dwtech.common.core.entity.bo.BorrowBO">
+    <select id="getBorrowPage" resultType="org.dwtech.system.model.bo.BorrowBO">
         <include refid="borrowView"/>
         <where>
             <if test="queryParams.field != null and queryParams.field != '' and queryParams.keyword != null and queryParams.keyword != ''">

@@ -2,9 +2,9 @@ package org.dwtech.controller.sys;
 
 import lombok.RequiredArgsConstructor;
 import org.dwtech.common.core.entity.Result;
-import org.dwtech.common.core.entity.dto.Option;
-import org.dwtech.common.core.entity.query.DeptQuery;
-import org.dwtech.common.core.entity.vo.DeptVO;
+import org.dwtech.common.model.Option;
+import org.dwtech.system.model.query.DeptQuery;
+import org.dwtech.system.model.vo.DeptVO;
 import org.dwtech.system.service.DeptService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;

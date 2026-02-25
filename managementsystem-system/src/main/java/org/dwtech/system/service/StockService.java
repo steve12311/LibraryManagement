@@ -2,9 +2,9 @@ package org.dwtech.system.service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import jakarta.validation.Valid;
-import org.dwtech.common.core.entity.form.StockForm;
-import org.dwtech.common.core.entity.query.StockPageQuery;
-import org.dwtech.common.core.entity.vo.StockPageVO;
+import org.dwtech.system.model.form.StockForm;
+import org.dwtech.system.model.query.StockPageQuery;
+import org.dwtech.system.model.vo.StockPageVO;
 
 import java.util.List;
 

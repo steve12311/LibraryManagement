@@ -1,7 +1,7 @@
 package org.dwtech.system.converter;
 
-import org.dwtech.common.core.entity.po.DeptPO;
-import org.dwtech.common.core.entity.vo.DeptVO;
+import org.dwtech.system.model.entity.DeptPO;
+import org.dwtech.system.model.vo.DeptVO;
 import org.mapstruct.Mapper;
 
 @Mapper(componentModel = "spring")

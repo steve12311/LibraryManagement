@@ -2,9 +2,9 @@ package org.dwtech.controller.lib;
 
 import lombok.RequiredArgsConstructor;
 import org.dwtech.common.core.entity.Result;
-import org.dwtech.common.core.entity.dto.Option;
-import org.dwtech.common.core.entity.query.CategoryQuery;
-import org.dwtech.common.core.entity.vo.CategoryVO;
+import org.dwtech.common.model.Option;
+import org.dwtech.system.model.query.CategoryQuery;
+import org.dwtech.system.model.vo.CategoryVO;
 import org.dwtech.system.service.CategoryService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;

@@ -24,7 +24,7 @@
                  LEFT JOIN lib_publish AS p ON p.id = b.press_id
                  LEFT JOIN lib_category AS c ON c.id = b.category_id
     </sql>
-    <select id="getStockPage" resultType="org.dwtech.common.core.entity.bo.StockBO">
+    <select id="getStockPage" resultType="org.dwtech.system.model.bo.StockBO">
         <include refid="stockView"/>
         <where>
             <if test="queryParams.field != null and queryParams.field != '' and queryParams.keyword != null and queryParams.keyword != ''">
@@ -32,7 +32,7 @@
             </if>
         </where>
     </select>
-    <select id="getStockByExacts" resultType="org.dwtech.common.core.entity.bo.StockBO">
+    <select id="getStockByExacts" resultType="org.dwtech.system.model.bo.StockBO">
         <include refid="stockView"/>
         <choose>
             <when test="isbns != null and isbns.size() > 0">
@@ -43,7 +43,7 @@
             </when>
         </choose>
     </select>
-    <select id="selectStockById" resultType="org.dwtech.common.core.entity.bo.StockBO">
+    <select id="selectStockById" resultType="org.dwtech.system.model.bo.StockBO">
         <include refid="stockView"/>
         <where>
             AND b.isbn = #{isbn}

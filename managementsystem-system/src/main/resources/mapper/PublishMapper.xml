@@ -18,7 +18,7 @@
         FROM lib_publish
         WHERE is_deleted = 0
     </sql>
-    <select id="getPublishPage" resultType="org.dwtech.common.core.entity.po.PublishPO">
+    <select id="getPublishPage" resultType="org.dwtech.system.model.entity.PublishPO">
         <include refid="publishView"/>
         <choose>
             <when test="queryParams.field != null and queryParams.field != '' and queryParams.keyword != null and queryParams.keyword != ''">

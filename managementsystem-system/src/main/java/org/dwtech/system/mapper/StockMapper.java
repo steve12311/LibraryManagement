@@ -4,9 +4,9 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
-import org.dwtech.common.core.entity.bo.StockBO;
-import org.dwtech.common.core.entity.po.StockPO;
-import org.dwtech.common.core.entity.query.StockPageQuery;
+import org.dwtech.system.model.bo.StockBO;
+import org.dwtech.system.model.entity.StockPO;
+import org.dwtech.system.model.query.StockPageQuery;
 
 import java.util.List;
 

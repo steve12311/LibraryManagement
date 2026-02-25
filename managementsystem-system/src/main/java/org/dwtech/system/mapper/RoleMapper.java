@@ -3,7 +3,7 @@ package org.dwtech.system.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
-import org.dwtech.common.core.entity.po.RolePO;
+import org.dwtech.system.model.entity.RolePO;
 
 import java.util.Set;
 

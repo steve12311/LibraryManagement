@@ -4,7 +4,7 @@ import cn.hutool.core.collection.CollectionUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
-import org.dwtech.common.core.entity.po.UserRolePO;
+import org.dwtech.system.model.entity.UserRolePO;
 import org.dwtech.common.utils.SecurityUtils;
 import org.dwtech.system.mapper.UserRoleMapper;
 import org.dwtech.system.service.UserRoleService;

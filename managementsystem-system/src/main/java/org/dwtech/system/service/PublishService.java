@@ -2,10 +2,10 @@ package org.dwtech.system.service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import jakarta.validation.Valid;
-import org.dwtech.common.core.entity.dto.Option;
-import org.dwtech.common.core.entity.form.PublishForm;
-import org.dwtech.common.core.entity.query.PublishPageQuery;
-import org.dwtech.common.core.entity.vo.PublishPageVO;
+import org.dwtech.common.model.Option;
+import org.dwtech.system.model.form.PublishForm;
+import org.dwtech.system.model.query.PublishPageQuery;
+import org.dwtech.system.model.vo.PublishPageVO;
 
 import java.util.List;
 
