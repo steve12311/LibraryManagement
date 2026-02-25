@@ -31,6 +31,11 @@ public class RoleMenuServiceImpl extends ServiceImpl<RoleMenuMapper, RoleMenuPO>
         refreshRolePermsCache();
     }
 
+    @Override
+    public List<Long> listMenuIdsByRoleId(Long roleId) {
+        return this.baseMapper.listMenuIdsByRoleId(roleId);
+    }
+
     /**
      * 刷新权限缓存
      */
@@ -50,5 +55,47 @@ public class RoleMenuServiceImpl extends ServiceImpl<RoleMenuMapper, RoleMenuPO>
                 }
             });
         }
+    }
+
+    @Override
+    public void refreshRolePermsCache(String roleCode) {
+// 清理权限缓存
+        redisTemplate.opsForHash().delete(RedisConstants.System.ROLE_PERMS, roleCode);
+
+        List<RolePermsBO> list = this.baseMapper.getRolePermsList(roleCode);
+        if (CollectionUtil.isNotEmpty(list)) {
+            RolePermsBO rolePerms = list.getFirst();
+            if (rolePerms == null) {
+                return;
+            }
+
+            Set<String> perms = rolePerms.getPerms();
+            if (CollectionUtil.isNotEmpty(perms)) {
+                redisTemplate.opsForHash().put(RedisConstants.System.ROLE_PERMS, roleCode, perms);
+            }
+        }
+    }
+
+    @Override
+    public void refreshRolePermsCache(String oldRoleCode, String newRoleCode) {
+// 清理旧角色权限缓存
+        redisTemplate.opsForHash().delete(RedisConstants.System.ROLE_PERMS, oldRoleCode);
+
+        // 添加新角色权限缓存
+        List<RolePermsBO> list = this.baseMapper.getRolePermsList(newRoleCode);
+        if (CollectionUtil.isNotEmpty(list)) {
+            RolePermsBO rolePerms = list.getFirst();
+            if (rolePerms == null) {
+                return;
+            }
+
+            Set<String> perms = rolePerms.getPerms();
+            redisTemplate.opsForHash().put(RedisConstants.System.ROLE_PERMS, newRoleCode, perms);
+        }
+    }
+
+    @Override
+    public Set<String> getRolePermsByRoleCodes(Set<String> roles) {
+        return this.baseMapper.listRolePerms(roles);
     }
 }

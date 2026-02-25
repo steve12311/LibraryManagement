@@ -6,9 +6,11 @@ import org.dwtech.common.core.entity.bo.UserBO;
 import org.dwtech.common.core.entity.dto.Avatar;
 import org.dwtech.common.core.entity.dto.Option;
 import org.dwtech.common.core.entity.form.UserForm;
+import org.dwtech.common.core.entity.form.UserProfileForm;
 import org.dwtech.common.core.entity.po.UserPO;
 import org.dwtech.common.core.entity.vo.CurrentUserVO;
 import org.dwtech.common.core.entity.vo.UserPageVO;
+import org.dwtech.common.core.entity.vo.UserProfileVO;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
@@ -25,7 +27,9 @@ public interface UserConverter {
 
     UserForm toForm(UserPO po);
 
-    UserPO toPO(UserForm form);
+    UserPO toPo(UserForm form);
+
+    UserPO toPo(UserProfileForm form);
 
     @Mappings({
             @Mapping(target = "userId", source = "id")
@@ -45,4 +49,6 @@ public interface UserConverter {
     }
 
     List<Option<String>> toOptions(List<UserPO> list);
+
+    UserProfileVO toProfileVo(UserBO entity);
 }

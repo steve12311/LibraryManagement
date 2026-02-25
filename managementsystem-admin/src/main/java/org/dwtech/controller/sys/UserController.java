@@ -1,6 +1,7 @@
 package org.dwtech.controller.sys;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.dwtech.common.annontation.RepeatSubmit;
@@ -9,9 +10,11 @@ import org.dwtech.common.core.entity.Result;
 import org.dwtech.common.core.entity.dto.Option;
 import org.dwtech.common.core.entity.form.PasswordUpdateForm;
 import org.dwtech.common.core.entity.form.UserForm;
+import org.dwtech.common.core.entity.form.UserProfileForm;
 import org.dwtech.common.core.entity.query.UserPageQuery;
 import org.dwtech.common.core.entity.vo.CurrentUserVO;
 import org.dwtech.common.core.entity.vo.UserPageVO;
+import org.dwtech.common.core.entity.vo.UserProfileVO;
 import org.dwtech.common.utils.SecurityUtils;
 import org.dwtech.system.service.UserService;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -91,5 +94,20 @@ public class UserController {
     public Result<List<Option<String>>> listUserOptions() {
         List<Option<String>> list = userService.listUserOptions();
         return Result.success(list);
+    }
+
+    @Operation(summary = "获取个人中心用户信息")
+    @GetMapping("/profile")
+    public Result<UserProfileVO> getUserProfile() {
+        Long userId = SecurityUtils.getUserId();
+        UserProfileVO userProfile = userService.getUserProfile(userId);
+        return Result.success(userProfile);
+    }
+
+    @Operation(summary = "个人中心修改用户信息")
+    @PutMapping("/profile")
+    public Result<?> updateUserProfile(@RequestBody UserProfileForm formData) {
+        boolean result = userService.updateUserProfile(formData);
+        return Result.judge(result);
     }
 }

@@ -19,4 +19,6 @@ public interface UserMapper extends BaseMapper<UserPO> {
     Page<UserBO> getUserPage(Page<UserBO> page, @Param("queryParams") UserPageQuery queryParams);
 
     UserForm getUserFormData(Long userId);
+
+    UserBO getUserProfile(Long userId);
 }

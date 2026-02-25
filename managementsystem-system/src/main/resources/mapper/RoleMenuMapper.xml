@@ -25,4 +25,25 @@
             AND t2.code = #{roleCode}
         </if>
     </select>
+    <select id="listMenuIdsByRoleId" resultType="java.lang.Long">
+        SELECT rm.menu_id
+        FROM sys_role_menu rm
+                 INNER JOIN sys_menu m ON rm.menu_id = m.id
+        WHERE rm.role_id = #{roleId}
+    </select>
+    <select id="listRolePerms" resultType="java.lang.String">
+        SELECT
+        DISTINCT t2.perm
+        FROM
+        sys_role_menu t1
+        INNER JOIN sys_menu t2 ON t2.id = t1.menu_id
+        INNER JOIN sys_role t3 ON t3.id = t1.role_id
+        WHERE
+        t2.type = '${@org.dwtech.common.enmus.MenuTypeEnum@BUTTON.getValue()}'
+        AND t2.perm IS NOT NULL
+        AND t3.CODE IN
+        <foreach collection="roles" item="role" separator="," open="(" close=")">
+            #{role}
+        </foreach>
+    </select>
 </mapper>

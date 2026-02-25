@@ -71,4 +71,10 @@ public class UserRoleServiceImpl extends ServiceImpl<UserRoleMapper, UserRolePO>
             tokenManager.invalidateToken(accessToken);
         }
     }
+
+    @Override
+    public boolean hasAssignedUsers(Long roleId) {
+        int count = this.baseMapper.countUsersForRole(roleId);
+        return count > 0;
+    }
 }

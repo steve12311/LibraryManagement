@@ -5,6 +5,7 @@ import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -15,11 +16,13 @@ import org.dwtech.common.core.entity.UserAuthCredentials;
 import org.dwtech.common.core.entity.bo.UserBO;
 import org.dwtech.common.core.entity.dto.Option;
 import org.dwtech.common.core.entity.form.PasswordUpdateForm;
+import org.dwtech.common.core.entity.form.UserProfileForm;
 import org.dwtech.common.core.entity.vo.CurrentUserVO;
 import org.dwtech.common.core.entity.form.UserForm;
 import org.dwtech.common.core.entity.po.UserPO;
 import org.dwtech.common.core.entity.query.UserPageQuery;
 import org.dwtech.common.core.entity.vo.UserPageVO;
+import org.dwtech.common.core.entity.vo.UserProfileVO;
 import org.dwtech.common.exception.BusinessException;
 import org.dwtech.common.service.PermissionService;
 import org.dwtech.common.token.TokenManager;
@@ -80,7 +83,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserPO> implements 
         Assert.isTrue(count == 0, "用户名已存在");
 
         // 实体转换 form->po
-        UserPO po = userConverter.toPO(formData);
+        UserPO po = userConverter.toPo(formData);
 
         // 设置默认加密密码
         String defaultEncryptPwd = passwordEncoder.encode(SystemConstants.DEFAULT_PASSWORD);
@@ -104,14 +107,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserPO> implements 
         String username = userForm.getUsername();
 
         long count = this.count(
-                this.lambdaQuery()
-                .eq(UserPO::getUsername, username)
-                .ne(UserPO::getId, userId)
+                new LambdaQueryWrapper<UserPO>()
+                        .eq(UserPO::getUsername, username)
+                        .ne(UserPO::getId, userId)
         );
         Assert.isTrue(count == 0, "用户名已存在");
 
         // form -> entity
-        UserPO entity = userConverter.toPO(userForm);
+        UserPO entity = userConverter.toPo(userForm);
         entity.setUpdateBy(SecurityUtils.getUserId());
 
         // 修改用户
@@ -171,18 +174,18 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserPO> implements 
             password = SystemConstants.DEFAULT_PASSWORD;
         }
         return this.update(
-                this.lambdaUpdate()
-                .eq(UserPO::getId, userId)
-                .set(UserPO::getPassword, passwordEncoder.encode(password))
+                new LambdaUpdateWrapper<UserPO>()
+                        .eq(UserPO::getId, userId)
+                        .set(UserPO::getPassword, passwordEncoder.encode(password))
         );
     }
 
     @Override
     public boolean updateUserStatus(Long userId, Integer status) {
         return this.update(
-                this.lambdaUpdate()
-                .eq(UserPO::getId, userId)
-                .set(UserPO::getStatus, status));
+                new LambdaUpdateWrapper<UserPO>()
+                        .eq(UserPO::getId, userId)
+                        .set(UserPO::getStatus, status));
     }
 
     @Override
@@ -208,8 +211,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserPO> implements 
 
         boolean result = this.update(
                 this.lambdaUpdate()
-                .eq(UserPO::getId, userId)
-                .set(UserPO::getPassword, passwordEncoder.encode(formData.getNewPassword()))
+                        .eq(UserPO::getId, userId)
+                        .set(UserPO::getPassword, passwordEncoder.encode(formData.getNewPassword()))
         );
 
         if (result) {
@@ -224,8 +227,22 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserPO> implements 
     public List<Option<String>> listUserOptions() {
         List<UserPO> list = this.list(
                 new LambdaQueryWrapper<UserPO>()
-                .eq(UserPO::getStatus, 1)
+                        .eq(UserPO::getStatus, 1)
         );
         return userConverter.toOptions(list);
+    }
+
+    @Override
+    public UserProfileVO getUserProfile(Long userId) {
+        UserBO entity = this.baseMapper.getUserProfile(userId);
+        return userConverter.toProfileVo(entity);
+    }
+
+    @Override
+    public boolean updateUserProfile(UserProfileForm formData) {
+        Long userId = SecurityUtils.getUserId();
+        UserPO entity = userConverter.toPo(formData);
+        entity.setId(userId);
+        return this.updateById(entity);
     }
 }
