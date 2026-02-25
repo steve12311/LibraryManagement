@@ -24,6 +24,8 @@ import org.dwtech.system.converter.MenuConverter;
 import org.dwtech.system.mapper.MenuMapper;
 import org.dwtech.system.service.MenuService;
 import org.dwtech.system.service.RoleMenuService;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -65,6 +67,7 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, MenuPO> implements 
     }
 
     @Override
+    @Cacheable(cacheNames = "menu", key = "'options:' + #onlyParent")
     public List<Option<Long>> listMenuOptions(boolean onlyParent) {
         List<MenuPO> menuList = this.list(new LambdaQueryWrapper<MenuPO>()
                 .in(onlyParent, MenuPO::getType, MenuTypeEnum.CATALOG.getValue())
@@ -74,6 +77,7 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, MenuPO> implements 
     }
 
     @Override
+    @Cacheable(cacheNames = "menu", key = "'routes:' + T(org.dwtech.common.utils.SecurityUtils).getUserId()")
     public List<RouteVO> listCurrentUserRoutes() {
         Set<String> roleCodes = SecurityUtils.getRoles();
 
@@ -130,6 +134,7 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, MenuPO> implements 
     }
 
     @Override
+    @CacheEvict(cacheNames = "menu", allEntries = true)
     public boolean saveMenu(MenuForm menuForm) {
 
         Integer menuType = menuForm.getType();
@@ -179,6 +184,7 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, MenuPO> implements 
     }
 
     @Override
+    @CacheEvict(cacheNames = "menu", allEntries = true)
     public boolean deleteMenu(List<Long> ids) {
         if (CollectionUtil.isEmpty(ids)) {
             return false;

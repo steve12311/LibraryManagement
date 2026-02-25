@@ -162,7 +162,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserPO> implements 
 
         // 用户权限集合
         if (CollectionUtil.isNotEmpty(roles)) {
-            Set<String> perms = permissionService.getRolePermsFormCache(roles);
+            Set<String> perms = permissionService.getRolePermsFromCache(roles);
             userInfoVO.setPerms(perms);
         }
         return userInfoVO;

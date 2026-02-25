@@ -51,13 +51,16 @@ public class UserController {
 
     @PutMapping("/{userId}")
     @PreAuthorize("@ss.hasPerm('sys:user:edit')")
+    @RepeatSubmit
     public Result<?> updateUser(@PathVariable("userId") Long userId, @RequestBody @Valid UserForm formData) {
+        formData.setId(userId);
         boolean result = userService.updateUser(userId, formData);
         return Result.judge(result);
     }
 
     @DeleteMapping("/{userIds}")
     @PreAuthorize("@ss.hasPerm('sys:user:delete')")
+    @RepeatSubmit
     public Result<?> deleteUsers(@PathVariable("userIds") List<Long> userIds) {
         boolean result = userService.deleteUsers(userIds);
         return Result.judge(result);
@@ -65,6 +68,7 @@ public class UserController {
 
     @PutMapping("/{userId}/status")
     @PreAuthorize("@ss.hasPerm('sys:user:edit')")
+    @RepeatSubmit
     public Result<?> updateUserStatus(@PathVariable("userId") Long userId, @RequestParam("status") Integer status) {
         boolean result = userService.updateUserStatus(userId, status);
         return Result.judge(result);
@@ -78,12 +82,14 @@ public class UserController {
 
     @PutMapping("/{userId}/password/reset")
     @PreAuthorize("@ss.hasPerm('sys:user:reset-password')")
+    @RepeatSubmit
     public Result<?> resetPassword(@PathVariable("userId") Long userId, @RequestParam("password") String password) {
         boolean result = userService.resetPassword(userId, password);
         return Result.judge(result);
     }
 
     @PutMapping("/password")
+    @RepeatSubmit
     public Result<?> updatePassword(@RequestBody PasswordUpdateForm formData) {
         Long userId = SecurityUtils.getUserId();
         boolean result = userService.changePassword(userId, formData);
@@ -106,6 +112,7 @@ public class UserController {
 
     @Operation(summary = "个人中心修改用户信息")
     @PutMapping("/profile")
+    @RepeatSubmit
     public Result<?> updateUserProfile(@RequestBody UserProfileForm formData) {
         boolean result = userService.updateUserProfile(formData);
         return Result.judge(result);

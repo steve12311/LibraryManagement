@@ -18,7 +18,7 @@ public interface PublishService {
 
     boolean deletePublish(List<Long> ids);
 
-    List<Option<Long>> getPublishOptions();
+    List<Option<Long>> listPublishOptions();
 
     boolean updatePublish(@Valid PublishForm publishForm);
 }

@@ -45,7 +45,7 @@ public class PermissionService {
         }
 
         // 获取当前登录用户的所有角色的权限列表
-        Set<String> rolePerms = this.getRolePermsFormCache(roleCodes);
+        Set<String> rolePerms = this.getRolePermsFromCache(roleCodes);
         if (CollectionUtil.isEmpty(rolePerms)) {
             return false;
         }
@@ -69,7 +69,7 @@ public class PermissionService {
      * @param roleCodes 角色编码集合
      * @return 角色权限列表
      */
-    public Set<String> getRolePermsFormCache(Set<String> roleCodes) {
+    public Set<String> getRolePermsFromCache(Set<String> roleCodes) {
         // 检查输入是否为空
         if (CollectionUtil.isEmpty(roleCodes)) {
             return Collections.emptySet();
@@ -89,6 +89,14 @@ public class PermissionService {
         }
 
         return perms;
+    }
+
+    /**
+     * @deprecated 保留旧方法名用于兼容，后续统一使用 getRolePermsFromCache
+     */
+    @Deprecated
+    public Set<String> getRolePermsFormCache(Set<String> roleCodes) {
+        return getRolePermsFromCache(roleCodes);
     }
 
 }

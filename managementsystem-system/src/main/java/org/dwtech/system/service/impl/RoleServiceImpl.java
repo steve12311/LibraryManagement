@@ -8,7 +8,6 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.dwtech.common.constant.SystemConstants;
 import org.dwtech.common.model.Option;
 import org.dwtech.system.model.form.RoleForm;
@@ -24,6 +23,7 @@ import org.dwtech.system.service.RoleMenuService;
 import org.dwtech.system.service.RoleService;
 import org.dwtech.system.service.UserRoleService;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,7 +32,6 @@ import java.util.List;
 import java.util.Set;
 
 @Service
-@Slf4j
 @RequiredArgsConstructor
 public class RoleServiceImpl extends ServiceImpl<RoleMapper, RolePO> implements RoleService {
     private final RoleConverter roleConverter;
@@ -41,7 +40,6 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, RolePO> implements 
 
     @Override
     public Integer getMaximumDataScope(Set<String> roles) {
-        log.info("{}", roles);
         return this.baseMapper.getMaximumDataScope(roles);
     }
 
@@ -70,6 +68,7 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, RolePO> implements 
     }
 
     @Override
+    @Cacheable(cacheNames = "role", key = "'options:' + T(org.dwtech.common.utils.SecurityUtils).isRoot()")
     public List<Option<Long>> listRoleOptions() {
         // 查询数据
         List<RolePO> roleList = this.list(new LambdaQueryWrapper<RolePO>()
@@ -83,6 +82,7 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, RolePO> implements 
     }
 
     @Override
+    @CacheEvict(cacheNames = {"role", "menu"}, allEntries = true)
     public boolean saveRole(RoleForm roleForm) {
         Long roleId = roleForm.getId();
 
@@ -125,6 +125,7 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, RolePO> implements 
     }
 
     @Override
+    @CacheEvict(cacheNames = {"role", "menu"}, allEntries = true)
     public void deleteRoles(String ids) {
         Assert.isTrue(StrUtil.isNotBlank(ids), "删除的角色ID不能为空");
         List<Long> roleIds = Arrays.stream(ids.split(","))
@@ -137,21 +138,18 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, RolePO> implements 
 
             // 判断角色是否被用户关联
             boolean isRoleAssigned = userRoleService.hasAssignedUsers(roleId);
-            if (role != null) {
-                Assert.isTrue(!isRoleAssigned, "角色【{}】已分配用户，请先解除关联后删除", role.getName());
-            }
+            Assert.isTrue(!isRoleAssigned, "角色【{}】已分配用户，请先解除关联后删除", role.getName());
 
             boolean deleteResult = this.removeById(roleId);
             if (deleteResult) {
                 // 删除成功，刷新权限缓存
-                if (role != null) {
-                    roleMenuService.refreshRolePermsCache(role.getCode());
-                }
+                roleMenuService.refreshRolePermsCache(role.getCode());
             }
         }
     }
 
     @Override
+    @CacheEvict(cacheNames = {"role", "menu"}, allEntries = true)
     public boolean updateRoleStatus(Long roleId, Integer status) {
         RolePO role = this.getById(roleId);
         if (role == null) {
@@ -168,13 +166,14 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, RolePO> implements 
     }
 
     @Override
+    @Cacheable(cacheNames = "role", key = "'menuIds:' + #roleId")
     public List<Long> getRoleMenuIds(Long roleId) {
         return roleMenuService.listMenuIdsByRoleId(roleId);
     }
 
     @Override
     @Transactional
-    @CacheEvict(cacheNames = "menu", key = "'routes'")
+    @CacheEvict(cacheNames = {"role", "menu"}, allEntries = true)
     public void assignMenusToRole(Long roleId, List<Long> menuIds) {
         RolePO role = this.getById(roleId);
         if (role == null) {
@@ -200,7 +199,12 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, RolePO> implements 
 
     @Override
     @Transactional
-    public void assignUserToRole(Long roleId, List<Long> userIds) {
-        userRoleService.saveUserRoles(roleId, userIds);
+    @CacheEvict(cacheNames = {"role", "menu"}, allEntries = true)
+    public void assignUsersToRole(Long roleId, List<Long> userIds) {
+        RolePO role = this.getById(roleId);
+        if (role == null) {
+            throw new BusinessException("角色不存在");
+        }
+        userRoleService.assignUsersToRole(roleId, userIds);
     }
 }

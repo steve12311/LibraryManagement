@@ -20,6 +20,13 @@ spring:
       base-url: http://localhost:11434
       embedding:
           model: nomic-embed-text-v2-moe
+  cache:
+    enabled: true
+    type: redis
+    redis:
+      time-to-live: 30m
+      cache-null-values: false
+      use-key-prefix: true
 
 milvus:
   uri: http://***REMOVED***:19530

@@ -58,15 +58,19 @@ public class MenuController {
 
     @PutMapping(value = "/{id}")
     @PreAuthorize("@ss.hasPerm('sys:menu:edit')")
+    @RepeatSubmit
     public Result<?> updateMenu(
+            @PathVariable("id") Long menuId,
             @RequestBody MenuForm menuForm
     ) {
+        menuForm.setId(menuId);
         boolean result = menuService.saveMenu(menuForm);
         return Result.judge(result);
     }
 
     @DeleteMapping("/{ids}")
     @PreAuthorize("@ss.hasPerm('sys:menu:delete')")
+    @RepeatSubmit
     public Result<?> deleteMenu(
             @PathVariable("ids") @Parameter(description = "菜单ID，多个以英文(,)分割") List<Long> ids
     ) {

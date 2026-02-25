@@ -60,7 +60,12 @@ public class RoleController {
     @Operation(summary = "修改角色")
     @PutMapping(value = "/{id}")
     @PreAuthorize("@ss.hasPerm('sys:role:edit')")
-    public Result<?> updateRole(@Valid @RequestBody RoleForm roleForm) {
+    @RepeatSubmit
+    public Result<?> updateRole(
+            @PathVariable("id") Long roleId,
+            @Valid @RequestBody RoleForm roleForm
+    ) {
+        roleForm.setId(roleId);
         boolean result = roleService.saveRole(roleForm);
         return Result.judge(result);
     }
@@ -68,6 +73,7 @@ public class RoleController {
     @Operation(summary = "删除角色")
     @DeleteMapping("/{ids}")
     @PreAuthorize("@ss.hasPerm('sys:role:delete')")
+    @RepeatSubmit
     public Result<Void> deleteRoles(
             @Parameter(description = "删除角色，多个以英文逗号(,)拼接") @PathVariable("ids") String ids
     ) {
@@ -78,6 +84,7 @@ public class RoleController {
     @Operation(summary = "修改角色状态")
     @PutMapping(value = "/{roleId}/status")
     @PreAuthorize("@ss.hasPerm('sys:role:edit')")
+    @RepeatSubmit
     public Result<?> updateRoleStatus(
             @Parameter(description = "角色ID") @PathVariable("roleId") Long roleId,
             @Parameter(description = "状态(1:启用;0:禁用)") @RequestParam("status") Integer status
@@ -97,6 +104,8 @@ public class RoleController {
 
     @Operation(summary = "角色分配菜单权限")
     @PutMapping("/{roleId}/menus")
+    @PreAuthorize("@ss.hasPerm('sys:role:edit')")
+    @RepeatSubmit
     public Result<Void> assignMenusToRole(
             @PathVariable("roleId") Long roleId,
             @RequestBody List<Long> menuIds
@@ -105,9 +114,15 @@ public class RoleController {
         return Result.success();
     }
 
+    @Operation(summary = "角色分配用户")
     @PutMapping("/{roleId}/users")
-    public Result<Void> assignUsersToRole(@PathVariable("roleId") Long roleId, @RequestParam("userIds") List<Long> userIds) {
-        roleService.assignUserToRole(roleId, userIds);
+    @PreAuthorize("@ss.hasPerm('sys:role:edit')")
+    @RepeatSubmit
+    public Result<Void> assignUsersToRole(
+            @PathVariable("roleId") Long roleId,
+            @RequestParam("userIds") List<Long> userIds
+    ) {
+        roleService.assignUsersToRole(roleId, userIds);
         return Result.success();
     }
 }

@@ -41,11 +41,10 @@ public class RoleMenuServiceImpl extends ServiceImpl<RoleMenuMapper, RoleMenuPO>
      */
     @Override
     public void refreshRolePermsCache() {
-        // 清理权限缓存
-        redisTemplate.opsForHash().delete(RedisConstants.System.ROLE_PERMS, "*");
+        // 清理所有角色权限缓存（Hash#delete 不支持通配符）
+        clearAllRolePermsCache();
 
         List<RolePermsBO> list = this.baseMapper.getRolePermsList(null);
-        log.info("权限信息：{}", list);
         if (CollectionUtil.isNotEmpty(list)) {
             list.forEach(item -> {
                 String roleCode = item.getRoleCode();
@@ -97,5 +96,15 @@ public class RoleMenuServiceImpl extends ServiceImpl<RoleMenuMapper, RoleMenuPO>
     @Override
     public Set<String> getRolePermsByRoleCodes(Set<String> roles) {
         return this.baseMapper.listRolePerms(roles);
+    }
+
+    /**
+     * 清空角色权限缓存
+     */
+    private void clearAllRolePermsCache() {
+        Set<Object> cacheRoleCodes = redisTemplate.opsForHash().keys(RedisConstants.System.ROLE_PERMS);
+        if (CollectionUtil.isNotEmpty(cacheRoleCodes)) {
+            redisTemplate.opsForHash().delete(RedisConstants.System.ROLE_PERMS, cacheRoleCodes.toArray());
+        }
     }
 }

@@ -9,7 +9,7 @@ import org.dwtech.system.model.vo.CategoryVO;
 import java.util.List;
 
 public interface CategoryService extends IService<CategoryPO> {
-    List<CategoryVO> listMenus(CategoryQuery queryParams);
+    List<CategoryVO> listCategories(CategoryQuery queryParams);
 
-    List<Option<Long>> getCategoryOptions();
+    List<Option<Long>> listCategoryOptions();
 }

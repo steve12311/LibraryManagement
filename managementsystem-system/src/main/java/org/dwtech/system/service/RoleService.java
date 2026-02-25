@@ -29,5 +29,5 @@ public interface RoleService {
 
     void assignMenusToRole(Long roleId, List<Long> menuIds);
 
-    void assignUserToRole(Long roleId, List<Long> userIds);
+    void assignUsersToRole(Long roleId, List<Long> userIds);
 }

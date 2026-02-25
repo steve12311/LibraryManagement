@@ -19,14 +19,14 @@ public class CategoryController {
     private final CategoryService categoryService;
 
     @GetMapping
-    public Result<List<CategoryVO>> getCategory(CategoryQuery queryParams) {
-        List<CategoryVO> categoryList = categoryService.listMenus(queryParams);
+    public Result<List<CategoryVO>> listCategories(CategoryQuery queryParams) {
+        List<CategoryVO> categoryList = categoryService.listCategories(queryParams);
         return Result.success(categoryList);
     }
 
     @GetMapping("/options")
-    public Result<List<Option<Long>>> getOptions() {
-        List<Option<Long>> list = categoryService.getCategoryOptions();
+    public Result<List<Option<Long>>> listCategoryOptions() {
+        List<Option<Long>> list = categoryService.listCategoryOptions();
         return Result.success(list);
     }
 }

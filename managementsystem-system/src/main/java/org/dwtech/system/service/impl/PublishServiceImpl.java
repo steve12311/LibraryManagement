@@ -14,6 +14,8 @@ import org.dwtech.system.model.vo.PublishPageVO;
 import org.dwtech.system.converter.PublishConverter;
 import org.dwtech.system.mapper.PublishMapper;
 import org.dwtech.system.service.PublishService;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -42,24 +44,28 @@ public class PublishServiceImpl extends ServiceImpl<PublishMapper, PublishPO> im
     }
 
     @Override
+    @CacheEvict(cacheNames = "publish", allEntries = true)
     public boolean savePublish(PublishForm publishForm) {
         PublishPO publish = publishConverter.toPo(publishForm);
         return this.save(publish);
     }
 
     @Override
+    @CacheEvict(cacheNames = "publish", allEntries = true)
     public boolean deletePublish(List<Long> ids) {
         Assert.isTrue(ArrayUtil.isNotEmpty(ids), "删除的出版社数据为空");
         return this.removeByIds(ids);
     }
 
     @Override
-    public List<Option<Long>> getPublishOptions() {
+    @Cacheable(cacheNames = "publish", key = "'options'")
+    public List<Option<Long>> listPublishOptions() {
         List<PublishPO> list = this.list();
         return publishConverter.toOptions(list);
     }
 
     @Override
+    @CacheEvict(cacheNames = "publish", allEntries = true)
     public boolean updatePublish(PublishForm publishForm) {
         PublishPO publish = publishConverter.toPo(publishForm);
         return this.updateById(publish);

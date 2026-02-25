@@ -14,6 +14,7 @@ import org.dwtech.system.model.vo.CategoryVO;
 import org.dwtech.system.converter.CategoryConverter;
 import org.dwtech.system.mapper.CategoryMapper;
 import org.dwtech.system.service.CategoryService;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -28,7 +29,7 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, CategoryPO>
     private final CategoryConverter categoryConverter;
 
     @Override
-    public List<CategoryVO> listMenus(CategoryQuery queryParams) {
+    public List<CategoryVO> listCategories(CategoryQuery queryParams) {
         List<CategoryPO> categories = this.list(new LambdaQueryWrapper<CategoryPO>()
                 .like(StrUtil.isNotBlank(queryParams.getCategoryName()), CategoryPO::getName, queryParams.getCategoryName())
                 .eq(ObjectUtil.isNotNull(queryParams.getStatus()), CategoryPO::getVisible, queryParams.getStatus())
@@ -61,7 +62,8 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, CategoryPO>
     }
 
     @Override
-    public List<Option<Long>> getCategoryOptions() {
+    @Cacheable(cacheNames = "category", key = "'options'")
+    public List<Option<Long>> listCategoryOptions() {
         List<CategoryPO> list = this.list(new LambdaQueryWrapper<CategoryPO>()
                 .eq(CategoryPO::getVisible, true)
                 .orderByAsc(CategoryPO::getSort)

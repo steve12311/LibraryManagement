@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.dwtech.common.annontation.RepeatSubmit;
 import org.dwtech.common.core.entity.PageResult;
 import org.dwtech.common.core.entity.Result;
 import org.dwtech.system.model.form.BorrowForm;
@@ -26,12 +27,14 @@ public class BorrowController {
     }
 
     @PostMapping
+    @RepeatSubmit
     public Result<?> saveBorrow(@Valid @RequestBody BorrowForm formData) {
         boolean result = borrowService.saveBorrow(formData);
         return Result.judge(result);
     }
 
     @PutMapping("/{borrowId}")
+    @RepeatSubmit
     public Result<?> updateBorrow(@PathVariable("borrowId") String borrowId, @Valid @RequestBody BorrowForm formData) {
         boolean result = borrowService.updateBorrow(borrowId, formData);
         return Result.judge(result);
