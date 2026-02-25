@@ -25,12 +25,24 @@ public class VectorTool {
     private final OllamaEmbeddingModel ollamaEmbeddingModel;
     private final MilvusService milvusService;
 
+    /**
+     * 用途：搜索 vectors。
+     * 
+     * @param keywords keywords
+     * @return 结果集合
+     */
     @Tool(description = "通过关键词搜索书库，返回相关书籍对应的ISBN码")
     public Set<String> searchVectors(List<String> keywords) {
         List<float[]> vectors = getVectors(keywords);
         return milvusService.searchVectors(vectors);
     }
 
+    /**
+     * 用途：获取 vectors 信息。
+     * 
+     * @param keywords keywords
+     * @return 结果列表
+     */
     public List<float[]> getVectors(List<String> keywords) {
         log.info("关键词{}", keywords.toString());
         List<float[]> vector = new ArrayList<>();

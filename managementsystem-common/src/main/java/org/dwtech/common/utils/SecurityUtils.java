@@ -28,9 +28,12 @@ import java.util.stream.Collectors;
 public class SecurityUtils {
 
     /**
+     * 用途：获取 user 信息。
+     * 
      * 获取当前登录人信息
      *
      * @return Optional<SysUserDetails>
+     * 入参：无。
      */
     public static Optional<SysUserDetails> getUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -45,9 +48,12 @@ public class SecurityUtils {
 
 
     /**
+     * 用途：获取 user id 信息。
+     * 
      * 获取用户ID
      *
      * @return Long
+     * 入参：无。
      */
     public static Long getUserId() {
         return getUser().map(SysUserDetails::getUserId).orElse(null);
@@ -55,9 +61,12 @@ public class SecurityUtils {
 
 
     /**
+     * 用途：获取 username 信息。
+     * 
      * 获取用户账号
      *
      * @return String 用户账号
+     * 入参：无。
      */
     public static String getUsername() {
         return getUser().map(SysUserDetails::getUsername).orElse(null);
@@ -65,18 +74,24 @@ public class SecurityUtils {
 
 
     /**
+     * 用途：获取 dept id 信息。
+     * 
      * 获取部门ID
      *
      * @return Long
+     * 入参：无。
      */
     public static Long getDeptId() {
         return getUser().map(SysUserDetails::getDeptId).orElse(null);
     }
 
     /**
+     * 用途：获取 data scope 信息。
+     * 
      * 获取数据权限范围
      *
      * @return Integer
+     * 入参：无。
      */
     public static Integer getDataScope() {
         return getUser().map(SysUserDetails::getDataScope).orElse(null);
@@ -84,9 +99,12 @@ public class SecurityUtils {
 
 
     /**
+     * 用途：获取 roles 信息。
+     * 
      * 获取角色集合
      *
      * @return 角色集合
+     * 入参：无。
      */
     public static Set<String> getRoles() {
         return Optional.ofNullable(SecurityContextHolder.getContext().getAuthentication())
@@ -102,9 +120,14 @@ public class SecurityUtils {
     }
 
     /**
+     * 用途：判断 root 状态。
+     * 
      * 是否超级管理员
      * <p>
      * 超级管理员忽视任何权限判断
+     * 
+     * 入参：无。
+     * @return 操作结果，true 表示成功，false 表示失败
      */
     public static boolean isRoot() {
         Set<String> roles = getRoles();
@@ -112,9 +135,12 @@ public class SecurityUtils {
     }
 
     /**
+     * 用途：获取 token from request 信息。
+     * 
      * 获取请求中的 Token
      *
      * @return Token 字符串
+     * 入参：无。
      */
     public static String getTokenFromRequest() {
         ServletRequestAttributes servletRequestAttributes = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes());

@@ -33,8 +33,15 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
     private final TokenManager tokenManager;
 
     /**
+     * 用途：执行 do filter internal 操作。
+     * 
      * 校验 Token ，包括验签和是否过期
      * 如果 Token 有效，将 Token 解析为 Authentication 对象，并设置到 Spring Security 上下文中
+     * 
+     * @param request request
+     * @param response response
+     * @param filterChain filter chain
+     * 返回：无。
      */
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {

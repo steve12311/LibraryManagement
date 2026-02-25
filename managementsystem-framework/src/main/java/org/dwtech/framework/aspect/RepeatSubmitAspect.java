@@ -38,14 +38,25 @@ public class RepeatSubmitAspect {
     private final RedissonClient redissonClient;
 
     /**
+     * 用途：执行 repeat submit point cut 操作。
+     * 
      * 防重复提交切点
+     * 
+     * @param repeatSubmit repeat submit
+     * 返回：无。
      */
     @Pointcut("@annotation(repeatSubmit)")
     public void repeatSubmitPointCut(RepeatSubmit repeatSubmit) {
     }
 
     /**
+     * 用途：处理 repeat submit。
+     * 
      * 环绕通知：处理防重复提交逻辑
+     * 
+     * @param pjp pjp
+     * @param repeatSubmit repeat submit
+     * @return 返回结果
      */
     @Around(value = "repeatSubmitPointCut(repeatSubmit)", argNames = "pjp,repeatSubmit")
     public Object handleRepeatSubmit(ProceedingJoinPoint pjp, RepeatSubmit repeatSubmit) throws Throwable {
@@ -62,8 +73,11 @@ public class RepeatSubmitAspect {
     }
 
     /**
+     * 用途：构建 lock key。
+     * 
      * 生成防重复提交锁的 key
      * @return 锁的 key
+     * 入参：无。
      */
     private String buildLockKey() {
         HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
@@ -75,6 +89,8 @@ public class RepeatSubmitAspect {
     }
 
     /**
+     * 用途：获取 user identifier 信息。
+     * 
      *  获取用户唯一标识
      *  1. 从请求头中获取 Token，使用 SHA-256 加密 Token 作为用户唯一标识
      *  2. 如果 Token 为空，使用 IP 作为用户唯一标识

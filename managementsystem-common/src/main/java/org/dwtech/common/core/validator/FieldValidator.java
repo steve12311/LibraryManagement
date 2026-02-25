@@ -16,12 +16,25 @@ public class FieldValidator implements ConstraintValidator<ValidField, String> {
 
     private String[] allowedValues;
 
+    /**
+     * 用途：初始化 ialize。
+     * 
+     * @param constraintAnnotation constraint annotation
+     * 返回：无。
+     */
     @Override
     public void initialize(ValidField constraintAnnotation) {
         // 初始化允许的值列表
         this.allowedValues = constraintAnnotation.allowedValues();
     }
 
+    /**
+     * 用途：判断 valid 状态。
+     * 
+     * @param value value
+     * @param context context
+     * @return 操作结果，true 表示成功，false 表示失败
+     */
     @Override
     public boolean isValid(String value, ConstraintValidatorContext context) {
         if (value == null) {

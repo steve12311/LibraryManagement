@@ -22,6 +22,12 @@ import org.springframework.stereotype.Service;
 public class SysUserDetailService implements UserDetailsService {
     private final UserService userService;
 
+    /**
+     * 用途：加载 user by username。
+     * 
+     * @param username username
+     * @return 返回结果
+     */
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         try {

@@ -18,6 +18,12 @@ import org.springframework.context.annotation.Configuration;
 public class MilvusConfig {
     private final MilvusProperties milvusProperties;
 
+    /**
+     * 用途：执行 milvus service client 操作。
+     * 
+     * 入参：无。
+     * @return 返回结果
+     */
     @Bean
     public MilvusClientV2 milvusServiceClient() {
         ConnectConfig config = ConnectConfig.builder()

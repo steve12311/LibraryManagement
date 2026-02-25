@@ -10,27 +10,35 @@ import java.util.Objects;
  * 枚举通用接口
  *
  * @author steve12311
-* @since 2025-11-18
- */
-/**
- * IBaseEnum
- *
- * @author steve12311
  * @since 2025-11-18
  */
 public interface IBaseEnum<T> {
 
+    /**
+     * 用途：获取 value 信息。
+     * 
+     * 入参：无。
+     * @return 返回结果
+     */
     T getValue();
 
+    /**
+     * 用途：获取 label 信息。
+     * 
+     * 入参：无。
+     * @return 结果字符串
+     */
     String getLabel();
 
     /**
+     * 用途：获取 enum by value 信息。
+     *
      * 根据值获取枚举
      *
-     * @param value
-     * @param clazz
-     * @param <E>   枚举
-     * @return
+     * @param value 枚举值
+     * @param clazz 枚举类型
+     * @param <E> 枚举泛型类型
+     * @return 对应的枚举实例，不存在时返回 null
      */
     static <E extends Enum<E> & IBaseEnum> E getEnumByValue(Object value, Class<E> clazz) {
         Objects.requireNonNull(value);
@@ -43,12 +51,14 @@ public interface IBaseEnum<T> {
     }
 
     /**
+     * 用途：获取 label by value 信息。
+     *
      * 根据文本标签获取值
      *
-     * @param value
-     * @param clazz
-     * @param <E>
-     * @return
+     * @param value 枚举值
+     * @param clazz 枚举类型
+     * @param <E> 枚举泛型类型
+     * @return 对应的文本标签，不存在时返回 null
      */
     static <E extends Enum<E> & IBaseEnum> String getLabelByValue(Object value, Class<E> clazz) {
         Objects.requireNonNull(value);
@@ -67,12 +77,14 @@ public interface IBaseEnum<T> {
 
 
     /**
+     * 用途：获取 value by label 信息。
+     *
      * 根据文本标签获取值
      *
-     * @param label
-     * @param clazz
-     * @param <E>
-     * @return
+     * @param label 文本标签
+     * @param clazz 枚举类型
+     * @param <E> 枚举泛型类型
+     * @return 对应的枚举值，不存在时返回 null
      */
     static <E extends Enum<E> & IBaseEnum> Object getValueByLabel(String label, Class<E> clazz) {
         Objects.requireNonNull(label);

@@ -44,11 +44,23 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, RolePO> implements 
     private final RoleMenuService roleMenuService;
     private final UserRoleService userRoleService;
 
+    /**
+     * 用途：获取 maximum data scope 信息。
+     * 
+     * @param roles roles
+     * @return 数值结果
+     */
     @Override
     public Integer getMaximumDataScope(Set<String> roles) {
         return this.baseMapper.getMaximumDataScope(roles);
     }
 
+    /**
+     * 用途：获取 role page 信息。
+     * 
+     * @param queryParams query params
+     * @return 分页结果
+     */
     @Override
     public Page<RolePageVO> getRolePage(RolePageQuery queryParams) {
         // 查询参数
@@ -73,6 +85,12 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, RolePO> implements 
         return roleConverter.toPageVo(rolePage);
     }
 
+    /**
+     * 用途：查询 role options 列表。
+     * 
+     * 入参：无。
+     * @return 结果列表
+     */
     @Override
     @Cacheable(cacheNames = "role", key = "'options:' + T(org.dwtech.common.utils.SecurityUtils).isRoot()")
     public List<Option<Long>> listRoleOptions() {
@@ -87,6 +105,12 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, RolePO> implements 
         return roleConverter.toOptions(roleList);
     }
 
+    /**
+     * 用途：保存 role。
+     * 
+     * @param roleForm role form
+     * @return 操作结果，true 表示成功，false 表示失败
+     */
     @Override
     @CacheEvict(cacheNames = {"role", "menu"}, allEntries = true)
     public boolean saveRole(RoleForm roleForm) {
@@ -124,12 +148,24 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, RolePO> implements 
         return result;
     }
 
+    /**
+     * 用途：获取 role form 信息。
+     * 
+     * @param roleId role ID
+     * @return 返回结果
+     */
     @Override
     public RoleForm getRoleForm(Long roleId) {
         RolePO entity = this.getById(roleId);
         return roleConverter.toForm(entity);
     }
 
+    /**
+     * 用途：删除 roles。
+     * 
+     * @param ids 主键 ID 列表
+     * 返回：无。
+     */
     @Override
     @CacheEvict(cacheNames = {"role", "menu"}, allEntries = true)
     public void deleteRoles(String ids) {
@@ -154,6 +190,13 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, RolePO> implements 
         }
     }
 
+    /**
+     * 用途：更新 role status。
+     * 
+     * @param roleId role ID
+     * @param status status
+     * @return 操作结果，true 表示成功，false 表示失败
+     */
     @Override
     @CacheEvict(cacheNames = {"role", "menu"}, allEntries = true)
     public boolean updateRoleStatus(Long roleId, Integer status) {
@@ -171,12 +214,25 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, RolePO> implements 
         return result;
     }
 
+    /**
+     * 用途：获取 role menu ids 信息。
+     * 
+     * @param roleId role ID
+     * @return 结果列表
+     */
     @Override
     @Cacheable(cacheNames = "role", key = "'menuIds:' + #roleId")
     public List<Long> getRoleMenuIds(Long roleId) {
         return roleMenuService.listMenuIdsByRoleId(roleId);
     }
 
+    /**
+     * 用途：分配 menus to role。
+     * 
+     * @param roleId role ID
+     * @param menuIds menu ID 列表
+     * 返回：无。
+     */
     @Override
     @Transactional
     @CacheEvict(cacheNames = {"role", "menu"}, allEntries = true)
@@ -203,6 +259,13 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, RolePO> implements 
         roleMenuService.refreshRolePermsCache(role.getCode());
     }
 
+    /**
+     * 用途：分配 users to role。
+     * 
+     * @param roleId role ID
+     * @param userIds user ID 列表
+     * 返回：无。
+     */
     @Override
     @Transactional
     @CacheEvict(cacheNames = {"role", "menu"}, allEntries = true)

@@ -15,9 +15,14 @@ import java.lang.annotation.*;
 public @interface RepeatSubmit {
 
     /**
+     * 用途：执行 expire 操作。
+     * 
      * 锁过期时间（秒）
      * <p>
      * 默认5秒内不允许重复提交
+     * 
+     * 入参：无。
+     * @return 数值结果
      */
     int expire() default 5;
 

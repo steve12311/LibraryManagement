@@ -25,6 +25,13 @@ public enum MenuTypeEnum implements IBaseEnum<Integer> {
     // @JsonValue //  表示对枚举序列化时返回此字段
     private final String label;
 
+    /**
+     * 用途：创建 MenuTypeEnum 实例。
+     * 
+     * @param value value
+     * @param label label
+     * 返回：无。
+     */
     MenuTypeEnum(Integer value, String label) {
         this.value = value;
         this.label = label;

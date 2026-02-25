@@ -15,7 +15,19 @@ import java.util.List;
  */
 
 public interface CategoryService extends IService<CategoryPO> {
+    /**
+     * 用途：查询 categories 列表。
+     * 
+     * @param queryParams query params
+     * @return 结果列表
+     */
     List<CategoryVO> listCategories(CategoryQuery queryParams);
 
+    /**
+     * 用途：查询 category options 列表。
+     * 
+     * 入参：无。
+     * @return 结果列表
+     */
     List<Option<Long>> listCategoryOptions();
 }

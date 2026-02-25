@@ -27,6 +27,13 @@ public class AISearchService {
     private final ToolsLoader toolsLoader;
     private final ChatMemory chatMemory;
 
+    /**
+     * 用途：执行 expand search keywords 操作。
+     * 
+     * @param originalQuery original query
+     * @param conversationId conversation ID
+     * @return 返回结果
+     */
     public Flux<ChatResponse> expandSearchKeywords(String originalQuery, Long conversationId) {
         // 构建提示词
         SystemMessage sysPrompt = buildSystemPrompt();
@@ -46,6 +53,12 @@ public class AISearchService {
                 .chatResponse();
     }
 
+    /**
+     * 用途：构建 system prompt。
+     * 
+     * 入参：无。
+     * @return 返回结果
+     */
     private SystemMessage buildSystemPrompt() {
         return SystemMessage.builder()
                 .text("""
@@ -86,6 +99,12 @@ public class AISearchService {
     }
 
 
+    /**
+     * 用途：构建 user prompt。
+     * 
+     * @param originalQuery original query
+     * @return 返回结果
+     */
     private UserMessage buildUserPrompt(String originalQuery) {
         return UserMessage.builder()
                 .text(originalQuery)

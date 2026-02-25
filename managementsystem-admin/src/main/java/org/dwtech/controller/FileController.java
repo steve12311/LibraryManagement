@@ -20,6 +20,12 @@ import org.springframework.web.multipart.MultipartFile;
 public class FileController {
     private final FileService fileService;
 
+    /**
+     * 用途：执行 upload file 操作。
+     * 
+     * @param file file
+     * @return 返回结果
+     */
     @PostMapping
     @RepeatSubmit
     public Result<FileInfo> uploadFile(@RequestParam("file") MultipartFile file) {

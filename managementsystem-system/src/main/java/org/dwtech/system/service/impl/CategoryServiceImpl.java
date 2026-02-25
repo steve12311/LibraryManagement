@@ -34,6 +34,12 @@ import java.util.stream.Collectors;
 public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, CategoryPO> implements CategoryService {
     private final CategoryConverter categoryConverter;
 
+    /**
+     * 用途：查询 categories 列表。
+     * 
+     * @param queryParams query params
+     * @return 结果列表
+     */
     @Override
     public List<CategoryVO> listCategories(CategoryQuery queryParams) {
         List<CategoryPO> categories = this.list(new LambdaQueryWrapper<CategoryPO>()
@@ -67,6 +73,12 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, CategoryPO>
                 .collect(Collectors.toList());
     }
 
+    /**
+     * 用途：查询 category options 列表。
+     * 
+     * 入参：无。
+     * @return 结果列表
+     */
     @Override
     @Cacheable(cacheNames = "category", key = "'options'")
     public List<Option<Long>> listCategoryOptions() {
@@ -77,6 +89,13 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, CategoryPO>
         return buildCategoryOptions(SystemConstants.ROOT_NODE_ID, list);
     }
 
+    /**
+     * 用途：构建 category tree。
+     * 
+     * @param parentId parent ID
+     * @param categories categories
+     * @return 结果列表
+     */
     private List<CategoryVO> buildCategoryTree(Long parentId, List<CategoryPO> categories) {
         return CollectionUtil.emptyIfNull(categories)
                 .stream()
@@ -89,6 +108,13 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, CategoryPO>
                 }).toList();
     }
 
+    /**
+     * 用途：构建 category options。
+     * 
+     * @param parentId parent ID
+     * @param categories categories
+     * @return 结果列表
+     */
     private List<Option<Long>> buildCategoryOptions(Long parentId, List<CategoryPO> categories) {
         List<Option<Long>> categoryOptions = new ArrayList<>();
 

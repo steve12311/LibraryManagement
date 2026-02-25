@@ -12,6 +12,12 @@ import java.time.LocalDateTime;
  */
 
 public class DateTimeTool {
+    /**
+     * 用途：获取 current date time 信息。
+     * 
+     * 入参：无。
+     * @return 结果字符串
+     */
     @Tool(description = "获取当前时间")
     String getCurrentDateTime() {
         return LocalDateTime.now().atZone(LocaleContextHolder.getTimeZone().toZoneId()).toString();

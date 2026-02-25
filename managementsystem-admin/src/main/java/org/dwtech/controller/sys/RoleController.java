@@ -30,6 +30,12 @@ import java.util.List;
 public class RoleController {
     private final RoleService roleService;
 
+    /**
+     * 用途：获取 role page 信息。
+     * 
+     * @param queryParams query params
+     * @return 返回结果
+     */
     @GetMapping("/page")
     public PageResult<RolePageVO> getRolePage(
             RolePageQuery queryParams
@@ -38,12 +44,24 @@ public class RoleController {
         return PageResult.success(result);
     }
 
+    /**
+     * 用途：查询 role options 列表。
+     * 
+     * 入参：无。
+     * @return 返回结果
+     */
     @GetMapping("/options")
     public Result<List<Option<Long>>> listRoleOptions() {
         List<Option<Long>> list = roleService.listRoleOptions();
         return Result.success(list);
     }
 
+    /**
+     * 用途：新增 role。
+     * 
+     * @param roleForm role form
+     * @return 返回结果
+     */
     @Operation(summary = "新增角色")
     @PostMapping
     @PreAuthorize("@ss.hasPerm('sys:role:add')")
@@ -53,6 +71,12 @@ public class RoleController {
         return Result.judge(result);
     }
 
+    /**
+     * 用途：获取 role form 信息。
+     * 
+     * @param roleId role ID
+     * @return 返回结果
+     */
     @Operation(summary = "获取角色表单数据")
     @GetMapping("/{roleId}/form")
     @PreAuthorize("@ss.hasPerm('sys:role:edit')")
@@ -63,6 +87,13 @@ public class RoleController {
         return Result.success(roleForm);
     }
 
+    /**
+     * 用途：更新 role。
+     * 
+     * @param roleId role ID
+     * @param roleForm role form
+     * @return 返回结果
+     */
     @Operation(summary = "修改角色")
     @PutMapping(value = "/{id}")
     @PreAuthorize("@ss.hasPerm('sys:role:edit')")
@@ -76,6 +107,12 @@ public class RoleController {
         return Result.judge(result);
     }
 
+    /**
+     * 用途：删除 roles。
+     * 
+     * @param ids 主键 ID 列表
+     * @return 返回结果
+     */
     @Operation(summary = "删除角色")
     @DeleteMapping("/{ids}")
     @PreAuthorize("@ss.hasPerm('sys:role:delete')")
@@ -87,6 +124,13 @@ public class RoleController {
         return Result.success();
     }
 
+    /**
+     * 用途：更新 role status。
+     * 
+     * @param roleId role ID
+     * @param status status
+     * @return 返回结果
+     */
     @Operation(summary = "修改角色状态")
     @PutMapping(value = "/{roleId}/status")
     @PreAuthorize("@ss.hasPerm('sys:role:edit')")
@@ -99,6 +143,12 @@ public class RoleController {
         return Result.judge(result);
     }
 
+    /**
+     * 用途：获取 role menu ids 信息。
+     * 
+     * @param roleId role ID
+     * @return 返回结果
+     */
     @Operation(summary = "获取角色的菜单ID集合")
     @GetMapping("/{roleId}/menuIds")
     public Result<List<Long>> getRoleMenuIds(
@@ -108,6 +158,13 @@ public class RoleController {
         return Result.success(menuIds);
     }
 
+    /**
+     * 用途：分配 menus to role。
+     * 
+     * @param roleId role ID
+     * @param menuIds menu ID 列表
+     * @return 返回结果
+     */
     @Operation(summary = "角色分配菜单权限")
     @PutMapping("/{roleId}/menus")
     @PreAuthorize("@ss.hasPerm('sys:role:edit')")
@@ -120,6 +177,13 @@ public class RoleController {
         return Result.success();
     }
 
+    /**
+     * 用途：分配 users to role。
+     * 
+     * @param roleId role ID
+     * @param userIds user ID 列表
+     * @return 返回结果
+     */
     @Operation(summary = "角色分配用户")
     @PutMapping("/{roleId}/users")
     @PreAuthorize("@ss.hasPerm('sys:role:edit')")

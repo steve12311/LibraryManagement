@@ -19,6 +19,13 @@ public enum StatusEnum implements IBaseEnum<Integer> {
 
     private final String label;
 
+    /**
+     * 用途：创建 StatusEnum 实例。
+     * 
+     * @param value value
+     * @param label label
+     * 返回：无。
+     */
     StatusEnum(Integer value, String label) {
         this.value = value;
         this.label = label;

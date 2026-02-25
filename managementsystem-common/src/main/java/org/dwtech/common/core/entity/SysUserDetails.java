@@ -57,9 +57,12 @@ public class SysUserDetails implements UserDetails {
     private Collection<SimpleGrantedAuthority> authorities;
 
     /**
+     * 用途：创建 SysUserDetails 实例。
+     * 
      * 构造函数：根据用户认证信息初始化用户详情对象
      *
      * @param user 用户认证信息对象 {@link UserAuthCredentials}
+     * 返回：无。
      */
     public SysUserDetails(UserAuthCredentials user) {
         this.userId = user.getUserId();

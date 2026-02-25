@@ -15,5 +15,12 @@ import org.dwtech.system.model.query.PublishPageQuery;
 
 @Mapper
 public interface PublishMapper extends BaseMapper<PublishPO> {
+    /**
+     * 用途：获取 publish page 信息。
+     * 
+     * @param page page
+     * @param queryParams query params
+     * @return 分页结果
+     */
     Page<PublishPO> getPublishPage(Page<PublishPO> page, @Param("queryParams") PublishPageQuery queryParams);
 }

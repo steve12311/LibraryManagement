@@ -27,6 +27,12 @@ public class MilvusService {
     private final MilvusProperties milvusProperties;
 
     // 插入向量数据
+    /**
+     * 用途：执行 insert vectors 操作。
+     * 
+     * @param json json
+     * 返回：无。
+     */
     public void insertVectors(String json) {
         Gson gson = new Gson();
         List<JsonObject> data = Collections.singletonList(gson.fromJson(json, JsonObject.class));
@@ -39,6 +45,12 @@ public class MilvusService {
     }
 
     // 查询向量数据
+    /**
+     * 用途：搜索 vectors。
+     * 
+     * @param vectors vectors
+     * @return 结果集合
+     */
     public Set<String> searchVectors(List<float[]> vectors) {
         List<BaseVector> floatVecs = new ArrayList<>();
         for (float[] vector : vectors) {

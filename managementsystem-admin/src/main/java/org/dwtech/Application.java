@@ -13,6 +13,12 @@ import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 @SpringBootApplication
 @ConfigurationPropertiesScan
 public class Application {
+    /**
+     * 用途：执行 main 操作。
+     * 
+     * @param args args
+     * 返回：无。
+     */
     public static void main(String[] args) {
         SpringApplication.run(Application.class, args);
     }

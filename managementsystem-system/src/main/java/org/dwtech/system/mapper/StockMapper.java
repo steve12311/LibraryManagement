@@ -18,9 +18,28 @@ import java.util.List;
 
 @Mapper
 public interface StockMapper extends BaseMapper<StockPO> {
+    /**
+     * 用途：获取 stock page 信息。
+     * 
+     * @param page page
+     * @param queryParams query params
+     * @return 分页结果
+     */
     Page<StockBO> getStockPage(Page<StockBO> page, @Param("queryParams") StockPageQuery queryParams);
 
+    /**
+     * 用途：获取 stock by exacts 信息。
+     * 
+     * @param isbns isbns
+     * @return 结果列表
+     */
     List<StockBO> getStockByExacts(@Param("isbns") List<String> isbns);
 
+    /**
+     * 用途：执行 select stock by id 操作。
+     * 
+     * @param isbn isbn
+     * @return 返回结果
+     */
     StockBO selectStockById(String isbn);
 }

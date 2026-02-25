@@ -47,6 +47,12 @@ public class AuthServiceImpl implements AuthService {
     private final RedisTemplate<String, Object> redisTemplate;
     private final CaptchaProperties captchaProperties;
 
+    /**
+     * 用途：获取 captcha 信息。
+     * 
+     * 入参：无。
+     * @return 返回结果
+     */
     @Override
     public CaptchaVO getCaptcha() {
         AbstractCaptcha captcha = getAbstractCaptcha();
@@ -72,6 +78,13 @@ public class AuthServiceImpl implements AuthService {
                 .build();
     }
 
+    /**
+     * 用途：执行 login 操作。
+     * 
+     * @param username username
+     * @param password password
+     * @return 返回结果
+     */
     @Override
     public AuthenticationToken login(String username, String password) {
         // 1. 创建用于密码认证的令牌（未认证）
@@ -97,7 +110,12 @@ public class AuthServiceImpl implements AuthService {
     }
 
     /**
+     * 用途：执行 logout 操作。
+     * 
      * 注销登录
+     * 
+     * 入参：无。
+     * 返回：无。
      */
     @Override
     public void logout() {
@@ -112,6 +130,8 @@ public class AuthServiceImpl implements AuthService {
     }
 
     /**
+     * 用途：刷新 token。
+     * 
      * 刷新token
      *
      * @param refreshToken 刷新令牌
@@ -122,6 +142,12 @@ public class AuthServiceImpl implements AuthService {
         return tokenManager.refreshToken(refreshToken);
     }
 
+    /**
+     * 用途：获取 abstract captcha 信息。
+     * 
+     * 入参：无。
+     * @return 返回结果
+     */
     private AbstractCaptcha getAbstractCaptcha() {
         String captchaType = captchaProperties.getType();
         int width = captchaProperties.getWidth();

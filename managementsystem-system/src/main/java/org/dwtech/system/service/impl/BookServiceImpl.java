@@ -24,18 +24,36 @@ import java.util.List;
 public class BookServiceImpl extends ServiceImpl<BookMapper, BookPO> implements BookService {
     private final BookConverter bookConverter;
 
+    /**
+     * 用途：保存 or update book。
+     * 
+     * @param bookForm book form
+     * @return 操作结果，true 表示成功，false 表示失败
+     */
     @Override
     public boolean saveOrUpdateBook(BookForm bookForm) {
         BookPO bookPo = bookConverter.toPo(bookForm);
         return this.saveOrUpdate(bookPo);
     }
 
+    /**
+     * 用途：获取 book by isbn 信息。
+     * 
+     * @param isbn isbn
+     * @return 返回结果
+     */
     @Override
     public BookForm getBookByIsbn(String isbn) {
         BookPO book = this.getById(isbn);
         return bookConverter.toForm(book);
     }
 
+    /**
+     * 用途：查询 book options 列表。
+     * 
+     * 入参：无。
+     * @return 结果列表
+     */
     @Override
     public List<Option<Long>> listBookOptions() {
         List<BookPO> list = this.list();

@@ -14,9 +14,27 @@ import java.util.List;
  */
 
 public interface BookService extends IService<BookPO> {
+    /**
+     * 用途：保存 or update book。
+     * 
+     * @param bookForm book form
+     * @return 操作结果，true 表示成功，false 表示失败
+     */
     boolean saveOrUpdateBook(BookForm bookForm);
 
+    /**
+     * 用途：获取 book by isbn 信息。
+     * 
+     * @param isbn isbn
+     * @return 返回结果
+     */
     BookForm getBookByIsbn(String isbn);
 
+    /**
+     * 用途：查询 book options 列表。
+     * 
+     * 入参：无。
+     * @return 结果列表
+     */
     List<Option<Long>> listBookOptions();
 }

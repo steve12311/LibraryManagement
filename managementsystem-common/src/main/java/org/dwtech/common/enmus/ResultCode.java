@@ -309,11 +309,23 @@ public enum ResultCode implements IResultCode, Serializable {
     EMAIL_REMINDER_SERVICE_FAILED("C0503", "邮件提醒服务失败");
 
 
+    /**
+     * 用途：获取 code 信息。
+     * 
+     * 入参：无。
+     * @return 结果字符串
+     */
     @Override
     public String getCode() {
         return code;
     }
 
+    /**
+     * 用途：获取 msg 信息。
+     * 
+     * 入参：无。
+     * @return 结果字符串
+     */
     @Override
     public String getMsg() {
         return msg;
@@ -323,6 +335,12 @@ public enum ResultCode implements IResultCode, Serializable {
 
     private String msg;
 
+    /**
+     * 用途：转换为 string。
+     * 
+     * 入参：无。
+     * @return 结果字符串
+     */
     @Override
     public String toString() {
         return "{" +
@@ -332,6 +350,12 @@ public enum ResultCode implements IResultCode, Serializable {
     }
 
 
+    /**
+     * 用途：获取 value 信息。
+     * 
+     * @param code code
+     * @return 返回结果
+     */
     public static ResultCode getValue(String code) {
         for (ResultCode value : values()) {
             if (value.getCode().equals(code)) {

@@ -25,11 +25,23 @@ import reactor.core.publisher.Flux;
 public class IndexController extends BaseController {
     private final AISearchService aiSearchService;
 
+    /**
+     * 用途：执行 index 操作。
+     * 
+     * 入参：无。
+     * @return 返回结果
+     */
     @GetMapping
     public Result<String> index() {
         return Result.success("欢迎使用图书管理系统！");
     }
 
+    /**
+     * 用途：执行 stream chat 操作。
+     * 
+     * @param message message
+     * @return 返回结果
+     */
     @GetMapping(value = "/chat", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<ChatResponse> streamChat(@RequestParam(value = "message", defaultValue = "你好", required = false) String message) {
         Long conversationId = SecurityUtils.getUserId();

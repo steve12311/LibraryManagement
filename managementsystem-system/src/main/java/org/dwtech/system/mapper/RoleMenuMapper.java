@@ -16,9 +16,27 @@ import java.util.Set;
 
 @Mapper
 public interface RoleMenuMapper extends BaseMapper<RoleMenuPO> {
+    /**
+     * 用途：获取 role perms list 信息。
+     * 
+     * @param roleCode role code
+     * @return 结果列表
+     */
     List<RolePermsBO> getRolePermsList(String roleCode);
 
+    /**
+     * 用途：查询 menu ids by role id 列表。
+     * 
+     * @param roleId role ID
+     * @return 结果列表
+     */
     List<Long> listMenuIdsByRoleId(Long roleId);
 
+    /**
+     * 用途：查询 role perms 列表。
+     * 
+     * @param roles roles
+     * @return 结果集合
+     */
     Set<String> listRolePerms(Set<String> roles);
 }

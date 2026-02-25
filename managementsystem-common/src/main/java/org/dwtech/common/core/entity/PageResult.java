@@ -28,6 +28,12 @@ public class PageResult<T> implements Serializable {
 
     private String msg;
 
+    /**
+     * 用途：执行 success 操作。
+     * 
+     * @param page page
+     * @return 返回结果
+     */
     public static <T> PageResult<T> success(IPage<T> page) {
         PageResult<T> result = new PageResult<>();
         result.setCode(ResultCode.SUCCESS.getCode());

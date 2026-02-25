@@ -40,6 +40,12 @@ public class IPUtils {
     private static final String DB_PATH = "/data/ip2region.xdb";
     private static Searcher searcher;
 
+    /**
+     * 用途：初始化 数据。
+     * 
+     * 入参：无。
+     * 返回：无。
+     */
     @PostConstruct
     public void init() {
         try {
@@ -61,6 +67,8 @@ public class IPUtils {
     }
 
     /**
+     * 用途：获取 ip addr 信息。
+     * 
      * 获取IP地址
      *
      * @param request HttpServletRequest对象
@@ -104,15 +112,24 @@ public class IPUtils {
         return ip;
     }
 
+    /**
+     * 用途：校验 ip。
+     * 
+     * @param ip ip
+     * @return 操作结果，true 表示成功，false 表示失败
+     */
     private static boolean checkIp(String ip) {
         String unknown = "unknown";
         return StrUtil.isEmpty(ip) || unknown.equalsIgnoreCase(ip);
     }
 
     /**
+     * 用途：获取 local addr 信息。
+     * 
      * 获取本机的IP地址
      *
      * @return 本机IP地址
+     * 入参：无。
      */
     private static String getLocalAddr() {
         try {
@@ -124,6 +141,8 @@ public class IPUtils {
     }
 
     /**
+     * 用途：获取 region 信息。
+     * 
      * 根据IP地址获取地理位置信息
      *
      * @param ip IP地址

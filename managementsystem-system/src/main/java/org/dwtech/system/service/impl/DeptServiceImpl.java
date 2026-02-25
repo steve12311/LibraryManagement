@@ -31,6 +31,12 @@ import java.util.stream.Collectors;
 public class DeptServiceImpl extends ServiceImpl<DeptMapper, DeptPO> implements DeptService {
     private final DeptConverter deptConverter;
 
+    /**
+     * 用途：获取 dept list 信息。
+     * 
+     * @param queryParams query params
+     * @return 结果列表
+     */
     @Override
     public List<DeptVO> getDeptList(DeptQuery queryParams) {
         // 查询参数
@@ -66,6 +72,12 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, DeptPO> implements 
                 .toList();
     }
 
+    /**
+     * 用途：查询 dept options 列表。
+     * 
+     * 入参：无。
+     * @return 结果列表
+     */
     @Override
     public List<Option<Long>> listDeptOptions() {
         List<DeptPO> deptList = this.list(new LambdaQueryWrapper<DeptPO>()
@@ -94,6 +106,8 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, DeptPO> implements 
     }
 
     /**
+     * 用途：执行 recur dept tree options 操作。
+     * 
      * 递归生成部门表格层级列表
      *
      * @param parentId 父ID
@@ -115,6 +129,8 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, DeptPO> implements 
     }
 
     /**
+     * 用途：执行 recur dept list 操作。
+     * 
      * 递归生成部门树形列表
      *
      * @param parentId 父ID

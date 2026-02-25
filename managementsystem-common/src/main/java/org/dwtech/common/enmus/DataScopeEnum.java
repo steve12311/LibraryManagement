@@ -29,6 +29,13 @@ public enum DataScopeEnum implements IBaseEnum<Integer> {
 
     private final String label;
 
+    /**
+     * 用途：创建 DataScopeEnum 实例。
+     * 
+     * @param value value
+     * @param label label
+     * 返回：无。
+     */
     DataScopeEnum(Integer value, String label) {
         this.value = value;
         this.label = label;

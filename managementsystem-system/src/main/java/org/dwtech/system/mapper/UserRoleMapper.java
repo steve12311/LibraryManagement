@@ -14,6 +14,18 @@ import java.util.Set;
 
 @Mapper
 public interface UserRoleMapper extends BaseMapper<UserRolePO> {
+    /**
+     * 用途：查询 role ids by user id 列表。
+     * 
+     * @param userId user ID
+     * @return 结果集合
+     */
     Set<Long> listRoleIdsByUserId(Long userId);
+    /**
+     * 用途：统计 users for role。
+     * 
+     * @param roleId role ID
+     * @return 数值结果
+     */
     int countUsersForRole(Long roleId);
 }

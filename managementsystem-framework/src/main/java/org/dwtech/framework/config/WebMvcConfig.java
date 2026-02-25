@@ -17,6 +17,12 @@ public class WebMvcConfig implements WebMvcConfigurer {
     @Value("${oss.local.storage-path}")
     private String storagePath;
 
+    /**
+     * 用途：新增 resource handlers。
+     * 
+     * @param registry registry
+     * 返回：无。
+     */
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         // 将本地存储路径映射为Web可访问的路径

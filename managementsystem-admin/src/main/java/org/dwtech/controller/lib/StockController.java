@@ -33,18 +33,36 @@ public class StockController {
     private final VectorTool vectorTool;
     private final PrepareMilvusJson prepareMilvusJson;
 
+    /**
+     * 用途：获取 stock page 信息。
+     * 
+     * @param queryParams query params
+     * @return 返回结果
+     */
     @GetMapping("/page")
     public PageResult<StockPageVO> getStockPage(@Valid StockPageQuery queryParams) {
         IPage<StockPageVO> result = stockService.getStockPage(queryParams);
         return PageResult.success(result);
     }
 
+    /**
+     * 用途：获取 stock 信息。
+     * 
+     * @param isbn isbn
+     * @return 返回结果
+     */
     @GetMapping("/{isbn}")
     public Result<StockForm> getStock(@PathVariable("isbn") String isbn) {
         StockForm result = stockService.getStockFormData(isbn);
         return Result.success(result);
     }
 
+    /**
+     * 用途：新增 stock。
+     * 
+     * @param stockForm stock form
+     * @return 返回结果
+     */
     @PostMapping
     @RepeatSubmit
     @PreAuthorize("@ss.hasPerm('sys:stock:entry')")
@@ -60,6 +78,12 @@ public class StockController {
         return Result.judge(result);
     }
 
+    /**
+     * 用途：执行 out stock 操作。
+     * 
+     * @param stockForm stock form
+     * @return 返回结果
+     */
     @PutMapping
     @RepeatSubmit
     @PreAuthorize("@ss.hasPerm('sys:stock:out')")

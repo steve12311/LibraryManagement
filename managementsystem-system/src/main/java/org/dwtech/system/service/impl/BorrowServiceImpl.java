@@ -34,6 +34,12 @@ public class BorrowServiceImpl extends ServiceImpl<BorrowMapper, BorrowPO> imple
     private final BookService bookService;
     private final StockService stockService;
 
+    /**
+     * 用途：获取 borrow page 信息。
+     * 
+     * @param queryParams query params
+     * @return 分页结果
+     */
     @Override
     public IPage<BorrowVO> getBorrowPage(BorrowPageQuery queryParams) {
         // 参数构建
@@ -46,6 +52,12 @@ public class BorrowServiceImpl extends ServiceImpl<BorrowMapper, BorrowPO> imple
         return borrowConverter.toPageVo(borrowPage);
     }
 
+    /**
+     * 用途：保存 borrow。
+     * 
+     * @param formData form data
+     * @return 操作结果，true 表示成功，false 表示失败
+     */
     @Override
     @Transactional
     public boolean saveBorrow(BorrowForm formData) {
@@ -64,6 +76,13 @@ public class BorrowServiceImpl extends ServiceImpl<BorrowMapper, BorrowPO> imple
         return true;
     }
 
+    /**
+     * 用途：更新 borrow。
+     * 
+     * @param borrowId borrow ID
+     * @param formData form data
+     * @return 操作结果，true 表示成功，false 表示失败
+     */
     @Override
     @Transactional
     public boolean updateBorrow(String borrowId, BorrowForm formData) {

@@ -24,6 +24,12 @@ import java.util.List;
 public class DeptController {
     private final DeptService deptService;
 
+    /**
+     * 用途：获取 dept list 信息。
+     * 
+     * @param queryParams query params
+     * @return 返回结果
+     */
     @GetMapping
     public Result<List<DeptVO>> getDeptList(
             DeptQuery queryParams
@@ -32,6 +38,12 @@ public class DeptController {
         return Result.success(list);
     }
 
+    /**
+     * 用途：获取 dept options 信息。
+     * 
+     * 入参：无。
+     * @return 返回结果
+     */
     @GetMapping("/options")
     public Result<List<Option<Long>>> getDeptOptions() {
         List<Option<Long>> list = deptService.listDeptOptions();

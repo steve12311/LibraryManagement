@@ -33,6 +33,12 @@ public class StockServiceImpl extends ServiceImpl<StockMapper, StockPO> implemen
     private final StockConverter stockConverter;
     private final BookService bookService;
 
+    /**
+     * 用途：获取 stock page 信息。
+     * 
+     * @param queryParams query params
+     * @return 分页结果
+     */
     @Override
     public IPage<StockPageVO> getStockPage(StockPageQuery queryParams) {
         log.info("获取书籍分页：{}", queryParams);
@@ -46,6 +52,12 @@ public class StockServiceImpl extends ServiceImpl<StockMapper, StockPO> implemen
         return stockConverter.toPageVo(stockPage);
     }
 
+    /**
+     * 用途：获取 stock by exacts 信息。
+     * 
+     * @param isbns isbns
+     * @return 结果列表
+     */
     @Override
     public List<StockPageVO> getStockByExacts(List<String> isbns) {
         log.info("查询书籍信息：{}", isbns);
@@ -53,6 +65,12 @@ public class StockServiceImpl extends ServiceImpl<StockMapper, StockPO> implemen
         return stockConverter.toListVo(stockList);
     }
 
+    /**
+     * 用途：新增 stock。
+     * 
+     * @param stockForm stock form
+     * @return 操作结果，true 表示成功，false 表示失败
+     */
     @Override
     @Transactional
     public boolean addStock(StockForm stockForm) {
@@ -78,6 +96,12 @@ public class StockServiceImpl extends ServiceImpl<StockMapper, StockPO> implemen
         return true;
     }
 
+    /**
+     * 用途：执行 out stock 操作。
+     * 
+     * @param stockForm stock form
+     * @return 操作结果，true 表示成功，false 表示失败
+     */
     @Override
     @Transactional
     public boolean outStock(StockForm stockForm) {
@@ -97,6 +121,12 @@ public class StockServiceImpl extends ServiceImpl<StockMapper, StockPO> implemen
         return true;
     }
 
+    /**
+     * 用途：执行 borrow out 操作。
+     * 
+     * @param stockForm stock form
+     * @return 操作结果，true 表示成功，false 表示失败
+     */
     @Override
     @Transactional
     public boolean borrowOut(StockForm stockForm) {
@@ -114,6 +144,12 @@ public class StockServiceImpl extends ServiceImpl<StockMapper, StockPO> implemen
         return true;
     }
 
+    /**
+     * 用途：执行 borrow enter 操作。
+     * 
+     * @param stockForm stock form
+     * @return 操作结果，true 表示成功，false 表示失败
+     */
     @Override
     public boolean borrowEnter(StockForm stockForm) {
         log.info("书籍还书库存开始：{}", stockForm);
@@ -126,6 +162,12 @@ public class StockServiceImpl extends ServiceImpl<StockMapper, StockPO> implemen
         return true;
     }
 
+    /**
+     * 用途：获取 stock form data 信息。
+     * 
+     * @param isbn isbn
+     * @return 返回结果
+     */
     @Override
     public StockForm getStockFormData(String isbn) {
         StockBO stock = this.baseMapper.selectStockById(isbn);

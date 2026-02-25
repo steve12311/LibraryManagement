@@ -26,12 +26,24 @@ import org.springframework.web.bind.annotation.*;
 public class BorrowController {
     private final BorrowService borrowService;
 
+    /**
+     * 用途：获取 borrow page 信息。
+     * 
+     * @param borrowPageQuery borrow page query
+     * @return 返回结果
+     */
     @GetMapping("/page")
     public PageResult<BorrowVO> getBorrowPage(@Valid BorrowPageQuery borrowPageQuery) {
         IPage<BorrowVO> result = borrowService.getBorrowPage(borrowPageQuery);
         return PageResult.success(result);
     }
 
+    /**
+     * 用途：保存 borrow。
+     * 
+     * @param formData form data
+     * @return 返回结果
+     */
     @PostMapping
     @RepeatSubmit
     public Result<?> saveBorrow(@Valid @RequestBody BorrowForm formData) {
@@ -39,6 +51,13 @@ public class BorrowController {
         return Result.judge(result);
     }
 
+    /**
+     * 用途：更新 borrow。
+     * 
+     * @param borrowId borrow ID
+     * @param formData form data
+     * @return 返回结果
+     */
     @PutMapping("/{borrowId}")
     @RepeatSubmit
     public Result<?> updateBorrow(@PathVariable("borrowId") String borrowId, @Valid @RequestBody BorrowForm formData) {

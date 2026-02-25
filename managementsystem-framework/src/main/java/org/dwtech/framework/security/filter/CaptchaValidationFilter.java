@@ -36,12 +36,27 @@ public class CaptchaValidationFilter extends OncePerRequestFilter {
 
     private final CodeGenerator codeGenerator;
 
+    /**
+     * 用途：创建 CaptchaValidationFilter 实例。
+     * 
+     * @param redisTemplate redis template
+     * @param codeGenerator code generator
+     * 返回：无。
+     */
     public CaptchaValidationFilter(RedisTemplate<String, Object> redisTemplate, CodeGenerator codeGenerator) {
         this.redisTemplate = redisTemplate;
         this.codeGenerator = codeGenerator;
     }
 
 
+    /**
+     * 用途：执行 do filter internal 操作。
+     * 
+     * @param request request
+     * @param response response
+     * @param chain chain
+     * 返回：无。
+     */
     @Override
     public void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws ServletException, IOException {
         // 检验登录接口的验证码

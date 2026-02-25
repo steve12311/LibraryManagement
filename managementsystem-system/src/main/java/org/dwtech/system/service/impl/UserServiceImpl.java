@@ -56,6 +56,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserPO> implements 
     private final PermissionService permissionService;
     private final TokenManager tokenManager;
 
+    /**
+     * 用途：获取 auth credentials by username 信息。
+     * 
+     * @param username username
+     * @return 返回结果
+     */
     @Override
     public UserAuthCredentials getAuthCredentialsByUsername(String username) {
         UserAuthCredentials userAuthCredentials = this.baseMapper.getAuthCredentialsByUsername(username);
@@ -68,6 +74,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserPO> implements 
         return userAuthCredentials;
     }
 
+    /**
+     * 用途：获取 user page 信息。
+     * 
+     * @param queryParams query params
+     * @return 分页结果
+     */
     @Override
     public IPage<UserPageVO> getUserPage(UserPageQuery queryParams) {
         // 参数构建
@@ -81,6 +93,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserPO> implements 
         return userConverter.toPageVo(userPage);
     }
 
+    /**
+     * 用途：保存 user。
+     * 
+     * @param formData form data
+     * @return 操作结果，true 表示成功，false 表示失败
+     */
     @Override
     public boolean saveUser(UserForm formData) {
         String username = formData.getUsername();
@@ -106,6 +124,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserPO> implements 
         return result;
     }
 
+    /**
+     * 用途：更新 user。
+     * 
+     * @param userId user ID
+     * @param userForm user form
+     * @return 操作结果，true 表示成功，false 表示失败
+     */
     @Override
     @Transactional
     public boolean updateUser(Long userId, UserForm userForm) {
@@ -133,11 +158,23 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserPO> implements 
         return result;
     }
 
+    /**
+     * 用途：获取 user form data 信息。
+     * 
+     * @param userId user ID
+     * @return 返回结果
+     */
     @Override
     public UserForm getUserFormData(Long userId) {
         return this.baseMapper.getUserFormData(userId);
     }
 
+    /**
+     * 用途：删除 users。
+     * 
+     * @param userIds user ID 列表
+     * @return 操作结果，true 表示成功，false 表示失败
+     */
     @Override
     @Transactional
     public boolean deleteUsers(List<Long> userIds) {
@@ -145,6 +182,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserPO> implements 
         return this.removeByIds(userIds);
     }
 
+    /**
+     * 用途：获取 current user info 信息。
+     * 
+     * 入参：无。
+     * @return 返回结果
+     */
     @Override
     public CurrentUserVO getCurrentUserInfo() {
         String username = SecurityUtils.getUsername();
@@ -174,6 +217,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserPO> implements 
         return userInfoVO;
     }
 
+    /**
+     * 用途：重置 password。
+     * 
+     * @param userId user ID
+     * @param password password
+     * @return 操作结果，true 表示成功，false 表示失败
+     */
     @Override
     public boolean resetPassword(Long userId, String password) {
         if (StrUtil.isBlank(password)) {
@@ -186,6 +236,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserPO> implements 
         );
     }
 
+    /**
+     * 用途：更新 user status。
+     * 
+     * @param userId user ID
+     * @param status status
+     * @return 操作结果，true 表示成功，false 表示失败
+     */
     @Override
     public boolean updateUserStatus(Long userId, Integer status) {
         return this.update(
@@ -194,6 +251,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserPO> implements 
                         .set(UserPO::getStatus, status));
     }
 
+    /**
+     * 用途：修改 password。
+     * 
+     * @param userId user ID
+     * @param formData form data
+     * @return 操作结果，true 表示成功，false 表示失败
+     */
     @Override
     public boolean changePassword(Long userId, PasswordUpdateForm formData) {
         UserPO user = this.getById(userId);
@@ -229,6 +293,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserPO> implements 
         return result;
     }
 
+    /**
+     * 用途：查询 user options 列表。
+     * 
+     * 入参：无。
+     * @return 结果列表
+     */
     @Override
     public List<Option<String>> listUserOptions() {
         List<UserPO> list = this.list(
@@ -238,12 +308,24 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserPO> implements 
         return userConverter.toOptions(list);
     }
 
+    /**
+     * 用途：获取 user profile 信息。
+     * 
+     * @param userId user ID
+     * @return 返回结果
+     */
     @Override
     public UserProfileVO getUserProfile(Long userId) {
         UserBO entity = this.baseMapper.getUserProfile(userId);
         return userConverter.toProfileVo(entity);
     }
 
+    /**
+     * 用途：更新 user profile。
+     * 
+     * @param formData form data
+     * @return 操作结果，true 表示成功，false 表示失败
+     */
     @Override
     public boolean updateUserProfile(UserProfileForm formData) {
         Long userId = SecurityUtils.getUserId();

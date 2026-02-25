@@ -17,6 +17,13 @@ import java.util.List;
 
 @Mapper(componentModel = "spring")
 public interface PublishConverter {
+    /**
+     * 用途：执行 set address from components 操作。
+     * 
+     * @param vo vo
+     * @param po po
+     * 返回：无。
+     */
     @AfterMapping
     default void setAddressFromComponents(@MappingTarget PublishPageVO vo, PublishPO po) {
         StringBuilder addressBuilder = new StringBuilder();
@@ -51,7 +58,12 @@ public interface PublishConverter {
     }
 
     /**
+     * 用途：判断 municipality 状态。
+     * 
      * 判断是否为直辖市
+     * 
+     * @param province province
+     * @return 操作结果，true 表示成功，false 表示失败
      */
     default boolean isMunicipality(String province) {
         if (province == null) return false;
@@ -73,19 +85,55 @@ public interface PublishConverter {
             @Mapping(source = "postalCode", target = "addressCode"),
             @Mapping(source = "telephone", target = "phonenumber")
     })
+    /**
+     * 用途：转换为 page vo。
+     * 
+     * @param po po
+     * @return 返回结果
+     */
     PublishPageVO toPageVo(PublishPO po);
 
+    /**
+     * 用途：转换为 page vo。
+     * 
+     * @param po po
+     * @return 分页结果
+     */
     Page<PublishPageVO> toPageVo(Page<PublishPO> po);
 
+    /**
+     * 用途：转换为 form。
+     * 
+     * @param publish publish
+     * @return 返回结果
+     */
     PublishForm toForm(PublishPO publish);
 
+    /**
+     * 用途：转换为 po。
+     * 
+     * @param publish publish
+     * @return 返回结果
+     */
     PublishPO toPo(PublishForm publish);
 
     @Mappings({
             @Mapping(source = "name", target = "label"),
             @Mapping(source = "id", target = "value")
     })
+    /**
+     * 用途：转换为 option。
+     * 
+     * @param publish publish
+     * @return 返回结果
+     */
     Option<Long> toOption(PublishPO publish);
 
+    /**
+     * 用途：转换为 options。
+     * 
+     * @param list list
+     * @return 结果列表
+     */
     List<Option<Long>> toOptions(List<PublishPO> list);
 }

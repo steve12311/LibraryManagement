@@ -24,12 +24,24 @@ import java.util.List;
 public class CategoryController {
     private final CategoryService categoryService;
 
+    /**
+     * 用途：查询 categories 列表。
+     * 
+     * @param queryParams query params
+     * @return 返回结果
+     */
     @GetMapping
     public Result<List<CategoryVO>> listCategories(CategoryQuery queryParams) {
         List<CategoryVO> categoryList = categoryService.listCategories(queryParams);
         return Result.success(categoryList);
     }
 
+    /**
+     * 用途：查询 category options 列表。
+     * 
+     * 入参：无。
+     * @return 返回结果
+     */
     @GetMapping("/options")
     public Result<List<Option<Long>>> listCategoryOptions() {
         List<Option<Long>> list = categoryService.listCategoryOptions();

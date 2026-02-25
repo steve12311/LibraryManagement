@@ -31,6 +31,12 @@ public class LocalFileServiceImpl implements FileService {
     @Value("${oss.local.storage-path}")
     private String storagePath;
 
+    /**
+     * 用途：执行 upload file 操作。
+     * 
+     * @param file file
+     * @return 返回结果
+     */
     @Override
     public FileInfo uploadFile(MultipartFile file) {
         // 获取文件名
@@ -59,6 +65,12 @@ public class LocalFileServiceImpl implements FileService {
         return fileInfo;
     }
 
+    /**
+     * 用途：删除 file。
+     * 
+     * @param filePath file path
+     * @return 操作结果，true 表示成功，false 表示失败
+     */
     @Override
     public boolean deleteFile(String filePath) {
         //判断文件是否为空

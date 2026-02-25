@@ -11,6 +11,13 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class PrepareMilvusJson {
+    /**
+     * 用途：执行 prepare insert json 操作。
+     * 
+     * @param id 主键 ID
+     * @param vector vector
+     * @return 结果字符串
+     */
     public String prepareInsertJson(String id, float[] vector) {
         JSONObject object = new JSONObject();
         object.set("id", Long.parseLong(id));

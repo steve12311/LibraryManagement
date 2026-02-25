@@ -28,18 +28,36 @@ import java.util.List;
 public class PublishController {
     private final PublishService publishService;
 
+    /**
+     * 用途：获取 publish page 信息。
+     * 
+     * @param queryParams query params
+     * @return 返回结果
+     */
     @GetMapping("/page")
     public PageResult<PublishPageVO> getPublishPage(@Valid PublishPageQuery queryParams) {
         IPage<PublishPageVO> result = publishService.getPublishPage(queryParams);
         return PageResult.success(result);
     }
 
+    /**
+     * 用途：查询 publish options 列表。
+     * 
+     * 入参：无。
+     * @return 返回结果
+     */
     @GetMapping("/options")
     public Result<List<Option<Long>>> listPublishOptions() {
         List<Option<Long>> list = publishService.listPublishOptions();
         return Result.success(list);
     }
 
+    /**
+     * 用途：获取 publish form 信息。
+     * 
+     * @param id 主键 ID
+     * @return 返回结果
+     */
     @GetMapping("/{id}/form")
     @PreAuthorize("@ss.hasPerm('lib:publish:edit')")
     public Result<PublishForm> getPublishForm(@PathVariable("id") Long id) {
@@ -47,6 +65,12 @@ public class PublishController {
         return Result.success(publishForm);
     }
 
+    /**
+     * 用途：新增 publish。
+     * 
+     * @param publishForm publish form
+     * @return 返回结果
+     */
     @PostMapping
     @PreAuthorize("@ss.hasPerm('lib:publish:add')")
     @RepeatSubmit
@@ -55,6 +79,12 @@ public class PublishController {
         return Result.judge(result);
     }
 
+    /**
+     * 用途：更新 publish。
+     * 
+     * @param publishForm publish form
+     * @return 返回结果
+     */
     @PutMapping
     @PreAuthorize("@ss.hasPerm('lib:publish:edit')")
     @RepeatSubmit
@@ -63,6 +93,12 @@ public class PublishController {
         return Result.judge(result);
     }
 
+    /**
+     * 用途：删除 publish。
+     * 
+     * @param ids 主键 ID 列表
+     * @return 返回结果
+     */
     @DeleteMapping("/{ids}")
     @PreAuthorize("@ss.hasPerm('lib:publish:delete')")
     @RepeatSubmit

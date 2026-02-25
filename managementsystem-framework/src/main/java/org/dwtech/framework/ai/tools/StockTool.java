@@ -17,6 +17,12 @@ import java.util.List;
 @RequiredArgsConstructor
 public class StockTool {
     private final StockService stockService;
+    /**
+     * 用途：查询 book stock by isbns。
+     * 
+     * @param isbns isbns
+     * @return 返回结果
+     */
     @Tool(description = "通过ISBN码查询书籍库存")
     Result<List<StockPageVO>> findBookStockByISBNS(List<String> isbns) {
         return Result.success(stockService.getStockByExacts(isbns));

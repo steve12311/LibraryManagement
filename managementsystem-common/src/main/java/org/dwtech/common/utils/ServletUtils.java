@@ -31,14 +31,25 @@ public class ServletUtils {
     private static final SecureRandom secureRandom = new SecureRandom();
 
     /**
+     * 用途：获取 parameter 信息。
+     * 
      * 获取String参数
+     * 
+     * @param name name
+     * @return 结果字符串
      */
     public static String getParameter(String name) {
         return getRequest().getParameter(name);
     }
 
     /**
+     * 用途：获取 parameter 信息。
+     * 
      * 获取String参数
+     * 
+     * @param name name
+     * @param defaultValue default value
+     * @return 结果字符串
      */
     public static String getParameter(String name, String defaultValue) {
         if (name == null) {
@@ -49,14 +60,25 @@ public class ServletUtils {
     }
 
     /**
+     * 用途：获取 parameter to int 信息。
+     * 
      * 获取Integer参数
+     * 
+     * @param name name
+     * @return 数值结果
      */
     public static Integer getParameterToInt(String name) {
         return Integer.parseInt(getRequest().getParameter(name));
     }
 
     /**
+     * 用途：获取 parameter to int 信息。
+     * 
      * 获取Integer参数
+     * 
+     * @param name name
+     * @param defaultValue default value
+     * @return 数值结果
      */
     public static Integer getParameterToInt(String name, Integer defaultValue) {
         if (name == null) {
@@ -67,14 +89,25 @@ public class ServletUtils {
     }
 
     /**
+     * 用途：获取 parameter to bool 信息。
+     * 
      * 获取Boolean参数
+     * 
+     * @param name name
+     * @return 操作结果，true 表示成功，false 表示失败
      */
     public static Boolean getParameterToBool(String name) {
         return Boolean.getBoolean(getRequest().getParameter(name));
     }
 
     /**
+     * 用途：获取 parameter to bool 信息。
+     * 
      * 获取Boolean参数
+     * 
+     * @param name name
+     * @param defaultValue default value
+     * @return 操作结果，true 表示成功，false 表示失败
      */
     public static Boolean getParameterToBool(String name, Boolean defaultValue) {
         if (name == null) {
@@ -85,32 +118,55 @@ public class ServletUtils {
     }
 
     /**
+     * 用途：获取 request 信息。
+     * 
      * 获取request
+     * 
+     * 入参：无。
+     * @return 返回结果
      */
     public static HttpServletRequest getRequest() {
         return getRequestAttributes().getRequest();
     }
 
     /**
+     * 用途：获取 response 信息。
+     * 
      * 获取response
+     * 
+     * 入参：无。
+     * @return 返回结果
      */
     public static HttpServletResponse getResponse() {
         return getRequestAttributes().getResponse();
     }
 
     /**
+     * 用途：获取 session 信息。
+     * 
      * 获取session
+     * 
+     * 入参：无。
+     * @return 返回结果
      */
     public static HttpSession getSession() {
         return getRequest().getSession();
     }
 
+    /**
+     * 用途：获取 request attributes 信息。
+     * 
+     * 入参：无。
+     * @return 返回结果
+     */
     public static ServletRequestAttributes getRequestAttributes() {
         RequestAttributes attributes = RequestContextHolder.getRequestAttributes();
         return (ServletRequestAttributes) attributes;
     }
 
     /**
+     * 用途：执行 render string 操作。
+     * 
      * 将字符串渲染到客户端
      *
      * @param response 渲染对象
@@ -129,7 +185,12 @@ public class ServletUtils {
     }
 
     /**
+     * 用途：校验 agent is mobile。
+     * 
      * 判断User-Agent 是不是来自于手机
+     * 
+     * @param ua ua
+     * @return 操作结果，true 表示成功，false 表示失败
      */
     public static boolean checkAgentIsMobile(String ua) {
         boolean flag = false;
@@ -148,7 +209,12 @@ public class ServletUtils {
     }
 
     /**
+     * 用途：获取 device fingerprint 信息。
+     * 
      * 获取请求设备指纹
+     * 
+     * 入参：无。
+     * @return 结果字符串
      */
     public static String getDeviceFingerprint() {
         HttpServletRequest request = getRequest();
@@ -162,6 +228,8 @@ public class ServletUtils {
     }
 
     /**
+     * 用途：执行 url encode 操作。
+     * 
      * 内容编码
      *
      * @param str 内容
@@ -172,6 +240,8 @@ public class ServletUtils {
     }
 
     /**
+     * 用途：执行 url decode 操作。
+     * 
      * 内容解码
      *
      * @param str 内容
@@ -182,9 +252,12 @@ public class ServletUtils {
     }
 
     /**
+     * 用途：生成 token。
+     * 
      * 生成CSRF Token
      *
      * @return 解码后的内容
+     * 入参：无。
      */
     public static String generateToken() {
         byte[] bytes = new byte[32];

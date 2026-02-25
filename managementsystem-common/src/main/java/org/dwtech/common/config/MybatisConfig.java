@@ -28,7 +28,12 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 public class MybatisConfig {
 
     /**
+     * 用途：执行 mybatis plus interceptor 操作。
+     * 
      * 分页插件和数据权限插件
+     * 
+     * 入参：无。
+     * @return 返回结果
      */
     @Bean
     public MybatisPlusInterceptor mybatisPlusInterceptor() {
@@ -42,7 +47,12 @@ public class MybatisConfig {
     }
 
     /**
+     * 用途：执行 global config 操作。
+     * 
      * 自动填充数据库创建人、创建时间、更新人、更新时间
+     * 
+     * 入参：无。
+     * @return 返回结果
      */
     @Bean
     public GlobalConfig globalConfig() {

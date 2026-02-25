@@ -48,6 +48,13 @@ public class JwtTokenManager implements TokenManager {
     private final RedisTemplate<String, Object> redisTemplate;
     private final byte[] secretKey;
 
+    /**
+     * 用途：创建 JwtTokenManager 实例。
+     * 
+     * @param securityProperties security properties
+     * @param redisTemplate redis template
+     * 返回：无。
+     */
     public JwtTokenManager(SecurityProperties securityProperties, RedisTemplate<String, Object> redisTemplate) {
         this.securityProperties = securityProperties;
         this.redisTemplate = redisTemplate;
@@ -55,6 +62,8 @@ public class JwtTokenManager implements TokenManager {
     }
 
     /**
+     * 用途：生成 token。
+     * 
      * 生成令牌
      *
      * @param authentication 认证信息
@@ -77,6 +86,8 @@ public class JwtTokenManager implements TokenManager {
     }
 
     /**
+     * 用途：解析 token。
+     * 
      * 解析令牌
      *
      * @param token JWT Token
@@ -103,6 +114,8 @@ public class JwtTokenManager implements TokenManager {
     }
 
     /**
+     * 用途：校验 token。
+     * 
      * 校验令牌
      *
      * @param token JWT Token
@@ -114,6 +127,8 @@ public class JwtTokenManager implements TokenManager {
     }
 
     /**
+     * 用途：校验 refresh token。
+     * 
      * 校验刷新令牌
      *
      * @param refreshToken JWT Token
@@ -125,6 +140,8 @@ public class JwtTokenManager implements TokenManager {
     }
 
     /**
+     * 用途：校验 token。
+     * 
      * 校验令牌
      *
      * @param token                JWT Token
@@ -161,9 +178,12 @@ public class JwtTokenManager implements TokenManager {
     }
 
     /**
+     * 用途：执行 invalidate token 操作。
+     * 
      * 将令牌加入黑名单
      *
      * @param token JWT Token
+     * 返回：无。
      */
     @Override
     public void invalidateToken(String token) {
@@ -197,6 +217,8 @@ public class JwtTokenManager implements TokenManager {
     }
 
     /**
+     * 用途：刷新 token。
+     * 
      * 刷新令牌
      *
      * @param refreshToken 刷新令牌
@@ -220,6 +242,8 @@ public class JwtTokenManager implements TokenManager {
     }
 
     /**
+     * 用途：生成 token。
+     * 
      * 生成 JWT Token
      *
      * @param authentication 认证信息
@@ -232,6 +256,8 @@ public class JwtTokenManager implements TokenManager {
 
 
     /**
+     * 用途：生成 token。
+     * 
      * 生成 JWT Token
      *
      * @param authentication 认证信息

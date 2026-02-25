@@ -29,6 +29,13 @@ import java.util.stream.Collectors;
 public class UserRoleServiceImpl extends ServiceImpl<UserRoleMapper, UserRolePO> implements UserRoleService {
     private final TokenManager tokenManager;
 
+    /**
+     * 用途：保存 user roles。
+     * 
+     * @param userId user ID
+     * @param roleIds role ID 列表
+     * 返回：无。
+     */
     @Override
     @Transactional
     @CacheEvict(cacheNames = "menu", allEntries = true)
@@ -86,6 +93,13 @@ public class UserRoleServiceImpl extends ServiceImpl<UserRoleMapper, UserRolePO>
         }
     }
 
+    /**
+     * 用途：分配 users to role。
+     * 
+     * @param roleId role ID
+     * @param userIds user ID 列表
+     * 返回：无。
+     */
     @Override
     @Transactional
     @CacheEvict(cacheNames = "menu", allEntries = true)
@@ -110,6 +124,12 @@ public class UserRoleServiceImpl extends ServiceImpl<UserRoleMapper, UserRolePO>
                 .toList());
     }
 
+    /**
+     * 用途：判断是否存在 assigned users。
+     * 
+     * @param roleId role ID
+     * @return 操作结果，true 表示成功，false 表示失败
+     */
     @Override
     public boolean hasAssignedUsers(Long roleId) {
         int count = this.baseMapper.countUsersForRole(roleId);

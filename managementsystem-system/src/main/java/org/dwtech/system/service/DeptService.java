@@ -13,7 +13,19 @@ import java.util.List;
  */
 
 public interface DeptService {
+    /**
+     * 用途：获取 dept list 信息。
+     * 
+     * @param queryParams query params
+     * @return 结果列表
+     */
     List<DeptVO> getDeptList(DeptQuery queryParams);
 
+    /**
+     * 用途：查询 dept options 列表。
+     * 
+     * 入参：无。
+     * @return 结果列表
+     */
     List<Option<Long>> listDeptOptions();
 }

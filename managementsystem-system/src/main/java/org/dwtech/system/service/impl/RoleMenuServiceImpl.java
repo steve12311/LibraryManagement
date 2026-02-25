@@ -29,7 +29,12 @@ public class RoleMenuServiceImpl extends ServiceImpl<RoleMenuMapper, RoleMenuPO>
     private final RedisTemplate<String, Object> redisTemplate;
 
     /**
+     * 用途：初始化 role perms cache。
+     * 
      * 初始化权限缓存
+     * 
+     * 入参：无。
+     * 返回：无。
      */
     @PostConstruct
     public void initRolePermsCache() {
@@ -37,13 +42,24 @@ public class RoleMenuServiceImpl extends ServiceImpl<RoleMenuMapper, RoleMenuPO>
         refreshRolePermsCache();
     }
 
+    /**
+     * 用途：查询 menu ids by role id 列表。
+     * 
+     * @param roleId role ID
+     * @return 结果列表
+     */
     @Override
     public List<Long> listMenuIdsByRoleId(Long roleId) {
         return this.baseMapper.listMenuIdsByRoleId(roleId);
     }
 
     /**
+     * 用途：刷新 role perms cache。
+     * 
      * 刷新权限缓存
+     * 
+     * 入参：无。
+     * 返回：无。
      */
     @Override
     public void refreshRolePermsCache() {
@@ -62,6 +78,12 @@ public class RoleMenuServiceImpl extends ServiceImpl<RoleMenuMapper, RoleMenuPO>
         }
     }
 
+    /**
+     * 用途：刷新 role perms cache。
+     * 
+     * @param roleCode role code
+     * 返回：无。
+     */
     @Override
     public void refreshRolePermsCache(String roleCode) {
 // 清理权限缓存
@@ -81,6 +103,13 @@ public class RoleMenuServiceImpl extends ServiceImpl<RoleMenuMapper, RoleMenuPO>
         }
     }
 
+    /**
+     * 用途：刷新 role perms cache。
+     * 
+     * @param oldRoleCode old role code
+     * @param newRoleCode new role code
+     * 返回：无。
+     */
     @Override
     public void refreshRolePermsCache(String oldRoleCode, String newRoleCode) {
 // 清理旧角色权限缓存
@@ -99,13 +128,24 @@ public class RoleMenuServiceImpl extends ServiceImpl<RoleMenuMapper, RoleMenuPO>
         }
     }
 
+    /**
+     * 用途：获取 role perms by role codes 信息。
+     * 
+     * @param roles roles
+     * @return 结果集合
+     */
     @Override
     public Set<String> getRolePermsByRoleCodes(Set<String> roles) {
         return this.baseMapper.listRolePerms(roles);
     }
 
     /**
+     * 用途：执行 clear all role perms cache 操作。
+     * 
      * 清空角色权限缓存
+     * 
+     * 入参：无。
+     * 返回：无。
      */
     private void clearAllRolePermsCache() {
         Set<Object> cacheRoleCodes = redisTemplate.opsForHash().keys(RedisConstants.System.ROLE_PERMS);

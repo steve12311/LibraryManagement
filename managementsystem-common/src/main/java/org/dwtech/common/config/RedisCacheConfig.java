@@ -26,6 +26,8 @@ import org.springframework.data.redis.serializer.RedisSerializer;
 public class RedisCacheConfig {
 
     /**
+     * 用途：执行 redis cache manager 操作。
+     * 
      * 自定义 RedisCacheManager
      * <p>
      * 修改 Redis 序列化方式，默认 JdkSerializationRedisSerializer
@@ -42,6 +44,8 @@ public class RedisCacheConfig {
     }
 
     /**
+     * 用途：执行 redis cache configuration 操作。
+     * 
      * 自定义 RedisCacheConfiguration
      *
      * @param cacheProperties {@link CacheProperties}

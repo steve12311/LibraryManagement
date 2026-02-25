@@ -31,6 +31,12 @@ import java.util.List;
 public class PublishServiceImpl extends ServiceImpl<PublishMapper, PublishPO> implements PublishService {
     private final PublishConverter publishConverter;
 
+    /**
+     * 用途：获取 publish page 信息。
+     * 
+     * @param queryParams query params
+     * @return 分页结果
+     */
     @Override
     public IPage<PublishPageVO> getPublishPage(PublishPageQuery queryParams) {
         int pageNum = queryParams.getPageNum();
@@ -42,6 +48,12 @@ public class PublishServiceImpl extends ServiceImpl<PublishMapper, PublishPO> im
         return publishConverter.toPageVo(publish);
     }
 
+    /**
+     * 用途：获取 publish form 信息。
+     * 
+     * @param id 主键 ID
+     * @return 返回结果
+     */
     @Override
     public PublishForm getPublishForm(Long id) {
         PublishPO publish = this.getById(id);
@@ -49,6 +61,12 @@ public class PublishServiceImpl extends ServiceImpl<PublishMapper, PublishPO> im
         return publishConverter.toForm(publish);
     }
 
+    /**
+     * 用途：保存 publish。
+     * 
+     * @param publishForm publish form
+     * @return 操作结果，true 表示成功，false 表示失败
+     */
     @Override
     @CacheEvict(cacheNames = "publish", allEntries = true)
     public boolean savePublish(PublishForm publishForm) {
@@ -56,6 +74,12 @@ public class PublishServiceImpl extends ServiceImpl<PublishMapper, PublishPO> im
         return this.save(publish);
     }
 
+    /**
+     * 用途：删除 publish。
+     * 
+     * @param ids 主键 ID 列表
+     * @return 操作结果，true 表示成功，false 表示失败
+     */
     @Override
     @CacheEvict(cacheNames = "publish", allEntries = true)
     public boolean deletePublish(List<Long> ids) {
@@ -63,6 +87,12 @@ public class PublishServiceImpl extends ServiceImpl<PublishMapper, PublishPO> im
         return this.removeByIds(ids);
     }
 
+    /**
+     * 用途：查询 publish options 列表。
+     * 
+     * 入参：无。
+     * @return 结果列表
+     */
     @Override
     @Cacheable(cacheNames = "publish", key = "'options'")
     public List<Option<Long>> listPublishOptions() {
@@ -70,6 +100,12 @@ public class PublishServiceImpl extends ServiceImpl<PublishMapper, PublishPO> im
         return publishConverter.toOptions(list);
     }
 
+    /**
+     * 用途：更新 publish。
+     * 
+     * @param publishForm publish form
+     * @return 操作结果，true 表示成功，false 表示失败
+     */
     @Override
     @CacheEvict(cacheNames = "publish", allEntries = true)
     public boolean updatePublish(PublishForm publishForm) {

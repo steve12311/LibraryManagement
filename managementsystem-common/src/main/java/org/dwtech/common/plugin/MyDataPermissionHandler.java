@@ -23,6 +23,13 @@ import java.lang.reflect.Method;
 
 @Slf4j
 public class MyDataPermissionHandler implements DataPermissionHandler {
+    /**
+     * 用途：获取 sql segment 信息。
+     * 
+     * @param where where
+     * @param mappedStatementId mapped statement ID
+     * @return 返回结果
+     */
     @Override
     @SneakyThrows
     public Expression getSqlSegment(Expression where, String mappedStatementId) {
@@ -57,10 +64,17 @@ public class MyDataPermissionHandler implements DataPermissionHandler {
     }
 
     /**
+     * 用途：执行 data scope filter 操作。
+     * 
      * 构建过滤条件
      *
      * @param where 当前查询条件
      * @return 构建后查询条件
+     * @param deptAlias dept alias
+     * @param deptIdColumnName dept id column name
+     * @param userAlias user alias
+     * @param userIdColumnName user id column name
+     * @param dataScopeEnum data scope enum
      */
     @SneakyThrows
     public static Expression dataScopeFilter(String deptAlias, String deptIdColumnName, String userAlias, String userIdColumnName, DataScopeEnum dataScopeEnum, Expression where) {

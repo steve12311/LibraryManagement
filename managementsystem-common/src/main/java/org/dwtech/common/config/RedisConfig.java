@@ -22,6 +22,8 @@ import org.springframework.data.redis.serializer.RedisSerializer;
 public class RedisConfig {
 
     /**
+     * 用途：执行 redis template 操作。
+     * 
      * 自定义 RedisTemplate
      * <p>
      * 修改 Redis 序列化方式，默认 JdkSerializationRedisSerializer

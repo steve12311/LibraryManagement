@@ -15,6 +15,8 @@ import org.springframework.security.core.Authentication;
 public interface TokenManager {
 
     /**
+     * 用途：生成 token。
+     * 
      * 生成认证 Token
      *
      * @param authentication 用户认证信息
@@ -23,6 +25,8 @@ public interface TokenManager {
     AuthenticationToken generateToken(Authentication authentication);
 
     /**
+     * 用途：解析 token。
+     * 
      * 解析 Token 获取认证信息
      *
      * @param token  Token
@@ -31,6 +35,8 @@ public interface TokenManager {
     Authentication parseToken(String token);
 
     /**
+     * 用途：校验 token。
+     * 
      * 校验 Token 是否有效
      *
      * @param token JWT Token
@@ -39,6 +45,8 @@ public interface TokenManager {
     boolean validateToken(String token);
 
     /**
+     * 用途：校验 refresh token。
+     * 
      * 校验 刷新 Token 是否有效
      *
      * @param refreshToken JWT Token
@@ -47,6 +55,8 @@ public interface TokenManager {
     boolean validateRefreshToken(String refreshToken);
 
     /**
+     * 用途：刷新 token。
+     * 
      *  刷新 Token
      *
      * @param token 刷新令牌
@@ -55,9 +65,12 @@ public interface TokenManager {
     AuthenticationToken refreshToken(String token);
 
     /**
+     * 用途：执行 invalidate token 操作。
+     * 
      * 令 Token 失效
      *
      * @param token Token
+     * 返回：无。
      */
     default void invalidateToken(String token) {
         // 默认实现可以是空的，或者抛出不支持的操作异常

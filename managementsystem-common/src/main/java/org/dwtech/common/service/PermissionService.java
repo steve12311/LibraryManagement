@@ -26,6 +26,8 @@ public class PermissionService {
     private final RedisTemplate<String, Object> redisTemplate;
 
     /**
+     * 用途：判断是否存在 perm。
+     * 
      * 判断当前登录用户是否拥有操作权限
      *
      * @param requiredPerm 所需权限
@@ -67,6 +69,8 @@ public class PermissionService {
 
 
     /**
+     * 用途：获取 role perms from cache 信息。
+     * 
      * 从缓存中获取角色权限列表
      *
      * @param roleCodes 角色编码集合
@@ -95,7 +99,11 @@ public class PermissionService {
     }
 
     /**
+     * 用途：获取 role perms form cache 信息。
+     * 
      * @deprecated 保留旧方法名用于兼容，后续统一使用 getRolePermsFromCache
+     * @param roleCodes role codes
+     * @return 结果集合
      */
     @Deprecated
     public Set<String> getRolePermsFormCache(Set<String> roleCodes) {

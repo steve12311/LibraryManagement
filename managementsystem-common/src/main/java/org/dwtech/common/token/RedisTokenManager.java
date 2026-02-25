@@ -37,12 +37,21 @@ public class RedisTokenManager implements TokenManager {
     private final SecurityProperties securityProperties;
     private final RedisTemplate<String, Object> redisTemplate;
 
+    /**
+     * 用途：创建 RedisTokenManager 实例。
+     * 
+     * @param securityProperties security properties
+     * @param redisTemplate redis template
+     * 返回：无。
+     */
     public RedisTokenManager(SecurityProperties securityProperties, RedisTemplate<String, Object> redisTemplate) {
         this.securityProperties = securityProperties;
         this.redisTemplate = redisTemplate;
     }
 
     /**
+     * 用途：生成 token。
+     * 
      * 生成 Token
      *
      * @param authentication 用户认证信息
@@ -79,6 +88,8 @@ public class RedisTokenManager implements TokenManager {
     }
 
     /**
+     * 用途：解析 token。
+     * 
      * 根据 token 解析用户信息
      *
      * @param token Redis Token
@@ -105,6 +116,8 @@ public class RedisTokenManager implements TokenManager {
     }
 
     /**
+     * 用途：校验 token。
+     * 
      * 校验 Token 是否有效
      *
      * @param token 访问令牌
@@ -116,6 +129,8 @@ public class RedisTokenManager implements TokenManager {
     }
 
     /**
+     * 用途：校验 refresh token。
+     * 
      * 校验 RefreshToken 是否有效
      *
      * @param refreshToken 访问令牌
@@ -127,6 +142,8 @@ public class RedisTokenManager implements TokenManager {
     }
 
     /**
+     * 用途：刷新 token。
+     * 
      * 刷新令牌
      *
      * @param refreshToken 刷新令牌
@@ -159,9 +176,12 @@ public class RedisTokenManager implements TokenManager {
     }
 
     /**
+     * 用途：执行 invalidate token 操作。
+     * 
      * 使访问令牌失效
      *
      * @param token 访问令牌
+     * 返回：无。
      */
     @Override
     public void invalidateToken(String token) {
@@ -187,11 +207,14 @@ public class RedisTokenManager implements TokenManager {
     }
 
     /**
+     * 用途：执行 store tokens in redis 操作。
+     * 
      * 将访问令牌和刷新令牌存储至 Redis
      *
      * @param accessToken  访问令牌
      * @param refreshToken 刷新令牌
      * @param onlineUser   在线用户信息
+     * 返回：无。
      */
     private void storeTokensInRedis(String accessToken, String refreshToken, OnlineUser onlineUser) {
         // 访问令牌 -> 用户信息
@@ -208,10 +231,13 @@ public class RedisTokenManager implements TokenManager {
     }
 
     /**
+     * 用途：处理 single device login。
+     * 
      * 处理单设备登录控制
      *
      * @param userId      用户ID
      * @param accessToken 新生成的访问令牌
+     * 返回：无。
      */
     private void handleSingleDeviceLogin(Long userId, String accessToken) {
         Boolean allowMultiLogin = securityProperties.getSession().getRedisToken().getAllowMultiLogin();
@@ -228,10 +254,13 @@ public class RedisTokenManager implements TokenManager {
     }
 
     /**
+     * 用途：执行 store access token 操作。
+     * 
      * 存储新的访问令牌
      *
      * @param newAccessToken 新访问令牌
      * @param onlineUser     在线用户信息
+     * 返回：无。
      */
     private void storeAccessToken(String newAccessToken, OnlineUser onlineUser) {
         setRedisValue(StrUtil.format(RedisConstants.Auth.ACCESS_TOKEN_USER, newAccessToken), onlineUser, securityProperties.getSession().getAccessTokenTimeToLive());
@@ -240,6 +269,8 @@ public class RedisTokenManager implements TokenManager {
     }
 
     /**
+     * 用途：构建 user details。
+     * 
      * 构建用户详情对象
      *
      * @param onlineUser  在线用户信息
@@ -257,6 +288,8 @@ public class RedisTokenManager implements TokenManager {
     }
 
     /**
+     * 用途：执行 format token key 操作。
+     * 
      * 格式化访问令牌的 Redis 键
      *
      * @param token 访问令牌
@@ -267,6 +300,8 @@ public class RedisTokenManager implements TokenManager {
     }
 
     /**
+     * 用途：执行 format refresh token key 操作。
+     * 
      * 格式化刷新令牌的 Redis 键
      *
      * @param refreshToken 访问令牌
@@ -277,11 +312,14 @@ public class RedisTokenManager implements TokenManager {
     }
 
     /**
+     * 用途：执行 set redis value 操作。
+     * 
      * 将值存储到 Redis
      *
      * @param key   键
      * @param value 值
      * @param ttl   过期时间（秒），-1表示永不过期
+     * 返回：无。
      */
     private void setRedisValue(String key, Object value, int ttl) {
         if (ttl != -1) {

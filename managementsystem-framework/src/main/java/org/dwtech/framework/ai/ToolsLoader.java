@@ -26,10 +26,22 @@ public class ToolsLoader {
     private final ApplicationContext applicationContext;
     private volatile List<Object> cachedTools;
 
+    /**
+     * 用途：创建 ToolsLoader 实例。
+     * 
+     * @param applicationContext application context
+     * 返回：无。
+     */
     public ToolsLoader(ApplicationContext applicationContext) {
         this.applicationContext = applicationContext;
     }
 
+    /**
+     * 用途：获取 all tools 信息。
+     * 
+     * 入参：无。
+     * @return 结果列表
+     */
     public List<Object> getAllTools() {
         List<Object> tools = cachedTools;
         if (tools != null) {
@@ -43,6 +55,12 @@ public class ToolsLoader {
         }
     }
 
+    /**
+     * 用途：执行 scan tools 操作。
+     * 
+     * 入参：无。
+     * @return 结果列表
+     */
     private List<Object> scanTools() {
         ClassPathScanningCandidateComponentProvider scanner =
                 new ClassPathScanningCandidateComponentProvider(false);
@@ -72,10 +90,22 @@ public class ToolsLoader {
         return tools;
     }
 
+    /**
+     * 用途：执行 match all filter 操作。
+     * 
+     * 入参：无。
+     * @return 返回结果
+     */
     private TypeFilter matchAllFilter() {
         return (metadataReader, metadataReaderFactory) -> true;
     }
 
+    /**
+     * 用途：执行 resolve tools package 操作。
+     * 
+     * 入参：无。
+     * @return 结果字符串
+     */
     private String resolveToolsPackage() {
         String basePackage = ToolsLoader.class.getPackageName();
         if (basePackage.endsWith("." + TOOLS_PACKAGE_SUFFIX)) {
@@ -84,6 +114,12 @@ public class ToolsLoader {
         return basePackage + "." + TOOLS_PACKAGE_SUFFIX;
     }
 
+    /**
+     * 用途：判断是否存在 tool methods。
+     * 
+     * @param toolClass tool class
+     * @return 操作结果，true 表示成功，false 表示失败
+     */
     private boolean hasToolMethods(Class<?> toolClass) {
         for (var method : toolClass.getDeclaredMethods()) {
             if (method.isAnnotationPresent(Tool.class)) {
@@ -93,6 +129,12 @@ public class ToolsLoader {
         return false;
     }
 
+    /**
+     * 用途：加载 class。
+     * 
+     * @param className class name
+     * @return 返回结果
+     */
     private Class<?> loadClass(String className) {
         try {
             return Class.forName(className);

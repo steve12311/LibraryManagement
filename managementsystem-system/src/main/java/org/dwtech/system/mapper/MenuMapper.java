@@ -16,5 +16,11 @@ import java.util.Set;
 
 @Mapper
 public interface MenuMapper extends BaseMapper<MenuPO> {
+    /**
+     * 用途：获取 menus by role codes 信息。
+     * 
+     * @param roleCodes role codes
+     * @return 结果列表
+     */
     List<MenuPO> getMenusByRoleCodes(@Param("roleCodes") Set<String> roleCodes);
 }

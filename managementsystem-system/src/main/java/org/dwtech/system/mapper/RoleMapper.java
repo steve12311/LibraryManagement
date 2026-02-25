@@ -15,5 +15,11 @@ import java.util.Set;
 
 @Mapper
 public interface RoleMapper extends BaseMapper<RolePO> {
+    /**
+     * 用途：获取 maximum data scope 信息。
+     * 
+     * @param roles roles
+     * @return 数值结果
+     */
     Integer getMaximumDataScope(@Param("roles") Set<String> roles);
 }

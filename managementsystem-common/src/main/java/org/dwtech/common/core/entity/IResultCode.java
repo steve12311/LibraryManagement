@@ -8,8 +8,20 @@ package org.dwtech.common.core.entity;
  **/
 public interface IResultCode {
 
+    /**
+     * 用途：获取 code 信息。
+     * 
+     * 入参：无。
+     * @return 结果字符串
+     */
     String getCode();
 
+    /**
+     * 用途：获取 msg 信息。
+     * 
+     * 入参：无。
+     * @return 结果字符串
+     */
     String getMsg();
 
 }

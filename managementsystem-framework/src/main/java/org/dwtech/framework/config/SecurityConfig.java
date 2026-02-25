@@ -44,6 +44,12 @@ public class SecurityConfig {
     private final SecurityProperties securityProperties;
     private final CodeGenerator codeGenerator;
 
+    /**
+     * 用途：执行 filter chain 操作。
+     * 
+     * @param httpSecurity http security
+     * @return 返回结果
+     */
     @Bean
     SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
         return httpSecurity
@@ -70,6 +76,12 @@ public class SecurityConfig {
                 .build();
     }
 
+    /**
+     * 用途：执行 web security customizer 操作。
+     * 
+     * 入参：无。
+     * @return 返回结果
+     */
     @Bean
     public WebSecurityCustomizer webSecurityCustomizer() {
         return (web) -> {
@@ -81,7 +93,12 @@ public class SecurityConfig {
     }
 
     /**
+     * 用途：执行 dao authentication provider 操作。
+     * 
      * 默认密码认证的 Provider
+     * 
+     * 入参：无。
+     * @return 返回结果
      */
     @Bean
     public DaoAuthenticationProvider daoAuthenticationProvider() {
@@ -91,7 +108,12 @@ public class SecurityConfig {
     }
 
     /**
+     * 用途：执行 authentication manager 操作。
+     * 
      * 认证管理器
+     * 
+     * @param daoAuthenticationProvider dao authentication provider
+     * @return 返回结果
      */
     @Bean
     public AuthenticationManager authenticationManager(

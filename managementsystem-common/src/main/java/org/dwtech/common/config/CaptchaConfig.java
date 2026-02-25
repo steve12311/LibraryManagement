@@ -21,6 +21,12 @@ import java.awt.*;
 public class CaptchaConfig {
     private final CaptchaProperties captchaProperties;
 
+    /**
+     * 用途：执行 code generator 操作。
+     * 
+     * 入参：无。
+     * @return 返回结果
+     */
     @Bean
     public CodeGenerator codeGenerator() {
         String codeType = captchaProperties.getCode().getType();
@@ -35,7 +41,12 @@ public class CaptchaConfig {
     }
 
     /**
+     * 用途：执行 captcha font 操作。
+     * 
      * 验证码字体
+     * 
+     * 入参：无。
+     * @return 返回结果
      */
     @Bean
     public Font captchaFont() {

@@ -30,12 +30,24 @@ public class BookController {
     private final VectorTool vectorTool;
     private final PrepareMilvusJson prepareMilvusJson;
 
+    /**
+     * 用途：获取 book form data 信息。
+     * 
+     * @param isbn isbn
+     * @return 返回结果
+     */
     @GetMapping({"/{isbn}/form"})
     public Result<BookForm> getBookFormData(@PathVariable("isbn") String isbn) {
         BookForm bookForm = bookService.getBookByIsbn(isbn);
         return Result.success(bookForm);
     }
 
+    /**
+     * 用途：更新 book。
+     * 
+     * @param bookForm book form
+     * @return 返回结果
+     */
     @PutMapping
     @RepeatSubmit
     @PreAuthorize("@ss.hasPerm('sys:stock:edit')")
@@ -49,6 +61,12 @@ public class BookController {
         return Result.judge(result);
     }
 
+    /**
+     * 用途：查询 book options 列表。
+     * 
+     * 入参：无。
+     * @return 返回结果
+     */
     @GetMapping("/options")
     public Result<List<Option<Long>>> listBookOptions() {
         List<Option<Long>> list = bookService.listBookOptions();

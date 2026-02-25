@@ -12,5 +12,11 @@ import org.mapstruct.Mapper;
 
 @Mapper(componentModel = "spring")
 public interface DeptConverter {
+    /**
+     * 用途：转换为 vo。
+     * 
+     * @param dept dept
+     * @return 返回结果
+     */
     DeptVO toVo(DeptPO dept);
 }

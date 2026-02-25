@@ -24,7 +24,12 @@ public class AuthController {
     private final AuthService authService;
 
     /**
+     * 用途：获取 kaptcha 信息。
+     * 
      * 验证码生成
+     * 
+     * 入参：无。
+     * @return 返回结果
      */
     @GetMapping("/captcha")
     public Result<CaptchaVO> getKaptcha() {
@@ -33,7 +38,12 @@ public class AuthController {
     }
 
     /**
+     * 用途：执行 login 操作。
+     * 
      * 账号密码登录
+     * 
+     * @param formData form data
+     * @return 返回结果
      */
     @PostMapping("/login")
     public Result<AuthenticationToken> login(@Validated @RequestBody UserLoginForm formData) {
@@ -41,12 +51,24 @@ public class AuthController {
         return Result.success(token);
     }
 
+    /**
+     * 用途：执行 logout 操作。
+     * 
+     * 入参：无。
+     * @return 返回结果
+     */
     @DeleteMapping("/logout")
     public Result<?> logout() {
         authService.logout();
         return Result.success();
     }
 
+    /**
+     * 用途：刷新 token。
+     * 
+     * @param refreshToken refresh token
+     * @return 返回结果
+     */
     @PostMapping("refresh-token")
     public Result<AuthenticationToken> refreshToken(
             @RequestParam("refreshToken") String refreshToken

@@ -16,5 +16,12 @@ import org.dwtech.system.model.query.BorrowPageQuery;
 
 @Mapper
 public interface BorrowMapper extends BaseMapper<BorrowPO> {
+    /**
+     * 用途：获取 borrow page 信息。
+     * 
+     * @param page page
+     * @param queryParams query params
+     * @return 分页结果
+     */
     Page<BorrowBO> getBorrowPage(Page<BorrowBO> page, @Param("queryParams") BorrowPageQuery queryParams);
 }

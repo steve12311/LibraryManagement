@@ -26,19 +26,67 @@ public interface StockConverter {
             @Mapping(source = "currentStock", target = "currentNumber"),
             @Mapping(source = "cover", target = "bookImage")
     })
+    /**
+     * 用途：转换为 page vo。
+     * 
+     * @param bo bo
+     * @return 返回结果
+     */
     StockPageVO toPageVo(StockBO bo);
 
+    /**
+     * 用途：转换为 bo。
+     * 
+     * @param form form
+     * @return 返回结果
+     */
     StockBO toBo(StockForm form);
 
+    /**
+     * 用途：转换为 po。
+     * 
+     * @param bo bo
+     * @return 返回结果
+     */
     StockPO toPo(StockBO bo);
 
+    /**
+     * 用途：转换为 po。
+     * 
+     * @param form form
+     * @return 返回结果
+     */
     StockPO toPo(StockForm form);
 
+    /**
+     * 用途：转换为 book po。
+     * 
+     * @param bo bo
+     * @return 返回结果
+     */
     BookPO toBookPo(StockBO bo);
 
+    /**
+     * 用途：转换为 page vo。
+     * 
+     * @param bo bo
+     * @return 分页结果
+     */
     Page<StockPageVO> toPageVo(Page<StockBO> bo);
 
+    /**
+     * 用途：转换为 list vo。
+     * 
+     * @param bo bo
+     * @return 结果列表
+     */
     List<StockPageVO> toListVo(List<StockBO> bo);
 
+    /**
+     * 用途：转换为 form。
+     * 
+     * @param stock stock
+     * @return 返回结果
+     */
     StockForm toForm(StockBO stock);
 }

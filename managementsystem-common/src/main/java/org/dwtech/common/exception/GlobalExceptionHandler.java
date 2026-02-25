@@ -30,9 +30,14 @@ import java.util.stream.Collectors;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
     /**
+     * 用途：处理 exception。
+     * 
      * 处理绑定异常
      * <p>
      * 当请求参数绑定到对象时发生错误，会抛出 BindException 异常。
+     * 
+     * @param e e
+     * @return 返回结果
      */
     @ExceptionHandler(BindException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
@@ -43,10 +48,15 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * 用途：处理 exception。
+     * 
      * 处理 @RequestParam 参数校验异常
      * <p>
      * 当请求参数在校验过程中发生违反约束条件的异常时（如 @RequestParam 验证不通过），
      * 会捕获到 ConstraintViolationException 异常。
+     * 
+     * @param e e
+     * @return 返回结果
      */
     @ExceptionHandler(ConstraintViolationException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
@@ -57,10 +67,15 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * 用途：处理 exception。
+     * 
      * 处理方法参数校验异常
      * <p>
      * 当使用 @Valid 或 @Validated 注解对方法参数进行验证时，如果验证失败，
      * 会抛出 MethodArgumentNotValidException 异常。
+     * 
+     * @param e e
+     * @return 返回结果
      */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
@@ -71,9 +86,14 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * 用途：处理 exception。
+     * 
      * 处理请求体不可读的异常
      * <p>
      * 当请求体不可读时，会抛出 HttpMessageNotReadableException 异常。
+     * 
+     * @param e e
+     * @return 返回结果
      */
     @ExceptionHandler(HttpMessageNotReadableException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
@@ -88,9 +108,14 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * 用途：处理 biz exception。
+     * 
      * 处理业务异常
      * <p>
      * 当业务逻辑发生错误时，会抛出 BusinessException 异常。
+     * 
+     * @param e e
+     * @return 返回结果
      */
     @ExceptionHandler(BusinessException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
@@ -103,9 +128,14 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * 用途：处理 exception。
+     * 
      * 处理所有未捕获的异常
      * <p>
      * 当发生未捕获的异常时，会抛出 Exception 异常。
+     * 
+     * @param e e
+     * @return 返回结果
      */
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
@@ -120,6 +150,8 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * 用途：转换 message。
+     * 
      * 传参类型错误时，用于消息转换
      *
      * @param throwable 异常
