@@ -45,10 +45,10 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, RolePO> implements 
     private final UserRoleService userRoleService;
 
     /**
-     * 用途：获取 maximum data scope 信息。
-     * 
-     * @param roles roles
-     * @return 数值结果
+     * 查询给定角色集合中的最大数据权限范围。
+     *
+     * @param roles 角色编码集合
+     * @return 最大数据权限值
      */
     @Override
     public Integer getMaximumDataScope(Set<String> roles) {
@@ -56,10 +56,12 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, RolePO> implements 
     }
 
     /**
-     * 用途：获取 role page 信息。
-     * 
-     * @param queryParams query params
-     * @return 分页结果
+     * 分页查询角色列表。
+     *
+     * <p>非超级管理员会自动过滤超级管理员角色，防止越权查看与操作。</p>
+     *
+     * @param queryParams 分页与关键字查询参数
+     * @return 角色分页结果
      */
     @Override
     public Page<RolePageVO> getRolePage(RolePageQuery queryParams) {
@@ -86,10 +88,11 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, RolePO> implements 
     }
 
     /**
-     * 用途：查询 role options 列表。
-     * 
-     * 入参：无。
-     * @return 结果列表
+     * 查询角色下拉选项。
+     *
+     * <p>结果按当前用户是否为超级管理员分别缓存，避免每次重复构造下拉数据。</p>
+     *
+     * @return 角色选项列表
      */
     @Override
     @Cacheable(cacheNames = "role", key = "'options:' + T(org.dwtech.common.utils.SecurityUtils).isRoot()")
@@ -106,10 +109,12 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, RolePO> implements 
     }
 
     /**
-     * 用途：保存 role。
-     * 
-     * @param roleForm role form
-     * @return 操作结果，true 表示成功，false 表示失败
+     * 新增或更新角色信息。
+     *
+     * <p>会校验角色名与编码唯一性；若编辑时角色编码或状态发生变化，将刷新对应角色权限缓存。</p>
+     *
+     * @param roleForm 角色表单数据
+     * @return {@code true} 表示保存成功
      */
     @Override
     @CacheEvict(cacheNames = {"role", "menu"}, allEntries = true)
@@ -149,10 +154,10 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, RolePO> implements 
     }
 
     /**
-     * 用途：获取 role form 信息。
-     * 
-     * @param roleId role ID
-     * @return 返回结果
+     * 获取角色表单详情。
+     *
+     * @param roleId 角色 ID
+     * @return 角色表单对象
      */
     @Override
     public RoleForm getRoleForm(Long roleId) {
@@ -161,10 +166,11 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, RolePO> implements 
     }
 
     /**
-     * 用途：删除 roles。
-     * 
-     * @param ids 主键 ID 列表
-     * 返回：无。
+     * 批量删除角色。
+     *
+     * <p>删除前会校验角色存在性和是否已分配给用户，删除成功后刷新角色权限缓存。</p>
+     *
+     * @param ids 逗号分隔的角色 ID 列表
      */
     @Override
     @CacheEvict(cacheNames = {"role", "menu"}, allEntries = true)
@@ -191,11 +197,13 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, RolePO> implements 
     }
 
     /**
-     * 用途：更新 role status。
-     * 
-     * @param roleId role ID
-     * @param status status
-     * @return 操作结果，true 表示成功，false 表示失败
+     * 更新角色状态。
+     *
+     * <p>状态更新成功后会立即刷新角色权限缓存，保证鉴权结果与最新状态一致。</p>
+     *
+     * @param roleId 角色 ID
+     * @param status 目标状态
+     * @return {@code true} 表示更新成功
      */
     @Override
     @CacheEvict(cacheNames = {"role", "menu"}, allEntries = true)
@@ -215,10 +223,10 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, RolePO> implements 
     }
 
     /**
-     * 用途：获取 role menu ids 信息。
-     * 
-     * @param roleId role ID
-     * @return 结果列表
+     * 查询角色已分配的菜单 ID 列表。
+     *
+     * @param roleId 角色 ID
+     * @return 菜单 ID 列表
      */
     @Override
     @Cacheable(cacheNames = "role", key = "'menuIds:' + #roleId")
@@ -227,11 +235,12 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, RolePO> implements 
     }
 
     /**
-     * 用途：分配 menus to role。
-     * 
-     * @param roleId role ID
-     * @param menuIds menu ID 列表
-     * 返回：无。
+     * 为角色重置并分配菜单权限。
+     *
+     * <p>方法在事务内先删后增，最后统一刷新角色权限缓存，避免权限数据出现中间态。</p>
+     *
+     * @param roleId 角色 ID
+     * @param menuIds 菜单 ID 列表
      */
     @Override
     @Transactional
@@ -260,11 +269,10 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, RolePO> implements 
     }
 
     /**
-     * 用途：分配 users to role。
-     * 
-     * @param roleId role ID
-     * @param userIds user ID 列表
-     * 返回：无。
+     * 为角色分配用户。
+     *
+     * @param roleId 角色 ID
+     * @param userIds 用户 ID 列表
      */
     @Override
     @Transactional

@@ -48,10 +48,12 @@ public class AuthServiceImpl implements AuthService {
     private final CaptchaProperties captchaProperties;
 
     /**
-     * 用途：获取 captcha 信息。
-     * 
-     * 入参：无。
-     * @return 返回结果
+     * 生成登录验证码并写入 Redis 缓存。
+     *
+     * <p>方法会按系统配置创建验证码对象，设置验证码生成器、透明度和字体，然后将验证码文本以随机键缓存到
+     * Redis 中，过期时间由 {@code captchaProperties.expireSeconds} 控制，最后返回前端所需的键和 Base64 图片。</p>
+     *
+     * @return 验证码响应对象，包含验证码键和 Base64 图片内容
      */
     @Override
     public CaptchaVO getCaptcha() {
@@ -79,11 +81,15 @@ public class AuthServiceImpl implements AuthService {
     }
 
     /**
-     * 用途：执行 login 操作。
-     * 
-     * @param username username
-     * @param password password
-     * @return 返回结果
+     * 使用用户名和密码执行登录认证并签发令牌。
+     *
+     * <p>认证成功后会生成访问令牌/刷新令牌，并将认证结果写入 {@link SecurityContextHolder}，
+     * 供后续鉴权链路和登录日志切面使用。</p>
+     *
+     * @param username 用户名
+     * @param password 明文密码
+     * @return 认证令牌对象，包含访问令牌和刷新令牌
+     * @throws BusinessException 用户名密码错误或认证过程出现其他业务异常
      */
     @Override
     public AuthenticationToken login(String username, String password) {
@@ -110,12 +116,10 @@ public class AuthServiceImpl implements AuthService {
     }
 
     /**
-     * 用途：执行 logout 操作。
-     * 
-     * 注销登录
-     * 
-     * 入参：无。
-     * 返回：无。
+     * 注销当前登录会话。
+     *
+     * <p>从请求中提取 Bearer Token 后加入黑名单，并清理 {@link SecurityContextHolder}，
+     * 确保后续请求不会复用已失效的认证上下文。</p>
      */
     @Override
     public void logout() {
@@ -130,12 +134,11 @@ public class AuthServiceImpl implements AuthService {
     }
 
     /**
-     * 用途：刷新 token。
-     * 
-     * 刷新token
+     * 使用刷新令牌换发新的访问令牌。
      *
      * @param refreshToken 刷新令牌
-     * @return 新的访问令牌
+     * @return 新的令牌对象，通常复用原刷新令牌并返回新的访问令牌
+     * @throws BusinessException 刷新令牌无效或已过期时抛出
      */
     @Override
     public AuthenticationToken refreshToken(String refreshToken) {
@@ -143,10 +146,10 @@ public class AuthServiceImpl implements AuthService {
     }
 
     /**
-     * 用途：获取 abstract captcha 信息。
-     * 
-     * 入参：无。
-     * @return 返回结果
+     * 根据验证码配置创建对应类型的验证码实例。
+     *
+     * @return 验证码对象
+     * @throws IllegalArgumentException 当配置的验证码类型不受支持时抛出
      */
     private AbstractCaptcha getAbstractCaptcha() {
         String captchaType = captchaProperties.getType();

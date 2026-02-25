@@ -26,12 +26,14 @@ public class PermissionService {
     private final RedisTemplate<String, Object> redisTemplate;
 
     /**
-     * 用途：判断是否存在 perm。
-     * 
-     * 判断当前登录用户是否拥有操作权限
+     * 判断当前登录用户是否具备指定权限。
      *
-     * @param requiredPerm 所需权限
-     * @return 是否有权限
+     * <p>权限判定流程：</p>
+     * <p>1) 参数为空直接拒绝；2) 超级管理员直接放行；3) 从当前用户角色集合对应的缓存权限中匹配；
+     * 4) 使用 Spring 的 {@code simpleMatch} 支持通配符权限表达式。</p>
+     *
+     * @param requiredPerm 所需权限标识，例如 {@code system:user:add}
+     * @return {@code true} 表示具备权限，{@code false} 表示无权限
      */
     public boolean hasPerm(String requiredPerm) {
 
@@ -69,12 +71,12 @@ public class PermissionService {
 
 
     /**
-     * 用途：获取 role perms from cache 信息。
-     * 
-     * 从缓存中获取角色权限列表
+     * 从 Redis 缓存中批量加载角色权限并合并去重。
+     *
+     * <p>方法通过 {@code multiGet} 一次性读取多个角色的权限集合，减少多次网络往返，提高鉴权性能。</p>
      *
      * @param roleCodes 角色编码集合
-     * @return 角色权限列表
+     * @return 角色对应的权限并集；当输入为空时返回空集合
      */
     public Set<String> getRolePermsFromCache(Set<String> roleCodes) {
         // 检查输入是否为空
@@ -99,11 +101,11 @@ public class PermissionService {
     }
 
     /**
-     * 用途：获取 role perms form cache 信息。
-     * 
-     * @deprecated 保留旧方法名用于兼容，后续统一使用 getRolePermsFromCache
-     * @param roleCodes role codes
-     * @return 结果集合
+     * 兼容旧方法名，内部委托给 {@link #getRolePermsFromCache(Set)}。
+     *
+     * @param roleCodes 角色编码集合
+     * @return 角色对应的权限并集
+     * @deprecated 请改用 {@link #getRolePermsFromCache(Set)}
      */
     @Deprecated
     public Set<String> getRolePermsFormCache(Set<String> roleCodes) {

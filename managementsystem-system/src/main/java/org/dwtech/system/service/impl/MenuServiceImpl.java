@@ -44,10 +44,10 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, MenuPO> implements 
     private final RoleMenuService roleMenuService;
 
     /**
-     * 用途：查询 menus 列表。
-     * 
-     * @param queryParams query params
-     * @return 结果列表
+     * 查询菜单列表并构建树形结构。
+     *
+     * @param queryParams 菜单查询参数（关键字、状态）
+     * @return 菜单树列表
      */
     @Override
     public List<MenuVO> listMenus(MenuQuery queryParams) {
@@ -79,10 +79,10 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, MenuPO> implements 
     }
 
     /**
-     * 用途：查询 menu options 列表。
-     * 
-     * @param onlyParent only parent
-     * @return 结果列表
+     * 查询菜单下拉选项。
+     *
+     * @param onlyParent 是否仅包含目录节点
+     * @return 菜单下拉树
      */
     @Override
     @Cacheable(cacheNames = "menu", key = "'options:' + #onlyParent")
@@ -95,10 +95,11 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, MenuPO> implements 
     }
 
     /**
-     * 用途：查询 current user routes 列表。
-     * 
-     * 入参：无。
-     * @return 结果列表
+     * 查询当前用户可访问的前端路由树。
+     *
+     * <p>超级管理员返回全部非按钮菜单，普通用户按角色权限返回。</p>
+     *
+     * @return 当前用户路由列表
      */
     @Override
     @Cacheable(cacheNames = "menu", key = "'routes:' + T(org.dwtech.common.utils.SecurityUtils).getUserId()")
@@ -123,10 +124,10 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, MenuPO> implements 
     }
 
     /**
-     * 用途：获取 menu form 信息。
-     * 
-     * @param id 主键 ID
-     * @return 返回结果
+     * 获取菜单编辑表单详情。
+     *
+     * @param id 菜单 ID
+     * @return 菜单表单对象，包含按钮权限配置
      */
     @Override
     public MenuForm getMenuForm(Long id) {
@@ -164,10 +165,12 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, MenuPO> implements 
     }
 
     /**
-     * 用途：保存 menu。
-     * 
-     * @param menuForm menu form
-     * @return 操作结果，true 表示成功，false 表示失败
+     * 新增或更新菜单。
+     *
+     * <p>方法会根据菜单类型规范化组件与路由字段，校验路由名唯一性，并在保存后刷新角色权限缓存与子节点树路径。</p>
+     *
+     * @param menuForm 菜单表单
+     * @return {@code true} 表示保存成功
      */
     @Override
     @CacheEvict(cacheNames = "menu", allEntries = true)
@@ -220,10 +223,10 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, MenuPO> implements 
     }
 
     /**
-     * 用途：删除 menu。
-     * 
-     * @param ids 主键 ID 列表
-     * @return 操作结果，true 表示成功，false 表示失败
+     * 批量删除菜单并刷新角色权限缓存。
+     *
+     * @param ids 菜单 ID 列表
+     * @return {@code true} 表示删除成功
      */
     @Override
     @CacheEvict(cacheNames = "menu", allEntries = true)
@@ -243,11 +246,11 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, MenuPO> implements 
 
 
     /**
-     * 用途：保存 or update menu。
-     * 
-     * @param menu menu
-     * @param permitForms permit forms
-     * @return 操作结果，true 表示成功，false 表示失败
+     * 保存或更新菜单，并同步其按钮权限。
+     *
+     * @param menu 菜单实体
+     * @param permitForms 按钮权限表单列表
+     * @return {@code true} 表示保存成功
      */
     private boolean saveOrUpdateMenu(MenuPO menu, List<PermitForm> permitForms) {
         if (MenuTypeEnum.MENU.getValue().equals(menu.getType())) {
@@ -265,13 +268,10 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, MenuPO> implements 
     }
 
     /**
-     * 用途：更新 children tree path。
-     * 
-     * 更新子菜单树路径
+     * 递归更新子菜单树路径。
      *
-     * @param id       当前菜单ID
+     * @param id 当前菜单 ID
      * @param treePath 当前菜单树路径
-     * 返回：无。
      */
     private void updateChildrenTreePath(Long id, String treePath) {
         List<MenuPO> children = this.list(new LambdaQueryWrapper<MenuPO>().eq(MenuPO::getParentId, id));
@@ -290,12 +290,10 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, MenuPO> implements 
     }
 
     /**
-     * 用途：生成 menu tree path。
-     * 
-     * 路径生成
+     * 生成菜单树路径。
      *
-     * @param parentId 父ID
-     * @return 父节点路径以英文逗号(, )分割，eg: 1,2,3
+     * @param parentId 父菜单 ID
+     * @return 父路径字符串（逗号分隔），例如 {@code 1,2,3}
      */
     private String generateMenuTreePath(Long parentId) {
         if (SystemConstants.ROOT_NODE_ID.equals(parentId)) {
@@ -307,13 +305,11 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, MenuPO> implements 
     }
 
     /**
-     * 用途：构建 routes。
-     * 
-     * 递归生成菜单路由层级列表
+     * 递归构建路由树。
      *
-     * @param parentId 父级ID
+     * @param parentId 父节点 ID
      * @param menuList 菜单列表
-     * @return 路由层级列表
+     * @return 路由树列表
      */
     private List<RouteVO> buildRoutes(Long parentId, List<MenuPO> menuList) {
         List<RouteVO> routeList = new ArrayList<>();
@@ -333,12 +329,10 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, MenuPO> implements 
     }
 
     /**
-     * 用途：转换为 route vo。
-     * 
-     * 根据RouteBO创建RouteVO
-     * 
-     * @param menu menu
-     * @return 返回结果
+     * 将菜单实体转换为前端路由对象。
+     *
+     * @param menu 菜单实体
+     * @return 路由对象
      */
     private RouteVO toRouteVo(MenuPO menu) {
         RouteVO routeVO = new RouteVO();
@@ -384,13 +378,11 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, MenuPO> implements 
     }
 
     /**
-     * 用途：构建 menu options。
-     * 
-     * 递归生成菜单下拉层级列表
+     * 递归构建菜单下拉树。
      *
-     * @param parentId 父级ID
+     * @param parentId 父节点 ID
      * @param menuList 菜单列表
-     * @return 菜单下拉列表
+     * @return 菜单选项树
      */
     private List<Option<Long>> buildMenuOptions(Long parentId, List<MenuPO> menuList) {
         List<Option<Long>> menuOptions = new ArrayList<>();
@@ -410,13 +402,11 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, MenuPO> implements 
     }
 
     /**
-     * 用途：构建 menu tree。
-     * 
-     * 递归生成菜单列表
+     * 递归构建菜单展示树。
      *
-     * @param parentId 父级ID
+     * @param parentId 父节点 ID
      * @param menuList 菜单列表
-     * @return 菜单列表
+     * @return 菜单树列表
      */
     private List<MenuVO> buildMenuTree(Long parentId, List<MenuPO> menuList) {
         return CollectionUtil.emptyIfNull(menuList)

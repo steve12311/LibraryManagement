@@ -49,11 +49,10 @@ public class JwtTokenManager implements TokenManager {
     private final byte[] secretKey;
 
     /**
-     * 用途：创建 JwtTokenManager 实例。
-     * 
-     * @param securityProperties security properties
-     * @param redisTemplate redis template
-     * 返回：无。
+     * 构造 JWT 令牌管理器。
+     *
+     * @param securityProperties 安全配置，提供密钥与令牌 TTL
+     * @param redisTemplate Redis 操作模板，用于黑名单校验
      */
     public JwtTokenManager(SecurityProperties securityProperties, RedisTemplate<String, Object> redisTemplate) {
         this.securityProperties = securityProperties;
@@ -62,12 +61,10 @@ public class JwtTokenManager implements TokenManager {
     }
 
     /**
-     * 用途：生成 token。
-     * 
-     * 生成令牌
+     * 为已认证用户签发访问令牌与刷新令牌。
      *
-     * @param authentication 认证信息
-     * @return 令牌响应对象
+     * @param authentication Spring Security 认证信息
+     * @return 令牌响应对象，包含访问令牌、刷新令牌和访问令牌过期时间
      */
     @Override
     public AuthenticationToken generateToken(Authentication authentication) {
@@ -86,12 +83,13 @@ public class JwtTokenManager implements TokenManager {
     }
 
     /**
-     * 用途：解析 token。
-     * 
-     * 解析令牌
+     * 解析 JWT 并重建 Spring Security 认证对象。
      *
-     * @param token JWT Token
-     * @return Authentication 对象
+     * <p>该方法仅负责从 payload 读取用户与权限信息，不执行有效性校验，
+     * 调用方应先通过 {@link #validateToken(String)} 或 {@link #validateRefreshToken(String)} 校验。</p>
+     *
+     * @param token JWT 令牌
+     * @return 认证对象
      */
     @Override
     public Authentication parseToken(String token) {
@@ -114,12 +112,10 @@ public class JwtTokenManager implements TokenManager {
     }
 
     /**
-     * 用途：校验 token。
-     * 
-     * 校验令牌
+     * 校验访问令牌是否有效。
      *
-     * @param token JWT Token
-     * @return 是否有效
+     * @param token JWT 访问令牌
+     * @return {@code true} 表示有效，{@code false} 表示无效
      */
     @Override
     public boolean validateToken(String token) {
@@ -127,12 +123,10 @@ public class JwtTokenManager implements TokenManager {
     }
 
     /**
-     * 用途：校验 refresh token。
-     * 
-     * 校验刷新令牌
+     * 校验刷新令牌是否有效。
      *
-     * @param refreshToken JWT Token
-     * @return 验证结果
+     * @param refreshToken JWT 刷新令牌
+     * @return {@code true} 表示有效，{@code false} 表示无效
      */
     @Override
     public boolean validateRefreshToken(String refreshToken) {
@@ -140,13 +134,13 @@ public class JwtTokenManager implements TokenManager {
     }
 
     /**
-     * 用途：校验 token。
-     * 
-     * 校验令牌
+     * 统一令牌校验逻辑。
      *
-     * @param token                JWT Token
-     * @param validateRefreshToken 是否校验刷新令牌
-     * @return 是否有效
+     * <p>校验项包括：签名、过期时间、刷新令牌类型标记（可选）以及 Redis 黑名单状态。</p>
+     *
+     * @param token JWT 令牌
+     * @param validateRefreshToken 是否按刷新令牌模式校验 token 类型
+     * @return {@code true} 表示校验通过
      */
     private boolean validateToken(String token, boolean validateRefreshToken) {
         try {
@@ -178,12 +172,11 @@ public class JwtTokenManager implements TokenManager {
     }
 
     /**
-     * 用途：执行 invalidate token 操作。
-     * 
-     * 将令牌加入黑名单
+     * 使令牌失效并加入黑名单。
      *
-     * @param token JWT Token
-     * 返回：无。
+     * <p>黑名单 key 的过期时间与令牌剩余有效期保持一致，避免无意义的长期缓存。</p>
+     *
+     * @param token JWT 令牌（支持携带或不携带 Bearer 前缀）
      */
     @Override
     public void invalidateToken(String token) {
@@ -217,12 +210,11 @@ public class JwtTokenManager implements TokenManager {
     }
 
     /**
-     * 用途：刷新 token。
-     * 
-     * 刷新令牌
+     * 使用刷新令牌换发新的访问令牌。
      *
      * @param refreshToken 刷新令牌
-     * @return 令牌响应对象
+     * @return 新令牌响应对象，复用原刷新令牌并返回新访问令牌
+     * @throws BusinessException 当刷新令牌无效时抛出
      */
     @Override
     public AuthenticationToken refreshToken(String refreshToken) {
@@ -242,13 +234,11 @@ public class JwtTokenManager implements TokenManager {
     }
 
     /**
-     * 用途：生成 token。
-     * 
-     * 生成 JWT Token
+     * 生成访问令牌（非刷新令牌）。
      *
      * @param authentication 认证信息
-     * @param ttl            过期时间
-     * @return JWT Token
+     * @param ttl 令牌有效期（秒），-1 表示不过期
+     * @return JWT 字符串
      */
     private String generateToken(Authentication authentication, int ttl) {
         return generateToken(authentication, ttl, false);
@@ -256,14 +246,12 @@ public class JwtTokenManager implements TokenManager {
 
 
     /**
-     * 用途：生成 token。
-     * 
-     * 生成 JWT Token
+     * 生成 JWT 字符串并写入标准与业务声明。
      *
      * @param authentication 认证信息
-     * @param ttl            过期时间
-     * @param isRefreshToken 类型是否为刷新token
-     * @return JWT Token
+     * @param ttl 令牌有效期（秒），-1 表示不过期
+     * @param isRefreshToken 是否生成刷新令牌
+     * @return JWT 字符串
      */
     private String generateToken(Authentication authentication, int ttl, boolean isRefreshToken) {
         SysUserDetails userDetails = (SysUserDetails) authentication.getPrincipal();

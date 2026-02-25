@@ -38,11 +38,10 @@ public class RedisTokenManager implements TokenManager {
     private final RedisTemplate<String, Object> redisTemplate;
 
     /**
-     * 用途：创建 RedisTokenManager 实例。
-     * 
-     * @param securityProperties security properties
-     * @param redisTemplate redis template
-     * 返回：无。
+     * 构造 Redis 会话令牌管理器。
+     *
+     * @param securityProperties 安全配置，提供令牌 TTL 与多端登录策略
+     * @param redisTemplate Redis 操作模板
      */
     public RedisTokenManager(SecurityProperties securityProperties, RedisTemplate<String, Object> redisTemplate) {
         this.securityProperties = securityProperties;
@@ -50,12 +49,12 @@ public class RedisTokenManager implements TokenManager {
     }
 
     /**
-     * 用途：生成 token。
-     * 
-     * 生成 Token
+     * 生成访问令牌与刷新令牌并写入 Redis。
+     *
+     * <p>同时维护令牌与用户的双向映射关系，便于刷新、注销和单设备登录控制。</p>
      *
      * @param authentication 用户认证信息
-     * @return 生成的 AuthenticationToken 对象
+     * @return 令牌响应对象
      */
     @Override
     public AuthenticationToken generateToken(Authentication authentication) {
@@ -88,12 +87,10 @@ public class RedisTokenManager implements TokenManager {
     }
 
     /**
-     * 用途：解析 token。
-     * 
-     * 根据 token 解析用户信息
+     * 根据访问令牌从 Redis 还原认证信息。
      *
-     * @param token Redis Token
-     * @return 构建的 Authentication 对象
+     * @param token 访问令牌
+     * @return 认证对象；令牌不存在或已过期时返回 {@code null}
      */
     @Override
     public Authentication parseToken(String token) {
@@ -116,12 +113,10 @@ public class RedisTokenManager implements TokenManager {
     }
 
     /**
-     * 用途：校验 token。
-     * 
-     * 校验 Token 是否有效
+     * 校验访问令牌是否存在于 Redis。
      *
      * @param token 访问令牌
-     * @return 是否有效
+     * @return {@code true} 表示有效
      */
     @Override
     public boolean validateToken(String token) {
@@ -129,12 +124,10 @@ public class RedisTokenManager implements TokenManager {
     }
 
     /**
-     * 用途：校验 refresh token。
-     * 
-     * 校验 RefreshToken 是否有效
+     * 校验刷新令牌是否存在于 Redis。
      *
-     * @param refreshToken 访问令牌
-     * @return 是否有效
+     * @param refreshToken 刷新令牌
+     * @return {@code true} 表示有效
      */
     @Override
     public boolean validateRefreshToken(String refreshToken) {
@@ -142,12 +135,13 @@ public class RedisTokenManager implements TokenManager {
     }
 
     /**
-     * 用途：刷新 token。
-     * 
-     * 刷新令牌
+     * 使用刷新令牌换发新的访问令牌。
+     *
+     * <p>该方法会清理旧访问令牌映射并写入新令牌，刷新令牌本身保持不变。</p>
      *
      * @param refreshToken 刷新令牌
-     * @return 新生成的 AuthenticationToken 对象
+     * @return 新令牌响应对象
+     * @throws BusinessException 刷新令牌不存在或已失效时抛出
      */
     @Override
     public AuthenticationToken refreshToken(String refreshToken) {
@@ -176,12 +170,9 @@ public class RedisTokenManager implements TokenManager {
     }
 
     /**
-     * 用途：执行 invalidate token 操作。
-     * 
-     * 使访问令牌失效
+     * 注销访问令牌并清理该用户的令牌映射。
      *
      * @param token 访问令牌
-     * 返回：无。
      */
     @Override
     public void invalidateToken(String token) {
@@ -207,14 +198,11 @@ public class RedisTokenManager implements TokenManager {
     }
 
     /**
-     * 用途：执行 store tokens in redis 操作。
-     * 
-     * 将访问令牌和刷新令牌存储至 Redis
+     * 持久化访问令牌、刷新令牌以及用户维度映射。
      *
-     * @param accessToken  访问令牌
+     * @param accessToken 访问令牌
      * @param refreshToken 刷新令牌
-     * @param onlineUser   在线用户信息
-     * 返回：无。
+     * @param onlineUser 在线用户信息
      */
     private void storeTokensInRedis(String accessToken, String refreshToken, OnlineUser onlineUser) {
         // 访问令牌 -> 用户信息
@@ -231,13 +219,12 @@ public class RedisTokenManager implements TokenManager {
     }
 
     /**
-     * 用途：处理 single device login。
-     * 
-     * 处理单设备登录控制
+     * 根据配置执行单设备登录控制。
      *
-     * @param userId      用户ID
-     * @param accessToken 新生成的访问令牌
-     * 返回：无。
+     * <p>当不允许多端登录时，会删除当前用户旧访问令牌，保证用户仅保留最新会话。</p>
+     *
+     * @param userId 用户 ID
+     * @param accessToken 新访问令牌
      */
     private void handleSingleDeviceLogin(Long userId, String accessToken) {
         Boolean allowMultiLogin = securityProperties.getSession().getRedisToken().getAllowMultiLogin();
@@ -254,13 +241,10 @@ public class RedisTokenManager implements TokenManager {
     }
 
     /**
-     * 用途：执行 store access token 操作。
-     * 
-     * 存储新的访问令牌
+     * 存储新访问令牌并维护用户到令牌的映射。
      *
      * @param newAccessToken 新访问令牌
-     * @param onlineUser     在线用户信息
-     * 返回：无。
+     * @param onlineUser 在线用户信息
      */
     private void storeAccessToken(String newAccessToken, OnlineUser onlineUser) {
         setRedisValue(StrUtil.format(RedisConstants.Auth.ACCESS_TOKEN_USER, newAccessToken), onlineUser, securityProperties.getSession().getAccessTokenTimeToLive());
@@ -269,13 +253,11 @@ public class RedisTokenManager implements TokenManager {
     }
 
     /**
-     * 用途：构建 user details。
-     * 
-     * 构建用户详情对象
+     * 将在线用户数据转换为 {@link SysUserDetails}。
      *
-     * @param onlineUser  在线用户信息
+     * @param onlineUser 在线用户信息
      * @param authorities 权限集合
-     * @return SysUserDetails 用户详情
+     * @return 用户详情对象
      */
     private SysUserDetails buildUserDetails(OnlineUser onlineUser, Set<SimpleGrantedAuthority> authorities) {
         SysUserDetails userDetails = new SysUserDetails();
@@ -288,38 +270,31 @@ public class RedisTokenManager implements TokenManager {
     }
 
     /**
-     * 用途：执行 format token key 操作。
-     * 
-     * 格式化访问令牌的 Redis 键
+     * 生成访问令牌对应的 Redis key。
      *
      * @param token 访问令牌
-     * @return 格式化后的 Redis 键
+     * @return Redis key
      */
     private String formatTokenKey(String token) {
         return StrUtil.format(RedisConstants.Auth.ACCESS_TOKEN_USER, token);
     }
 
     /**
-     * 用途：执行 format refresh token key 操作。
-     * 
-     * 格式化刷新令牌的 Redis 键
+     * 生成刷新令牌对应的 Redis key。
      *
-     * @param refreshToken 访问令牌
-     * @return 格式化后的 Redis 键
+     * @param refreshToken 刷新令牌
+     * @return Redis key
      */
     private String formatRefreshTokenKey(String refreshToken) {
         return StrUtil.format(RedisConstants.Auth.REFRESH_TOKEN_USER, refreshToken);
     }
 
     /**
-     * 用途：执行 set redis value 操作。
-     * 
-     * 将值存储到 Redis
+     * 按 TTL 规则写入 Redis。
      *
-     * @param key   键
-     * @param value 值
-     * @param ttl   过期时间（秒），-1表示永不过期
-     * 返回：无。
+     * @param key Redis key
+     * @param value Redis value
+     * @param ttl 过期时间（秒），-1 表示永不过期
      */
     private void setRedisValue(String key, Object value, int ttl) {
         if (ttl != -1) {
