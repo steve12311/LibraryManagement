@@ -10,6 +10,12 @@ import org.dwtech.system.model.bo.UserBO;
 import org.dwtech.system.model.form.UserForm;
 import org.dwtech.system.model.entity.UserPO;
 import org.dwtech.system.model.query.UserPageQuery;
+/**
+ * UserMapper
+ *
+ * @author steve12311
+ * @since 2025-11-18
+ */
 
 @Mapper
 public interface UserMapper extends BaseMapper<UserPO> {

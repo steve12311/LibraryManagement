@@ -12,6 +12,12 @@ import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.deepseek.DeepSeekChatModel;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
+/**
+ * AISearchService
+ *
+ * @author steve12311
+ * @since 2025-11-18
+ */
 
 @Slf4j
 @Service

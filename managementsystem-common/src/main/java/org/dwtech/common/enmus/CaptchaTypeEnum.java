@@ -3,8 +3,14 @@ package org.dwtech.common.enmus;
 /**
  * EasyCaptcha 验证码类型枚举
  *
- * @author haoxr
- * @since 2.5.1
+ * @author steve12311
+* @since 2025-11-18
+ */
+/**
+ * CaptchaTypeEnum
+ *
+ * @author steve12311
+ * @since 2025-11-18
  */
 public enum CaptchaTypeEnum {
 

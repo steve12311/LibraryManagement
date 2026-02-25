@@ -4,6 +4,9 @@ import java.lang.annotation.*;
 
 /**
  * 数据权限注解
+ *
+ * @author steve12311
+ * @since 2025-11-18
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)

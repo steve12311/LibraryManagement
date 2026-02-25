@@ -7,6 +7,12 @@ import org.apache.ibatis.annotations.Param;
 import org.dwtech.system.model.bo.BorrowBO;
 import org.dwtech.system.model.entity.BorrowPO;
 import org.dwtech.system.model.query.BorrowPageQuery;
+/**
+ * BorrowMapper
+ *
+ * @author steve12311
+ * @since 2026-02-24
+ */
 
 @Mapper
 public interface BorrowMapper extends BaseMapper<BorrowPO> {

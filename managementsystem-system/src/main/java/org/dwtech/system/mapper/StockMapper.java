@@ -9,6 +9,12 @@ import org.dwtech.system.model.entity.StockPO;
 import org.dwtech.system.model.query.StockPageQuery;
 
 import java.util.List;
+/**
+ * StockMapper
+ *
+ * @author steve12311
+ * @since 2026-02-22
+ */
 
 @Mapper
 public interface StockMapper extends BaseMapper<StockPO> {

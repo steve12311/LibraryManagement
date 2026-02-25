@@ -2,6 +2,12 @@ package org.dwtech.system.service;
 
 import org.dwtech.common.core.entity.FileInfo;
 import org.springframework.web.multipart.MultipartFile;
+/**
+ * FileService
+ *
+ * @author steve12311
+ * @since 2026-02-22
+ */
 
 public interface FileService {
     /**

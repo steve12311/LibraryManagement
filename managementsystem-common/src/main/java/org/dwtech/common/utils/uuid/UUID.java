@@ -1,6 +1,12 @@
 package org.dwtech.common.utils.uuid;
 
 import java.security.SecureRandom;
+/**
+ * UUID
+ *
+ * @author steve12311
+ * @since 2025-10-30
+ */
 
 public record UUID(long mostSigBits, long leastSigBits) implements java.io.Serializable, Comparable<UUID> {
     private static final SecureRandom numberGenerator = new SecureRandom();

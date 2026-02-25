@@ -17,6 +17,12 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+/**
+ * RoleController
+ *
+ * @author steve12311
+ * @since 2025-11-18
+ */
 
 @RestController
 @RequiredArgsConstructor

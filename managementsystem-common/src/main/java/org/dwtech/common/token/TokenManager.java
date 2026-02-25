@@ -9,6 +9,8 @@ import org.springframework.security.core.Authentication;
  *  <p>
  *  用于生成、解析、校验、刷新 Token
  *
+ * @author steve12311
+ * @since 2025-11-18
  */
 public interface TokenManager {
 

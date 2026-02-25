@@ -7,6 +7,12 @@ import lombok.Data;
 
 import java.time.LocalDateTime;
 import java.util.Date;
+/**
+ * BorrowPO
+ *
+ * @author steve12311
+ * @since 2025-11-18
+ */
 
 @Data
 @TableName("lib_borrow")

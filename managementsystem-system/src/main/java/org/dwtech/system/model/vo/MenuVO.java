@@ -6,6 +6,12 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import java.util.List;
+/**
+ * MenuVO
+ *
+ * @author steve12311
+ * @since 2025-11-18
+ */
 
 @EqualsAndHashCode(callSuper = true)
 @Data

@@ -24,8 +24,14 @@ import java.nio.file.StandardCopyOption;
  * 如果使用了多级反向代理的话，X-Forwarded-For的值并不止一个，而是一串IP地址，X-Forwarded-For中第一个非unknown的有效IP字符串，则为真实IP地址
  * </p>
  *
- * @author Ray
- * @since 2.10.0
+ * @author steve12311
+* @since 2025-11-18
+ */
+/**
+ * IPUtils
+ *
+ * @author steve12311
+ * @since 2025-11-18
  */
 @Slf4j
 @Component

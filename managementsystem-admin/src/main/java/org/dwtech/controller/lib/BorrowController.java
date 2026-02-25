@@ -12,6 +12,12 @@ import org.dwtech.system.model.query.BorrowPageQuery;
 import org.dwtech.system.model.vo.BorrowVO;
 import org.dwtech.system.service.BorrowService;
 import org.springframework.web.bind.annotation.*;
+/**
+ * BorrowController
+ *
+ * @author steve12311
+ * @since 2026-02-24
+ */
 
 @Slf4j
 @RestController

@@ -6,6 +6,9 @@ import org.slf4j.helpers.MessageFormatter;
 
 /**
  * 自定义业务异常
+ *
+ * @author steve12311
+ * @since 2025-11-18
  */
 @Getter
 public class BusinessException extends RuntimeException {

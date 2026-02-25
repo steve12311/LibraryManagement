@@ -17,6 +17,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+/**
+ * UserRoleServiceImpl
+ *
+ * @author steve12311
+ * @since 2025-11-18
+ */
 
 @Service
 @RequiredArgsConstructor

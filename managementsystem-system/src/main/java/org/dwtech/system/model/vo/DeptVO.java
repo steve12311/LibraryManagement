@@ -7,6 +7,12 @@ import lombok.EqualsAndHashCode;
 
 import java.time.LocalDateTime;
 import java.util.List;
+/**
+ * DeptVO
+ *
+ * @author steve12311
+ * @since 2025-11-18
+ */
 
 @EqualsAndHashCode(callSuper = true)
 @Data

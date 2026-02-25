@@ -2,6 +2,9 @@ package org.dwtech.common.constant;
 
 /**
  * 系统常量
+ *
+ * @author steve12311
+ * @since 2025-11-18
  */
 public interface SystemConstants {
 

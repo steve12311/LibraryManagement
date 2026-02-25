@@ -13,6 +13,12 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.Date;
+/**
+ * BookPO
+ *
+ * @author steve12311
+ * @since 2026-02-22
+ */
 
 @Data
 @TableName("lib_book")

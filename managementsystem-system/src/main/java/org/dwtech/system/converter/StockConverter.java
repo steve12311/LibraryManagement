@@ -11,6 +11,12 @@ import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
 
 import java.util.List;
+/**
+ * StockConverter
+ *
+ * @author steve12311
+ * @since 2026-02-22
+ */
 
 @Mapper(componentModel = "spring")
 public interface StockConverter {

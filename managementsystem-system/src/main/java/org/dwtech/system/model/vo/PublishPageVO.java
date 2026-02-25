@@ -6,6 +6,12 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import java.util.Date;
+/**
+ * PublishPageVO
+ *
+ * @author steve12311
+ * @since 2026-02-22
+ */
 
 @EqualsAndHashCode(callSuper = true)
 @Data

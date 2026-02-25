@@ -9,6 +9,8 @@ import java.lang.annotation.*;
 /**
  * 用于验证字段值是否合法的注解
  *
+ * @author steve12311
+ * @since 2025-11-18
  */
 @Documented
 @Constraint(validatedBy = FieldValidator.class)

@@ -17,6 +17,12 @@ import org.mapstruct.Mappings;
 import org.mapstruct.Named;
 
 import java.util.List;
+/**
+ * UserConverter
+ *
+ * @author steve12311
+ * @since 2025-11-18
+ */
 
 @Mapper(componentModel = "spring")
 public interface UserConverter {

@@ -1,6 +1,12 @@
 package org.dwtech.common.annontation;
 
 import java.lang.annotation.*;
+/**
+ * RepeatSubmit
+ *
+ * @author steve12311
+ * @since 2026-02-12
+ */
 
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)

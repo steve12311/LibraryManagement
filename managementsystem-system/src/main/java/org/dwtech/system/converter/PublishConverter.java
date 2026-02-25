@@ -8,6 +8,12 @@ import org.dwtech.system.model.vo.PublishPageVO;
 import org.mapstruct.*;
 
 import java.util.List;
+/**
+ * PublishConverter
+ *
+ * @author steve12311
+ * @since 2026-02-22
+ */
 
 @Mapper(componentModel = "spring")
 public interface PublishConverter {

@@ -1,6 +1,12 @@
 package org.dwtech.system.service;
 
 import java.util.List;
+/**
+ * UserRoleService
+ *
+ * @author steve12311
+ * @since 2025-11-18
+ */
 
 public interface UserRoleService {
     /**

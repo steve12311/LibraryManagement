@@ -11,6 +11,12 @@ import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
+/**
+ * VectorTool
+ *
+ * @author steve12311
+ * @since 2026-02-22
+ */
 
 @Slf4j
 @Component

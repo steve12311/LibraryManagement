@@ -9,6 +9,12 @@ import org.dwtech.auth.model.vo.CaptchaVO;
 import org.dwtech.framework.auth.service.AuthService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+/**
+ * AuthController
+ *
+ * @author steve12311
+ * @since 2025-11-18
+ */
 
 @Slf4j
 @RestController

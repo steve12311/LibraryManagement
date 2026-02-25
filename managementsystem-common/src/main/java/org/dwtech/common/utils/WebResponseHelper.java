@@ -16,6 +16,8 @@ import java.nio.charset.StandardCharsets;
  * <p>
  * 用于在过滤器、处理器等无法使用 @RestControllerAdvice 的场景中统一处理响应
  *
+ * @author steve12311
+ * @since 2025-11-18
  */
 @Slf4j
 public class WebResponseHelper {

@@ -9,9 +9,15 @@ import java.io.Serializable;
 /**
  * 统一响应结构体
  *
- * @author Ray
- * @since 2022/1/30
+ * @author steve12311
+* @since 2025-11-18
  **/
+/**
+ * Result
+ *
+ * @author steve12311
+ * @since 2025-11-18
+ */
 @Data
 public class Result<T> implements Serializable {
 

@@ -9,6 +9,12 @@ import org.dwtech.system.model.vo.RolePageVO;
 
 import java.util.List;
 import java.util.Set;
+/**
+ * RoleService
+ *
+ * @author steve12311
+ * @since 2025-11-18
+ */
 
 public interface RoleService {
     Integer getMaximumDataScope(Set<String> roles);

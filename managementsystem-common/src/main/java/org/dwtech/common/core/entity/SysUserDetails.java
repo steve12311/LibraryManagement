@@ -11,6 +11,12 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.stream.Collectors;
+/**
+ * SysUserDetails
+ *
+ * @author steve12311
+ * @since 2025-11-18
+ */
 
 @Data
 @NoArgsConstructor

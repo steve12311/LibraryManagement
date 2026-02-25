@@ -9,6 +9,12 @@ import lombok.Data;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.LocalDateTime;
+/**
+ * BaseEntity
+ *
+ * @author steve12311
+ * @since 2025-11-18
+ */
 
 @Data
 public class BaseEntity implements Serializable {

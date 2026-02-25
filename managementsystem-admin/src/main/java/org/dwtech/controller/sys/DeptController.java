@@ -11,6 +11,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+/**
+ * DeptController
+ *
+ * @author steve12311
+ * @since 2025-11-18
+ */
 
 @RestController
 @RequestMapping("/api/v1/dept")

@@ -7,6 +7,12 @@ import org.dwtech.system.model.vo.MenuVO;
 import org.dwtech.system.model.vo.RouteVO;
 
 import java.util.List;
+/**
+ * MenuService
+ *
+ * @author steve12311
+ * @since 2025-11-18
+ */
 
 public interface MenuService {
     List<MenuVO> listMenus(MenuQuery queryParams);

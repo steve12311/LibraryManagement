@@ -2,6 +2,12 @@ package org.dwtech.system.model.form;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
+/**
+ * PublishForm
+ *
+ * @author steve12311
+ * @since 2026-02-22
+ */
 
 @Data
 public class PublishForm {

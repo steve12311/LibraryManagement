@@ -15,6 +15,12 @@ import org.dwtech.system.model.vo.UserProfileVO;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+/**
+ * UserService
+ *
+ * @author steve12311
+ * @since 2025-11-18
+ */
 
 public interface UserService extends IService<UserPO> {
     UserAuthCredentials getAuthCredentialsByUsername(String username);

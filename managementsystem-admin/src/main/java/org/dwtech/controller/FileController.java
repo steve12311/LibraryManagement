@@ -7,6 +7,12 @@ import org.dwtech.common.core.entity.Result;
 import org.dwtech.system.service.FileService;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+/**
+ * FileController
+ *
+ * @author steve12311
+ * @since 2026-02-22
+ */
 
 @RestController
 @RequiredArgsConstructor

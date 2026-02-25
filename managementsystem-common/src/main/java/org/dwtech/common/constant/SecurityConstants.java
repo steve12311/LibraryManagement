@@ -3,8 +3,14 @@ package org.dwtech.common.constant;
 /**
  * 安全模块常量
  *
- * @author Ray.Hao
- * @since 2023/11/24
+ * @author steve12311
+* @since 2025-11-18
+ */
+/**
+ * SecurityConstants
+ *
+ * @author steve12311
+ * @since 2025-11-18
  */
 public interface SecurityConstants {
 

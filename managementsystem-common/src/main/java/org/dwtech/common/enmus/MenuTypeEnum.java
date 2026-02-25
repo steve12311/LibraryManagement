@@ -5,6 +5,9 @@ import lombok.Getter;
 
 /**
  * 菜单类型枚举
+ *
+ * @author steve12311
+ * @since 2025-11-18
  */
 @Getter
 public enum MenuTypeEnum implements IBaseEnum<Integer> {

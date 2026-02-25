@@ -11,6 +11,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+/**
+ * CategoryController
+ *
+ * @author steve12311
+ * @since 2026-02-12
+ */
 
 @RestController
 @RequiredArgsConstructor

@@ -5,8 +5,14 @@ import lombok.Getter;
 /**
  * 数据权限枚举
  *
- * @author Ray.Hao
- * @since 2.3.0
+ * @author steve12311
+* @since 2025-11-18
+ */
+/**
+ * DataScopeEnum
+ *
+ * @author steve12311
+ * @since 2025-11-18
  */
 @Getter
 public enum DataScopeEnum implements IBaseEnum<Integer> {

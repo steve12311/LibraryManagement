@@ -9,8 +9,14 @@ import lombok.Setter;
 /**
  * 角色实体
  *
- * @author Ray.Hao
- * @since 2024/6/23
+ * @author steve12311
+* @since 2025-11-18
+ */
+/**
+ * RolePO
+ *
+ * @author steve12311
+ * @since 2025-11-18
  */
 @TableName("sys_role")
 @Getter

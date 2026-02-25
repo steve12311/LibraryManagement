@@ -8,8 +8,14 @@ import java.util.Date;
 /**
  * 个人中心用户信息
  *
- * @author Ray
- * @since 2024/8/13
+ * @author steve12311
+* @since 2025-11-18
+ */
+/**
+ * UserProfileVO
+ *
+ * @author steve12311
+ * @since 2025-11-18
  */
 @Data
 public class UserProfileVO {

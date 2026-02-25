@@ -7,6 +7,12 @@ import org.dwtech.system.model.entity.MenuPO;
 
 import java.util.List;
 import java.util.Set;
+/**
+ * MenuMapper
+ *
+ * @author steve12311
+ * @since 2025-11-18
+ */
 
 @Mapper
 public interface MenuMapper extends BaseMapper<MenuPO> {

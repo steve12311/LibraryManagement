@@ -5,8 +5,14 @@ import lombok.Data;
 /**
  * 个人中心用户信息
  *
- * @author Ray.Hao
- * @since 2024/8/13
+ * @author steve12311
+* @since 2026-02-25
+ */
+/**
+ * UserProfileForm
+ *
+ * @author steve12311
+ * @since 2026-02-25
  */
 @Data
 public class UserProfileForm {

@@ -19,6 +19,12 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+/**
+ * GlobalExceptionHandler
+ *
+ * @author steve12311
+ * @since 2025-11-18
+ */
 
 @Slf4j
 @RestControllerAdvice

@@ -3,6 +3,12 @@ package org.dwtech.system.model.bo;
 import lombok.Data;
 
 import java.util.Date;
+/**
+ * BorrowBO
+ *
+ * @author steve12311
+ * @since 2026-02-24
+ */
 
 @Data
 public class BorrowBO {

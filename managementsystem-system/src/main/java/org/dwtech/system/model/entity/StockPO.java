@@ -10,6 +10,12 @@ import lombok.EqualsAndHashCode;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.LocalDateTime;
+/**
+ * StockPO
+ *
+ * @author steve12311
+ * @since 2026-02-22
+ */
 
 @Data
 @TableName("lib_stock")

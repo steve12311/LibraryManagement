@@ -7,8 +7,14 @@ import java.util.Set;
 /**
  * 角色权限业务对象
  *
- * @author haoxr
- * @since 2023/11/29
+ * @author steve12311
+* @since 2025-11-18
+ */
+/**
+ * RolePermsBO
+ *
+ * @author steve12311
+ * @since 2025-11-18
  */
 @Data
 public class RolePermsBO {

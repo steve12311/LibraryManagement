@@ -3,8 +3,14 @@ package org.dwtech.common.constant;
 /**
  * Redis 常量
  *
- * @author Theo
- * @since 2024-7-29 11:46:08
+ * @author steve12311
+* @since 2025-11-18
+ */
+/**
+ * RedisConstants
+ *
+ * @author steve12311
+ * @since 2025-11-18
  */
 public interface RedisConstants {
 

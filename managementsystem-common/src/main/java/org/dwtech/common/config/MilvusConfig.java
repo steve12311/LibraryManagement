@@ -6,6 +6,12 @@ import lombok.RequiredArgsConstructor;
 import org.dwtech.common.config.properties.MilvusProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+/**
+ * MilvusConfig
+ *
+ * @author steve12311
+ * @since 2025-11-18
+ */
 
 @RequiredArgsConstructor
 @Configuration

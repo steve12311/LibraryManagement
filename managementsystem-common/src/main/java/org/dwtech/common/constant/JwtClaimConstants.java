@@ -4,6 +4,9 @@ package org.dwtech.common.constant;
  * JWT Claims声明常量
  * <p>
  * JWT Claims 属于 Payload 的一部分，包含了一些实体（通常指的用户）的状态和额外的元数据。
+ *
+ * @author steve12311
+ * @since 2025-11-18
  */
 public interface JwtClaimConstants {
 

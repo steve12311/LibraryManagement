@@ -7,6 +7,9 @@ import java.io.Serializable;
 
 /**
  * 基础分页请求对象
+ *
+ * @author steve12311
+ * @since 2025-11-18
  */
 @Data
 public class BasePageQuery implements Serializable {

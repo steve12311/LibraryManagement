@@ -7,6 +7,12 @@ import lombok.EqualsAndHashCode;
 
 import java.math.BigDecimal;
 import java.util.Date;
+/**
+ * StockPageVO
+ *
+ * @author steve12311
+ * @since 2026-02-22
+ */
 
 @EqualsAndHashCode(callSuper = true)
 @Data

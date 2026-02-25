@@ -11,6 +11,9 @@ import java.util.List;
 
 /**
  * 用户分页查询对象
+ *
+ * @author steve12311
+ * @since 2025-11-18
  */
 @Data
 @EqualsAndHashCode(callSuper = false)

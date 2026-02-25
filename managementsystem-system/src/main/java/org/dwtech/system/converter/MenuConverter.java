@@ -9,6 +9,12 @@ import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
 
 import java.util.List;
+/**
+ * MenuConverter
+ *
+ * @author steve12311
+ * @since 2025-11-18
+ */
 
 @Mapper(componentModel = "spring")
 public interface MenuConverter {

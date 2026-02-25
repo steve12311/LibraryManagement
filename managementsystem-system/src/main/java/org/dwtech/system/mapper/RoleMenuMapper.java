@@ -7,6 +7,12 @@ import org.dwtech.system.model.entity.RoleMenuPO;
 
 import java.util.List;
 import java.util.Set;
+/**
+ * RoleMenuMapper
+ *
+ * @author steve12311
+ * @since 2025-11-18
+ */
 
 @Mapper
 public interface RoleMenuMapper extends BaseMapper<RoleMenuPO> {

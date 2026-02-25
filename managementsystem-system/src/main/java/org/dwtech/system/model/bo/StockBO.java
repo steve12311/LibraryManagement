@@ -4,6 +4,12 @@ import lombok.Data;
 
 import java.math.BigDecimal;
 import java.util.Date;
+/**
+ * StockBO
+ *
+ * @author steve12311
+ * @since 2026-02-22
+ */
 
 @Data
 public class StockBO {

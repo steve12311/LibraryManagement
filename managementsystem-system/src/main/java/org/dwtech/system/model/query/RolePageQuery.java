@@ -10,6 +10,8 @@ import java.time.LocalDateTime;
 /**
  * 角色分页查询对象
  *
+ * @author steve12311
+ * @since 2025-11-18
  */
 @Getter
 @Setter

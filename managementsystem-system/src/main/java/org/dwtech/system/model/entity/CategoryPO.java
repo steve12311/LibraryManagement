@@ -5,6 +5,12 @@ import org.dwtech.common.base.BaseEntity;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+/**
+ * CategoryPO
+ *
+ * @author steve12311
+ * @since 2026-02-22
+ */
 
 @EqualsAndHashCode(callSuper = true)
 @Data

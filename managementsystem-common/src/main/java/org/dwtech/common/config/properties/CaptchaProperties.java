@@ -6,6 +6,9 @@ import org.springframework.stereotype.Component;
 
 /**
  * 验证码 属性配置
+ *
+ * @author steve12311
+ * @since 2025-11-18
  */
 @Data
 @Component

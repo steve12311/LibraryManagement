@@ -38,6 +38,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Set;
+/**
+ * UserServiceImpl
+ *
+ * @author steve12311
+ * @since 2025-11-18
+ */
 
 @Service
 @Slf4j

@@ -3,6 +3,12 @@ package org.dwtech.system.model.form;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 import org.hibernate.validator.constraints.Range;
+/**
+ * RoleForm
+ *
+ * @author steve12311
+ * @since 2026-02-25
+ */
 
 @Data
 public class RoleForm {

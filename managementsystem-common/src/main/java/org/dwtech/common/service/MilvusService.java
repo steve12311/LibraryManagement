@@ -13,6 +13,12 @@ import org.dwtech.common.config.properties.MilvusProperties;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+/**
+ * MilvusService
+ *
+ * @author steve12311
+ * @since 2025-11-18
+ */
 
 @Service
 @RequiredArgsConstructor

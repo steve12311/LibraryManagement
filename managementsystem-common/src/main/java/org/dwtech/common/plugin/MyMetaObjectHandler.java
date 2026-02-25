@@ -8,6 +8,9 @@ import java.time.LocalDateTime;
 
 /**
  * mybatis-plus 字段自动填充
+ *
+ * @author steve12311
+ * @since 2025-11-18
  */
 @Component
 public class MyMetaObjectHandler implements MetaObjectHandler {

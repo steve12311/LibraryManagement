@@ -8,6 +8,12 @@ import org.dwtech.system.model.query.PublishPageQuery;
 import org.dwtech.system.model.vo.PublishPageVO;
 
 import java.util.List;
+/**
+ * PublishService
+ *
+ * @author steve12311
+ * @since 2026-02-22
+ */
 
 public interface PublishService {
     IPage<PublishPageVO> getPublishPage(PublishPageQuery queryParams);

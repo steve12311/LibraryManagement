@@ -7,8 +7,14 @@ import java.util.Set;
 /**
  * 用户认证凭证信息
  *
- * @author Ray.Hao
- * @since 2022/10/22
+ * @author steve12311
+* @since 2025-11-18
+ */
+/**
+ * UserAuthCredentials
+ *
+ * @author steve12311
+ * @since 2025-11-18
  */
 @Data
 public class UserAuthCredentials {

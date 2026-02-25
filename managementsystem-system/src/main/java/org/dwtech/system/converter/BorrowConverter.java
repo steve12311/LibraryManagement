@@ -8,6 +8,12 @@ import org.dwtech.system.model.vo.BorrowVO;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
+/**
+ * BorrowConverter
+ *
+ * @author steve12311
+ * @since 2026-02-24
+ */
 
 @Mapper(componentModel = "spring")
 public interface BorrowConverter {

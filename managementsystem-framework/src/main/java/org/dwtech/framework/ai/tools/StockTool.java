@@ -7,6 +7,12 @@ import org.dwtech.system.service.StockService;
 import org.springframework.ai.tool.annotation.Tool;
 
 import java.util.List;
+/**
+ * StockTool
+ *
+ * @author steve12311
+ * @since 2026-02-22
+ */
 
 @RequiredArgsConstructor
 public class StockTool {

@@ -10,6 +10,9 @@ import java.util.Map;
 
 /**
  * 菜单路由视图对象
+ *
+ * @author steve12311
+ * @since 2025-11-18
  */
 @EqualsAndHashCode(callSuper = true)
 @Data

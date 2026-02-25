@@ -4,6 +4,9 @@ import lombok.Getter;
 
 /**
  * 状态枚举
+ *
+ * @author steve12311
+ * @since 2025-11-18
  */
 @Getter
 public enum StatusEnum implements IBaseEnum<Integer> {

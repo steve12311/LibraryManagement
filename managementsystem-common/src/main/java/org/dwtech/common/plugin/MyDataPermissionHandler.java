@@ -14,6 +14,12 @@ import org.dwtech.common.enmus.IBaseEnum;
 import org.dwtech.common.utils.SecurityUtils;
 
 import java.lang.reflect.Method;
+/**
+ * MyDataPermissionHandler
+ *
+ * @author steve12311
+ * @since 2025-11-18
+ */
 
 @Slf4j
 public class MyDataPermissionHandler implements DataPermissionHandler {

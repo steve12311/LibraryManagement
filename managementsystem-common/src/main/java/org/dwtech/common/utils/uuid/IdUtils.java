@@ -3,6 +3,8 @@ package org.dwtech.common.utils.uuid;
 /**
  * ID生成器工具类
  *
+ * @author steve12311
+ * @since 2025-10-30
  */
 public class IdUtils {
     /**

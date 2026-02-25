@@ -7,6 +7,9 @@ import java.util.List;
 
 /**
  * 菜单表单对象
+ *
+ * @author steve12311
+ * @since 2025-11-18
  */
 @Data
 public class MenuForm {

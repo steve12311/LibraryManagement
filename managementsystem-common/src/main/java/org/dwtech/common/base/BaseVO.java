@@ -8,6 +8,9 @@ import java.io.Serializable;
 
 /**
  * 视图对象基类
+ *
+ * @author steve12311
+ * @since 2025-11-18
  */
 @Data
 @ToString

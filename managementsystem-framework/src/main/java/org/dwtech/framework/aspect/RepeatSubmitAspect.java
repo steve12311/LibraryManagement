@@ -23,6 +23,12 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.util.concurrent.TimeUnit;
+/**
+ * RepeatSubmitAspect
+ *
+ * @author steve12311
+ * @since 2026-02-12
+ */
 
 @Aspect
 @Component

@@ -9,6 +9,12 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.awt.*;
+/**
+ * CaptchaConfig
+ *
+ * @author steve12311
+ * @since 2025-11-18
+ */
 
 @Configuration
 @RequiredArgsConstructor

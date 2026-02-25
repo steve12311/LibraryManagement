@@ -20,6 +20,9 @@ import java.io.IOException;
 
 /**
  * Token 认证校验过滤器
+ *
+ * @author steve12311
+ * @since 2025-11-18
  */
 @RequiredArgsConstructor
 public class TokenAuthenticationFilter extends OncePerRequestFilter {

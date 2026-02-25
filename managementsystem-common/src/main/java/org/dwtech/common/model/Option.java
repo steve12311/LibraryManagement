@@ -4,6 +4,12 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
+/**
+ * Option
+ *
+ * @author steve12311
+ * @since 2025-11-18
+ */
 
 @Data
 @NoArgsConstructor

@@ -7,6 +7,12 @@ import lombok.Data;
 import org.hibernate.validator.constraints.Range;
 
 import java.util.List;
+/**
+ * UserForm
+ *
+ * @author steve12311
+ * @since 2025-11-18
+ */
 
 @Data
 public class UserForm {

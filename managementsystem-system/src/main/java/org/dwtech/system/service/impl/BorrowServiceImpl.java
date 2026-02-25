@@ -19,6 +19,12 @@ import org.dwtech.system.service.BorrowService;
 import org.dwtech.system.service.StockService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+/**
+ * BorrowServiceImpl
+ *
+ * @author steve12311
+ * @since 2026-02-24
+ */
 
 @Slf4j
 @Service

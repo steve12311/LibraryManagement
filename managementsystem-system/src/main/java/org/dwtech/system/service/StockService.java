@@ -7,6 +7,12 @@ import org.dwtech.system.model.query.StockPageQuery;
 import org.dwtech.system.model.vo.StockPageVO;
 
 import java.util.List;
+/**
+ * StockService
+ *
+ * @author steve12311
+ * @since 2026-02-22
+ */
 
 public interface StockService {
     IPage<StockPageVO> getStockPage(@Valid StockPageQuery queryParams);

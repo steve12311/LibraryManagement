@@ -14,6 +14,9 @@ import java.util.*;
 
 /**
  * SpringSecurity 权限校验
+ *
+ * @author steve12311
+ * @since 2025-11-18
  */
 @Component("ss")
 @RequiredArgsConstructor

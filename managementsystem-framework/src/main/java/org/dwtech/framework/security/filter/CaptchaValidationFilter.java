@@ -22,6 +22,8 @@ import java.io.IOException;
 /**
  * 图形验证码校验过滤器
  *
+ * @author steve12311
+ * @since 2025-11-18
  */
 public class CaptchaValidationFilter extends OncePerRequestFilter {
 
