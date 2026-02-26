@@ -7,6 +7,7 @@
 - 账号登录、验证码、Token 刷新与注销
 - 用户/角色/菜单（RBAC）权限体系
 - 图书、库存、借阅、分类、出版社管理
+- 文件上传哈希去重（SHA-256）与 `fileId` 黑盒访问
 - Redis 缓存（角色权限、菜单路由、下拉选项等）
 - 防重复提交（`@RepeatSubmit` + AOP）
 - Spring AI + Milvus + Ollama 向量检索（`/chat` SSE 流式）
@@ -72,6 +73,7 @@ LibraryManagement
 - `milvus.*`
 - `security.session.*`
 - `oss.local.storage-path`
+- `file.cache.*`（文件元数据缓存）
 
 建议将密钥、密码改为环境变量注入，不要在仓库中明文保存。
 
@@ -113,6 +115,12 @@ mvn -pl managementsystem-admin -am spring-boot:run
 - 分类：`/api/v1/category/**`
 - 出版社：`/api/v1/publish/**`
 
+### 文件服务
+
+- 上传文件：`POST /api/v1/files`
+- 读取文件：`GET /api/v1/files/{fileId}`
+- 删除文件：`DELETE /api/v1/files/{fileId}`
+
 ### AI
 
 - 流式对话：`GET /chat`（SSE）
@@ -121,9 +129,16 @@ mvn -pl managementsystem-admin -am spring-boot:run
 
 - 使用 Spring Cache + Redis 做菜单、角色、选项数据缓存
 - 角色权限变更后会清理并刷新相关缓存
+- 文件下载链路支持 Redis 元数据缓存（`fileId -> 文件元数据`），并对不存在文件做短期空值缓存防穿透
 - 写接口使用 `@RepeatSubmit` 防止短时间重复提交
 
-## 9. 开发约定
+## 9. 文件存储说明
+
+- 本地存储场景下，物理文件按内容哈希去重存储，避免重复落盘
+- 接口返回 `url=/{fileId}`，前端使用统一前缀 `/api/v1/files` 访问，不暴露真实文件路径
+- 首次上线需执行 DDL：`docs/sql/20260226_file_dedup.sql`
+
+## 10. 开发约定
 
 - 统一返回：`Result` / `PageResult`
 - 命名风格：参考 youlai-boot，方法与类名优先语义化
@@ -131,6 +146,6 @@ mvn -pl managementsystem-admin -am spring-boot:run
   - `@author steve12311`
   - `@since`（按文件首次提交日期）
 
-## 10. 许可证
+## 11. 许可证
 
 本项目使用仓库根目录 `LICENSE` 中定义的开源协议。
