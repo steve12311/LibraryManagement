@@ -72,9 +72,10 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, MenuPO> implements 
                 .filter(id -> !menuIds.contains(id))
                 .toList();
 
+        Map<Long, List<MenuPO>> menuChildrenMap = groupMenusByParentId(menus);
         // 使用递归函数来构建菜单树
         return rootIds.stream()
-                .flatMap(rootId -> buildMenuTree(rootId, menus).stream())
+                .flatMap(rootId -> buildMenuTree(rootId, menuChildrenMap).stream())
                 .collect(Collectors.toList());
     }
 
@@ -91,7 +92,8 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, MenuPO> implements 
                 .in(onlyParent, MenuPO::getType, MenuTypeEnum.CATALOG.getValue())
                 .orderByAsc(MenuPO::getSort)
         );
-        return buildMenuOptions(SystemConstants.ROOT_NODE_ID, menuList);
+        Map<Long, List<MenuPO>> menuChildrenMap = groupMenusByParentId(menuList);
+        return buildMenuOptions(SystemConstants.ROOT_NODE_ID, menuChildrenMap);
     }
 
     /**
@@ -120,7 +122,8 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, MenuPO> implements 
         } else {
             menuList = this.baseMapper.getMenusByRoleCodes(roleCodes);
         }
-        return buildRoutes(SystemConstants.ROOT_NODE_ID, menuList);
+        Map<Long, List<MenuPO>> menuChildrenMap = groupMenusByParentId(menuList);
+        return buildRoutes(SystemConstants.ROOT_NODE_ID, menuChildrenMap);
     }
 
     /**
@@ -311,20 +314,20 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, MenuPO> implements 
      * @param menuList 菜单列表
      * @return 路由树列表
      */
-    private List<RouteVO> buildRoutes(Long parentId, List<MenuPO> menuList) {
-        List<RouteVO> routeList = new ArrayList<>();
-
-        for (MenuPO menu : menuList) {
-            if (menu.getParentId().equals(parentId)) {
-                RouteVO routeVO = toRouteVo(menu);
-                List<RouteVO> children = buildRoutes(menu.getId(), menuList);
-                if (!children.isEmpty()) {
-                    routeVO.setChildren(children);
-                }
-                routeList.add(routeVO);
-            }
+    private List<RouteVO> buildRoutes(Long parentId, Map<Long, List<MenuPO>> menuChildrenMap) {
+        List<MenuPO> childrenMenus = menuChildrenMap.get(parentId);
+        if (CollectionUtil.isEmpty(childrenMenus)) {
+            return Collections.emptyList();
         }
-
+        List<RouteVO> routeList = new ArrayList<>(childrenMenus.size());
+        for (MenuPO menu : childrenMenus) {
+            RouteVO routeVO = toRouteVo(menu);
+            List<RouteVO> children = buildRoutes(menu.getId(), menuChildrenMap);
+            if (!children.isEmpty()) {
+                routeVO.setChildren(children);
+            }
+            routeList.add(routeVO);
+        }
         return routeList;
     }
 
@@ -384,18 +387,19 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, MenuPO> implements 
      * @param menuList 菜单列表
      * @return 菜单选项树
      */
-    private List<Option<Long>> buildMenuOptions(Long parentId, List<MenuPO> menuList) {
-        List<Option<Long>> menuOptions = new ArrayList<>();
-
-        for (MenuPO menu : menuList) {
-            if (menu.getParentId().equals(parentId)) {
-                Option<Long> option = new Option<>(menu.getId(), menu.getName());
-                List<Option<Long>> subMenuOptions = buildMenuOptions(menu.getId(), menuList);
-                if (!subMenuOptions.isEmpty()) {
-                    option.setChildren(subMenuOptions);
-                }
-                menuOptions.add(option);
+    private List<Option<Long>> buildMenuOptions(Long parentId, Map<Long, List<MenuPO>> menuChildrenMap) {
+        List<MenuPO> childrenMenus = menuChildrenMap.get(parentId);
+        if (CollectionUtil.isEmpty(childrenMenus)) {
+            return Collections.emptyList();
+        }
+        List<Option<Long>> menuOptions = new ArrayList<>(childrenMenus.size());
+        for (MenuPO menu : childrenMenus) {
+            Option<Long> option = new Option<>(menu.getId(), menu.getName());
+            List<Option<Long>> subMenuOptions = buildMenuOptions(menu.getId(), menuChildrenMap);
+            if (!subMenuOptions.isEmpty()) {
+                option.setChildren(subMenuOptions);
             }
+            menuOptions.add(option);
         }
 
         return menuOptions;
@@ -408,15 +412,29 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, MenuPO> implements 
      * @param menuList 菜单列表
      * @return 菜单树列表
      */
-    private List<MenuVO> buildMenuTree(Long parentId, List<MenuPO> menuList) {
-        return CollectionUtil.emptyIfNull(menuList)
-                .stream()
-                .filter(menu -> menu.getParentId().equals(parentId))
+    private List<MenuVO> buildMenuTree(Long parentId, Map<Long, List<MenuPO>> menuChildrenMap) {
+        List<MenuPO> childrenMenus = menuChildrenMap.get(parentId);
+        if (CollectionUtil.isEmpty(childrenMenus)) {
+            return Collections.emptyList();
+        }
+        return childrenMenus.stream()
                 .map(entity -> {
                     MenuVO menuVO = menuConverter.toVo(entity);
-                    List<MenuVO> children = buildMenuTree(entity.getId(), menuList);
+                    List<MenuVO> children = buildMenuTree(entity.getId(), menuChildrenMap);
                     menuVO.setChildren(children);
                     return menuVO;
                 }).toList();
+    }
+
+    /**
+     * 按父节点分组菜单，避免递归时重复全量扫描。
+     *
+     * @param menuList 菜单列表
+     * @return 父节点到子菜单列表映射
+     */
+    private Map<Long, List<MenuPO>> groupMenusByParentId(List<MenuPO> menuList) {
+        return CollectionUtil.emptyIfNull(menuList)
+                .stream()
+                .collect(Collectors.groupingBy(MenuPO::getParentId));
     }
 }
