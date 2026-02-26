@@ -28,9 +28,20 @@
         <include refid="stockView"/>
         <where>
             <if test="queryParams.field != null and queryParams.field != '' and queryParams.keyword != null and queryParams.keyword != ''">
-                AND b.${queryParams.field} LIKE CONCAT('%',#{queryParams.keyword},'%')
+                <choose>
+                    <when test="queryParams.field == 'isbn'">
+                        AND b.isbn LIKE CONCAT(#{queryParams.keyword},'%')
+                    </when>
+                    <when test="queryParams.field == 'name'">
+                        AND b.name LIKE CONCAT('%',#{queryParams.keyword},'%')
+                    </when>
+                    <when test="queryParams.field == 'author'">
+                        AND b.author LIKE CONCAT('%',#{queryParams.keyword},'%')
+                    </when>
+                </choose>
             </if>
         </where>
+        ORDER BY b.isbn DESC
     </select>
     <select id="getStockByExacts" resultType="org.dwtech.system.model.bo.StockBO">
         <include refid="stockView"/>
@@ -41,12 +52,13 @@
                     #{isbn}
                 </foreach>
             </when>
+            <otherwise>
+                WHERE 1 = 0
+            </otherwise>
         </choose>
     </select>
     <select id="selectStockById" resultType="org.dwtech.system.model.bo.StockBO">
         <include refid="stockView"/>
-        <where>
-            AND b.isbn = #{isbn}
-        </where>
+        WHERE b.isbn = #{isbn}
     </select>
 </mapper>
