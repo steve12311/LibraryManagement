@@ -11,6 +11,7 @@ import org.dwtech.system.model.form.StockForm;
 import org.dwtech.system.model.entity.BorrowPO;
 import org.dwtech.system.model.query.BorrowPageQuery;
 import org.dwtech.system.model.vo.BorrowVO;
+import org.dwtech.common.exception.BusinessException;
 import org.dwtech.common.utils.uuid.UUID;
 import org.dwtech.system.converter.BorrowConverter;
 import org.dwtech.system.mapper.BorrowMapper;
@@ -88,8 +89,11 @@ public class BorrowServiceImpl extends ServiceImpl<BorrowMapper, BorrowPO> imple
     public boolean updateBorrow(String borrowId, BorrowForm formData) {
         BorrowPO borrow = borrowConverter.toPo(formData);
         BorrowPO borrowPO = this.getById(borrowId);
+        if (borrowPO == null) {
+            throw new BusinessException("借阅记录不存在");
+        }
         if (borrowPO.getRealityReturnTime() != null) {
-            throw new RuntimeException("已还书的不可操作");
+            throw new BusinessException("已还书的不可操作");
         }
         borrow.setId(borrowId);
         if (borrow.getRealityReturnTime() != null) {
