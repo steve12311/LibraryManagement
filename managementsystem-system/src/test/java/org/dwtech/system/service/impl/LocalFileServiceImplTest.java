@@ -2,10 +2,13 @@ package org.dwtech.system.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import cn.hutool.core.util.StrUtil;
+import org.dwtech.common.constant.RedisConstants;
 import org.dwtech.common.core.entity.FileInfo;
 import org.dwtech.system.mapper.FileObjectMapper;
 import org.dwtech.system.mapper.FileRecordMapper;
 import org.dwtech.system.model.bo.FileDownloadBO;
+import org.dwtech.system.model.bo.FileMetaCacheBO;
 import org.dwtech.system.model.entity.FileObjectPO;
 import org.dwtech.system.model.entity.FileRecordPO;
 import org.junit.jupiter.api.BeforeEach;
@@ -15,6 +18,8 @@ import org.junit.jupiter.api.io.TempDir;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -24,11 +29,16 @@ import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.util.HexFormat;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -45,12 +55,19 @@ class LocalFileServiceImplTest {
     @Mock
     private FileRecordMapper fileRecordMapper;
 
+    @Mock
+    private RedisTemplate<String, Object> redisTemplate;
+
+    @Mock
+    private ValueOperations<String, Object> valueOperations;
+
     private LocalFileServiceImpl localFileService;
 
     @BeforeEach
     void setUp() {
-        localFileService = new LocalFileServiceImpl(fileObjectMapper, fileRecordMapper);
+        localFileService = new LocalFileServiceImpl(fileObjectMapper, fileRecordMapper, redisTemplate);
         ReflectionTestUtils.setField(localFileService, "storagePath", tempDir.toString());
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
     }
 
     @Test
@@ -81,6 +98,10 @@ class LocalFileServiceImplTest {
 
         assertThat(fileInfo.getName()).isEqualTo("book.txt");
         assertThat(fileInfo.getUrl()).isEqualTo("/101");
+        String metaKey = "system:file:meta:101";
+        String nullKey = "system:file:meta:null:101";
+        verify(valueOperations).set(eq(metaKey), any(FileMetaCacheBO.class), anyLong(), eq(TimeUnit.SECONDS));
+        verify(redisTemplate).delete(nullKey);
 
         ArgumentCaptor<FileObjectPO> objectCaptor = ArgumentCaptor.forClass(FileObjectPO.class);
         verify(fileObjectMapper).insert(objectCaptor.capture());
@@ -171,6 +192,46 @@ class LocalFileServiceImplTest {
     }
 
     @Test
+    void shouldReadFileMetaFromCacheWithoutDbQuery() throws Exception {
+        Path objectPath = tempDir.resolve(".objects/aa/bb/from-cache");
+        Files.createDirectories(objectPath.getParent());
+        Files.writeString(objectPath, "cache-content");
+
+        FileMetaCacheBO cacheBO = new FileMetaCacheBO();
+        cacheBO.setFileId(20L);
+        cacheBO.setOriginalName("avatar.jpg");
+        cacheBO.setStoragePath(".objects/aa/bb/from-cache");
+        cacheBO.setMimeType("image/jpeg");
+        cacheBO.setFileSize(13L);
+        cacheBO.setSha256("cache-sha");
+
+        when(valueOperations.get(StrUtil.format(RedisConstants.System.FILE_META, 20L))).thenReturn(cacheBO);
+
+        FileDownloadBO fileDownloadBO = localFileService.getFile(20L);
+
+        assertThat(fileDownloadBO.getFileName()).isEqualTo("avatar.jpg");
+        verify(fileRecordMapper, never()).selectById(any());
+        verify(fileObjectMapper, never()).selectById(any());
+    }
+
+    @Test
+    void shouldWriteNullCacheWhenFileMissing() {
+        Long fileId = 404L;
+        String metaKey = StrUtil.format(RedisConstants.System.FILE_META, fileId);
+        String nullKey = StrUtil.format(RedisConstants.System.FILE_META_NULL, fileId);
+        when(valueOperations.get(metaKey)).thenReturn(null);
+        when(valueOperations.get(nullKey)).thenReturn(null);
+        when(fileRecordMapper.selectById(fileId)).thenReturn(null);
+
+        assertThatThrownBy(() -> localFileService.getFile(fileId))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("文件不存在");
+
+        verify(valueOperations).set(eq(nullKey), eq("__NULL__"), anyLong(), eq(TimeUnit.SECONDS));
+        verify(redisTemplate).delete(metaKey);
+    }
+
+    @Test
     void shouldDeleteFileAndPhysicalObjectWhenRefCountReachZero() throws Exception {
         Path objectPath = tempDir.resolve(".objects/aa/bb/to-delete");
         Files.createDirectories(objectPath.getParent());
@@ -193,6 +254,10 @@ class LocalFileServiceImplTest {
         assertThat(deleted).isTrue();
         verify(fileObjectMapper).deleteById(88L);
         assertThat(Files.exists(objectPath)).isFalse();
+        String metaKey = StrUtil.format(RedisConstants.System.FILE_META, 7L);
+        String nullKey = StrUtil.format(RedisConstants.System.FILE_META_NULL, 7L);
+        verify(redisTemplate, atLeastOnce()).delete(metaKey);
+        verify(valueOperations).set(eq(nullKey), eq("__NULL__"), anyLong(), eq(TimeUnit.SECONDS));
     }
 
     @Test

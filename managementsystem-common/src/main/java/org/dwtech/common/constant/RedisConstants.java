@@ -61,6 +61,8 @@ public interface RedisConstants {
     interface System {
         String CONFIG = "system:config";                 // 系统配置
         String ROLE_PERMS = "system:role:perms"; // 系统角色和权限映射
+        String FILE_META = "system:file:meta:{}"; // 文件元数据缓存
+        String FILE_META_NULL = "system:file:meta:null:{}"; // 文件空值缓存
     }
 
 }

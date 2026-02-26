@@ -10,12 +10,15 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.nio.file.Path;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -27,6 +30,12 @@ class LocalFileServiceImplSecurityTest {
     @Mock
     private FileRecordMapper fileRecordMapper;
 
+    @Mock
+    private RedisTemplate<String, Object> redisTemplate;
+
+    @Mock
+    private ValueOperations<String, Object> valueOperations;
+
     @TempDir
     Path tempDir;
 
@@ -34,8 +43,9 @@ class LocalFileServiceImplSecurityTest {
 
     @BeforeEach
     void setUp() {
-        localFileService = new LocalFileServiceImpl(fileObjectMapper, fileRecordMapper);
+        localFileService = new LocalFileServiceImpl(fileObjectMapper, fileRecordMapper, redisTemplate);
         ReflectionTestUtils.setField(localFileService, "storagePath", tempDir.toString());
+        lenient().when(redisTemplate.opsForValue()).thenReturn(valueOperations);
     }
 
     @Test

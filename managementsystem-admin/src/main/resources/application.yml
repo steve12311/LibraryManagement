@@ -108,3 +108,9 @@ oss:
   type: local
   local:
     storage-path: ${OSS_LOCAL_STORAGE_PATH:/tmp/oss/}
+
+file:
+  cache:
+    enabled: true
+    meta-ttl-seconds: 86400
+    null-ttl-seconds: 60

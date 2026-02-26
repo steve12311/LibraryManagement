@@ -7,20 +7,26 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.dwtech.common.constant.RedisConstants;
 import org.dwtech.common.core.entity.FileInfo;
 import org.dwtech.common.utils.SecurityUtils;
 import org.dwtech.system.mapper.FileObjectMapper;
 import org.dwtech.system.mapper.FileRecordMapper;
 import org.dwtech.system.model.bo.FileDownloadBO;
+import org.dwtech.system.model.bo.FileMetaCacheBO;
 import org.dwtech.system.model.entity.FileObjectPO;
 import org.dwtech.system.model.entity.FileRecordPO;
 import org.dwtech.system.service.FileService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.InputStream;
@@ -31,6 +37,9 @@ import java.nio.file.StandardCopyOption;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.util.HexFormat;
+import java.util.Map;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
 /**
  * LocalFileServiceImpl
  *
@@ -45,12 +54,24 @@ import java.util.HexFormat;
 public class LocalFileServiceImpl implements FileService {
     private static final int BUFFER_SIZE = 8192;
     private static final String OBJECT_DIR = ".objects";
+    private static final String NULL_CACHE_VALUE = "__NULL__";
+    private static final long CACHE_TTL_JITTER_MAX_SECONDS = 600L;
 
     @Value("${oss.local.storage-path}")
     private String storagePath;
 
+    @Value("${file.cache.enabled:true}")
+    private boolean fileMetaCacheEnabled = true;
+
+    @Value("${file.cache.meta-ttl-seconds:86400}")
+    private long fileMetaCacheTtlSeconds = TimeUnit.DAYS.toSeconds(1);
+
+    @Value("${file.cache.null-ttl-seconds:60}")
+    private long fileMetaNullTtlSeconds = 60L;
+
     private final FileObjectMapper fileObjectMapper;
     private final FileRecordMapper fileRecordMapper;
+    private final RedisTemplate<String, Object> redisTemplate;
 
     /**
      * 用途：执行 upload file 操作。
@@ -94,6 +115,8 @@ public class LocalFileServiceImpl implements FileService {
             FileInfo fileInfo = new FileInfo();
             fileInfo.setName(originalFilename);
             fileInfo.setUrl("/" + fileRecord.getId());
+            FileMetaCacheBO fileMetaCacheBO = toFileMetaCache(fileRecord.getId(), fileRecord, fileObject);
+            runAfterCommitOrNow(() -> cacheFileMeta(fileMetaCacheBO));
             return fileInfo;
         } catch (Exception e) {
             log.error("文件上传失败", e);
@@ -113,27 +136,33 @@ public class LocalFileServiceImpl implements FileService {
     @Override
     public FileDownloadBO getFile(Long fileId) {
         Assert.notNull(fileId, "文件ID不能为空");
-        FileRecordPO fileRecord = fileRecordMapper.selectById(fileId);
-        if (fileRecord == null) {
+
+        FileMetaCacheBO fileMetaCacheBO = getFileMetaFromCache(fileId);
+        if (fileMetaCacheBO == null && isNullMetaCacheHit(fileId)) {
             throw new RuntimeException("文件不存在");
         }
 
-        FileObjectPO fileObject = fileObjectMapper.selectById(fileRecord.getObjectId());
-        if (fileObject == null) {
-            throw new RuntimeException("文件不存在");
+        if (fileMetaCacheBO == null) {
+            fileMetaCacheBO = loadFileMetaFromDb(fileId);
+            if (fileMetaCacheBO == null) {
+                cacheNullFileMeta(fileId);
+                throw new RuntimeException("文件不存在");
+            }
+            cacheFileMeta(fileMetaCacheBO);
         }
 
-        Path targetPath = resolveSafePath(fileObject.getStoragePath());
+        Path targetPath = resolveSafePath(fileMetaCacheBO.getStoragePath());
         if (!Files.exists(targetPath) || Files.isDirectory(targetPath)) {
+            evictFileMeta(fileId);
             throw new RuntimeException("文件不存在");
         }
 
-        String mimeType = StrUtil.blankToDefault(fileObject.getMimeType(), probeMimeType(targetPath));
-        long fileSize = fileObject.getFileSize() == null ? targetPath.toFile().length() : fileObject.getFileSize();
+        String mimeType = StrUtil.blankToDefault(fileMetaCacheBO.getMimeType(), probeMimeType(targetPath));
+        long fileSize = fileMetaCacheBO.getFileSize() == null ? targetPath.toFile().length() : fileMetaCacheBO.getFileSize();
 
         FileDownloadBO fileDownloadBO = new FileDownloadBO();
         fileDownloadBO.setFilePath(targetPath);
-        fileDownloadBO.setFileName(StrUtil.blankToDefault(fileRecord.getOriginalName(), fileObject.getSha256()));
+        fileDownloadBO.setFileName(StrUtil.blankToDefault(fileMetaCacheBO.getOriginalName(), fileMetaCacheBO.getSha256()));
         fileDownloadBO.setMimeType(StrUtil.blankToDefault(mimeType, MediaType.APPLICATION_OCTET_STREAM_VALUE));
         fileDownloadBO.setFileSize(fileSize);
         return fileDownloadBO;
@@ -179,6 +208,12 @@ public class LocalFileServiceImpl implements FileService {
             Path objectPath = resolveSafePath(fileObject.getStoragePath());
             FileUtil.del(objectPath.toFile());
         }
+
+        Long finalFileId = fileId;
+        runAfterCommitOrNow(() -> {
+            evictFileMeta(finalFileId);
+            cacheNullFileMeta(finalFileId);
+        });
         return true;
     }
 
@@ -282,6 +317,159 @@ public class LocalFileServiceImpl implements FileService {
 
     private String buildObjectPath(String sha256) {
         return OBJECT_DIR + "/" + sha256.substring(0, 2) + "/" + sha256.substring(2, 4) + "/" + sha256;
+    }
+
+    private FileMetaCacheBO loadFileMetaFromDb(Long fileId) {
+        FileRecordPO fileRecord = fileRecordMapper.selectById(fileId);
+        if (fileRecord == null) {
+            return null;
+        }
+        FileObjectPO fileObject = fileObjectMapper.selectById(fileRecord.getObjectId());
+        if (fileObject == null) {
+            return null;
+        }
+        return toFileMetaCache(fileId, fileRecord, fileObject);
+    }
+
+    private FileMetaCacheBO toFileMetaCache(Long fileId, FileRecordPO fileRecord, FileObjectPO fileObject) {
+        FileMetaCacheBO fileMetaCacheBO = new FileMetaCacheBO();
+        fileMetaCacheBO.setFileId(fileId);
+        fileMetaCacheBO.setObjectId(fileObject.getId());
+        fileMetaCacheBO.setOriginalName(fileRecord.getOriginalName());
+        fileMetaCacheBO.setStoragePath(fileObject.getStoragePath());
+        fileMetaCacheBO.setMimeType(fileObject.getMimeType());
+        fileMetaCacheBO.setFileSize(fileObject.getFileSize());
+        fileMetaCacheBO.setSha256(fileObject.getSha256());
+        return fileMetaCacheBO;
+    }
+
+    private void cacheFileMeta(FileMetaCacheBO fileMetaCacheBO) {
+        if (!fileMetaCacheEnabled || fileMetaCacheBO == null || fileMetaCacheBO.getFileId() == null) {
+            return;
+        }
+        String metaKey = StrUtil.format(RedisConstants.System.FILE_META, fileMetaCacheBO.getFileId());
+        String nullKey = StrUtil.format(RedisConstants.System.FILE_META_NULL, fileMetaCacheBO.getFileId());
+        long ttlSeconds = Math.max(1L, fileMetaCacheTtlSeconds)
+                + ThreadLocalRandom.current().nextLong(CACHE_TTL_JITTER_MAX_SECONDS + 1);
+
+        try {
+            ValueOperations<String, Object> valueOps = redisTemplate.opsForValue();
+            valueOps.set(metaKey, fileMetaCacheBO, ttlSeconds, TimeUnit.SECONDS);
+            redisTemplate.delete(nullKey);
+        } catch (Exception e) {
+            log.warn("写入文件元数据缓存失败，fileId={}", fileMetaCacheBO.getFileId(), e);
+        }
+    }
+
+    private void cacheNullFileMeta(Long fileId) {
+        if (!fileMetaCacheEnabled || fileId == null) {
+            return;
+        }
+        String metaKey = StrUtil.format(RedisConstants.System.FILE_META, fileId);
+        String nullKey = StrUtil.format(RedisConstants.System.FILE_META_NULL, fileId);
+        long ttlSeconds = Math.max(1L, fileMetaNullTtlSeconds);
+        try {
+            ValueOperations<String, Object> valueOps = redisTemplate.opsForValue();
+            valueOps.set(nullKey, NULL_CACHE_VALUE, ttlSeconds, TimeUnit.SECONDS);
+            redisTemplate.delete(metaKey);
+        } catch (Exception e) {
+            log.warn("写入文件空值缓存失败，fileId={}", fileId, e);
+        }
+    }
+
+    private void evictFileMeta(Long fileId) {
+        if (!fileMetaCacheEnabled || fileId == null) {
+            return;
+        }
+        String metaKey = StrUtil.format(RedisConstants.System.FILE_META, fileId);
+        String nullKey = StrUtil.format(RedisConstants.System.FILE_META_NULL, fileId);
+        try {
+            redisTemplate.delete(metaKey);
+            redisTemplate.delete(nullKey);
+        } catch (Exception e) {
+            log.warn("删除文件元数据缓存失败，fileId={}", fileId, e);
+        }
+    }
+
+    private FileMetaCacheBO getFileMetaFromCache(Long fileId) {
+        if (!fileMetaCacheEnabled || fileId == null) {
+            return null;
+        }
+        String metaKey = StrUtil.format(RedisConstants.System.FILE_META, fileId);
+        try {
+            Object cacheValue = redisTemplate.opsForValue().get(metaKey);
+            if (cacheValue instanceof FileMetaCacheBO meta) {
+                return meta;
+            }
+            if (cacheValue instanceof Map<?, ?> mapValue) {
+                return mapToFileMeta(mapValue);
+            }
+            return null;
+        } catch (Exception e) {
+            log.warn("读取文件元数据缓存失败，fileId={}", fileId, e);
+            return null;
+        }
+    }
+
+    private boolean isNullMetaCacheHit(Long fileId) {
+        if (!fileMetaCacheEnabled || fileId == null) {
+            return false;
+        }
+        String nullKey = StrUtil.format(RedisConstants.System.FILE_META_NULL, fileId);
+        try {
+            Object nullValue = redisTemplate.opsForValue().get(nullKey);
+            return nullValue != null && StrUtil.equals(NULL_CACHE_VALUE, String.valueOf(nullValue));
+        } catch (Exception e) {
+            log.warn("读取文件空值缓存失败，fileId={}", fileId, e);
+            return false;
+        }
+    }
+
+    private FileMetaCacheBO mapToFileMeta(Map<?, ?> mapValue) {
+        FileMetaCacheBO fileMetaCacheBO = new FileMetaCacheBO();
+        fileMetaCacheBO.setFileId(toLong(mapValue.get("fileId")));
+        fileMetaCacheBO.setObjectId(toLong(mapValue.get("objectId")));
+        fileMetaCacheBO.setOriginalName(toStringValue(mapValue.get("originalName")));
+        fileMetaCacheBO.setStoragePath(toStringValue(mapValue.get("storagePath")));
+        fileMetaCacheBO.setMimeType(toStringValue(mapValue.get("mimeType")));
+        fileMetaCacheBO.setFileSize(toLong(mapValue.get("fileSize")));
+        fileMetaCacheBO.setSha256(toStringValue(mapValue.get("sha256")));
+        if (StrUtil.isBlank(fileMetaCacheBO.getStoragePath())) {
+            return null;
+        }
+        return fileMetaCacheBO;
+    }
+
+    private Long toLong(Object value) {
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof Number number) {
+            return number.longValue();
+        }
+        try {
+            return Long.parseLong(String.valueOf(value));
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private String toStringValue(Object value) {
+        return value == null ? null : String.valueOf(value);
+    }
+
+    private void runAfterCommitOrNow(Runnable runnable) {
+        if (TransactionSynchronizationManager.isSynchronizationActive()
+                && TransactionSynchronizationManager.isActualTransactionActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    runnable.run();
+                }
+            });
+            return;
+        }
+        runnable.run();
     }
 
     private record UploadDigest(Path tempFilePath, String sha256, long fileSize) {
