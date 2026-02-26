@@ -24,18 +24,18 @@
                     <when test="queryParams.field == 'status'">
                         <choose>
                             <!-- 0: 已归还 -->
-                            <when test="queryParams.keyword == '0'">
+                            <when test="queryParams.keyword == &quot;0&quot;">
                                 AND bw.reality_return_time IS NOT NULL
                             </when>
 
                             <!-- 1: 借阅中（未归还且未超期） -->
-                            <when test="queryParams.keyword == '1'">
+                            <when test="queryParams.keyword == &quot;1&quot;">
                                 AND bw.reality_return_time IS NULL
                                 AND bw.return_time &gt;= NOW()
                             </when>
 
                             <!-- 2: 已逾期（未归还且已超过应还时间） -->
-                            <when test="queryParams.keyword == '2'">
+                            <when test="queryParams.keyword == &quot;2&quot;">
                                 AND bw.reality_return_time IS NULL
                                 AND bw.return_time &lt; NOW()
                             </when>
