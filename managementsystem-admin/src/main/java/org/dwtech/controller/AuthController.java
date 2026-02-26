@@ -7,6 +7,7 @@ import org.dwtech.common.core.entity.Result;
 import org.dwtech.auth.model.form.UserLoginForm;
 import org.dwtech.auth.model.vo.CaptchaVO;
 import org.dwtech.framework.auth.service.AuthService;
+import org.springframework.http.MediaType;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 /**
@@ -40,13 +41,13 @@ public class AuthController {
     /**
      * 用途：执行 login 操作。
      * 
-     * 账号密码登录
+     * 账号密码登录（application/x-www-form-urlencoded）
      * 
      * @param formData form data
      * @return 返回结果
      */
-    @PostMapping("/login")
-    public Result<AuthenticationToken> login(@Validated @RequestBody UserLoginForm formData) {
+    @PostMapping(value = "/login", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+    public Result<AuthenticationToken> login(@Validated UserLoginForm formData) {
         AuthenticationToken token = authService.login(formData.getUsername(), formData.getPassword());
         return Result.success(token);
     }
