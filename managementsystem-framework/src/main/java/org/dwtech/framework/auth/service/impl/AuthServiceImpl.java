@@ -105,8 +105,8 @@ public class AuthServiceImpl implements AuthService {
                 log.error("验证用户名密码失败：{}", e.getMessage());
                 throw new BusinessException(ResultCode.USER_PASSWORD_ERROR, "验证用户名密码失败");
             }
-            log.error("错误：{}", e.getMessage());
-            throw new BusinessException("错误：{}", e.getMessage());
+            log.error("认证流程异常", e);
+            throw new BusinessException("登录失败，请稍后再试");
         }
         // 3. 认证成功后生成 JWT 令牌，并存入 Security 上下文，供登录日志 AOP 使用（已认证）
         AuthenticationToken authenticationTokenResponse =

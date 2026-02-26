@@ -115,9 +115,21 @@
         GROUP BY
         u.id
         <choose>
-            <!-- 如果排序参数都传入 -->
-            <when test="queryParams.field != null and queryParams.field != '' and queryParams.direction != null">
-                ORDER BY u.${queryParams.field} ${queryParams.direction}
+            <when test="queryParams.field == 'create_time'">
+                ORDER BY u.create_time
+                <choose>
+                    <when test="queryParams.direction != null and queryParams.direction.toString() == 'ASC'"> ASC
+                    </when>
+                    <otherwise> DESC</otherwise>
+                </choose>
+            </when>
+            <when test="queryParams.field == 'update_time'">
+                ORDER BY u.update_time
+                <choose>
+                    <when test="queryParams.direction != null and queryParams.direction.toString() == 'ASC'"> ASC
+                    </when>
+                    <otherwise> DESC</otherwise>
+                </choose>
             </when>
             <!-- 默认排序 -->
             <otherwise>
