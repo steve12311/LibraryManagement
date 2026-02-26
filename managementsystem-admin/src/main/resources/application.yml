@@ -85,6 +85,7 @@ security:
   # 非安全端点路径，完全绕过 Spring Security 的安全控制
   unsecured-urls:
     - /favicon.ico
+    - /uploads/**
 
 mybatis-plus:
   mapper-locations: classpath*:/mapper/*.xml

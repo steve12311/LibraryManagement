@@ -26,7 +26,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         // 将本地存储路径映射为Web可访问的路径
-        registry.addResourceHandler("/api/v1/files/uploads/**")
+        registry.addResourceHandler("/uploads/**")
                 .addResourceLocations("file:" + storagePath);
     }
 }
