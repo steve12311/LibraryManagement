@@ -146,7 +146,7 @@ public class GlobalExceptionHandler {
             throw e;
         }
         log.error("unknown exception", e);
-        return Result.failed(e.getLocalizedMessage());
+        return Result.failed("系统繁忙，请稍后再试");
     }
 
     /**

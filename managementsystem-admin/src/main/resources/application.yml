@@ -4,18 +4,18 @@ server:
 spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://***REMOVED***:3306/ms?zeroDateTimeBehavior=convertToNull&useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&autoReconnect=true&allowMultiQueries=true
-    username: ms
-    password: ***REMOVED***
+    url: ${DB_URL:jdbc:mysql://127.0.0.1:3306/ms?zeroDateTimeBehavior=convertToNull&useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&autoReconnect=true&allowMultiQueries=true}
+    username: ${DB_USERNAME:ms}
+    password: ${DB_PASSWORD:}
   data:
     redis:
-      port: 6379
+      port: ${REDIS_PORT:6379}
       database: 0
-      password: ***REMOVED***
-      host: ***REMOVED***
+      password: ${REDIS_PASSWORD:}
+      host: ${REDIS_HOST:127.0.0.1}
   ai:
     deepseek:
-      api-key: ***REMOVED***
+      api-key: ${DEEPSEEK_API_KEY:}
     ollama:
       base-url: http://localhost:11434
       embedding:
@@ -29,9 +29,9 @@ spring:
       use-key-prefix: true
 
 milvus:
-  uri: http://***REMOVED***:19530
-  username: root
-  password: Milvus
+  uri: ${MILVUS_URI:http://127.0.0.1:19530}
+  username: ${MILVUS_USERNAME:root}
+  password: ${MILVUS_PASSWORD:}
   vector-dim: 768
   collection-name: bookKeyWords
 
@@ -71,7 +71,7 @@ security:
     access-token-time-to-live: 7200 # 访问令牌 有效期(单位：秒)，默认 2 小时，-1 表示永不过期
     refresh-token-time-to-live: 604800 # 刷新令牌有效期(单位：秒)，默认 7 天，-1 表示永不过期
     jwt:
-      secret-key: ***REMOVED*** # JWT密钥(HS256算法至少32字符)
+      secret-key: ${JWT_SECRET_KEY:change-me-012345678901234567890123456789012345678901234567890123456789} # JWT密钥(HS256算法至少32字符)
     redis-token:
       allow-multi-login: true # 是否允许多设备登录
   # 安全白名单路径，仅跳过 AuthorizationFilter 过滤器，还是会走 Spring Security 的其他过滤器(CSRF、CORS等)
@@ -107,4 +107,4 @@ mybatis-plus:
 oss:
   type: local
   local:
-    storage-path: /Users/dengwei/Downloads/oss/
+    storage-path: ${OSS_LOCAL_STORAGE_PATH:/tmp/oss/}

@@ -63,16 +63,16 @@ public class CaptchaValidationFilter extends OncePerRequestFilter {
         if (LOGIN_PATH_REQUEST_MATCHER.matches(request)) {
             // 请求中的验证码
             String captchaCode = request.getParameter(CAPTCHA_CODE_PARAM_NAME);
-            // TODO 兼容没有验证码的版本(线上请移除这个判断)
-            if (StrUtil.isBlank(captchaCode)) {
-                chain.doFilter(request, response);
+            String verifyCodeKey = request.getParameter(CAPTCHA_KEY_PARAM_NAME);
+            if (StrUtil.isBlank(captchaCode) || StrUtil.isBlank(verifyCodeKey)) {
+                WebResponseHelper.writeError(response, ResultCode.USER_VERIFICATION_CODE_ERROR);
                 return;
             }
             // 缓存中的验证码
-            String verifyCodeKey = request.getParameter(CAPTCHA_KEY_PARAM_NAME);
-            String cacheVerifyCode = (String) redisTemplate.opsForValue().get(
-                    StrUtil.format(RedisConstants.Captcha.IMAGE_CODE, verifyCodeKey)
-            );
+            String captchaCacheKey = StrUtil.format(RedisConstants.Captcha.IMAGE_CODE, verifyCodeKey);
+            String cacheVerifyCode = (String) redisTemplate.opsForValue().get(captchaCacheKey);
+            // 一次性验证码，取出后立即删除，避免暴力重试和重放
+            redisTemplate.delete(captchaCacheKey);
             if (cacheVerifyCode == null) {
                 WebResponseHelper.writeError(response, ResultCode.USER_VERIFICATION_CODE_EXPIRED);
             } else {
