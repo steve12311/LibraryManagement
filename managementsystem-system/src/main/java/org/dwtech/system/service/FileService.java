@@ -1,6 +1,7 @@
 package org.dwtech.system.service;
 
 import org.dwtech.common.core.entity.FileInfo;
+import org.dwtech.system.model.bo.FileDownloadBO;
 import org.springframework.web.multipart.MultipartFile;
 /**
  * FileService
@@ -20,13 +21,19 @@ public interface FileService {
     FileInfo uploadFile(MultipartFile file);
 
     /**
-     * 用途：删除 file。
-     * 
-     * 删除文件
+     * 用途：根据 fileId 获取文件下载信息。
      *
-     * @param filePath 文件完整URL
+     * @param fileId 文件ID
+     * @return 文件下载信息
+     */
+    FileDownloadBO getFile(Long fileId);
+
+    /**
+     * 用途：删除 file。
+     *
+     * @param fileId 文件ID
      * @return 删除结果
      */
-    boolean deleteFile(String filePath);
+    boolean deleteFile(Long fileId);
 
 }

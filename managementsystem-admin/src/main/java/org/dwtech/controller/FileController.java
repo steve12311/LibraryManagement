@@ -4,9 +4,17 @@ import lombok.RequiredArgsConstructor;
 import org.dwtech.common.annontation.RepeatSubmit;
 import org.dwtech.common.core.entity.FileInfo;
 import org.dwtech.common.core.entity.Result;
+import org.dwtech.system.model.bo.FileDownloadBO;
 import org.dwtech.system.service.FileService;
+import org.springframework.core.io.UrlResource;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.nio.charset.StandardCharsets;
 /**
  * FileController
  *
@@ -31,5 +39,45 @@ public class FileController {
     public Result<FileInfo> uploadFile(@RequestParam("file") MultipartFile file) {
         FileInfo fileInfo = fileService.uploadFile(file);
         return Result.success(fileInfo);
+    }
+
+    /**
+     * 用途：根据 fileId 获取文件内容。
+     *
+     * @param fileId 文件ID
+     * @return 文件二进制流
+     */
+    @GetMapping("/{fileId}")
+    public ResponseEntity<UrlResource> getFile(@PathVariable("fileId") Long fileId) throws Exception {
+        FileDownloadBO fileDownloadBO = fileService.getFile(fileId);
+        UrlResource resource = new UrlResource(fileDownloadBO.getFilePath().toUri());
+
+        MediaType mediaType;
+        try {
+            mediaType = MediaType.parseMediaType(fileDownloadBO.getMimeType());
+        } catch (Exception e) {
+            mediaType = MediaType.APPLICATION_OCTET_STREAM;
+        }
+
+        ContentDisposition contentDisposition = ContentDisposition.inline()
+                .filename(fileDownloadBO.getFileName(), StandardCharsets.UTF_8)
+                .build();
+        return ResponseEntity.ok()
+                .contentType(mediaType)
+                .contentLength(fileDownloadBO.getFileSize())
+                .header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition.toString())
+                .body(resource);
+    }
+
+    /**
+     * 用途：删除文件。
+     *
+     * @param fileId 文件ID
+     * @return 返回结果
+     */
+    @DeleteMapping("/{fileId}")
+    public Result<Boolean> deleteFile(@PathVariable("fileId") Long fileId) {
+        boolean deleted = fileService.deleteFile(fileId);
+        return Result.success(deleted);
     }
 }
