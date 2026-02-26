@@ -1,16 +1,31 @@
 package org.dwtech.system.service.impl;
 
+import org.dwtech.system.mapper.FileObjectMapper;
+import org.dwtech.system.mapper.FileRecordMapper;
+import org.dwtech.system.model.entity.FileObjectPO;
+import org.dwtech.system.model.entity.FileRecordPO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 class LocalFileServiceImplSecurityTest {
+
+    @Mock
+    private FileObjectMapper fileObjectMapper;
+
+    @Mock
+    private FileRecordMapper fileRecordMapper;
 
     @TempDir
     Path tempDir;
@@ -19,20 +34,30 @@ class LocalFileServiceImplSecurityTest {
 
     @BeforeEach
     void setUp() {
-        localFileService = new LocalFileServiceImpl();
+        localFileService = new LocalFileServiceImpl(fileObjectMapper, fileRecordMapper);
         ReflectionTestUtils.setField(localFileService, "storagePath", tempDir.toString());
     }
 
     @Test
-    void shouldRejectPathTraversalWhenDeleteFile() throws Exception {
-        Path outsideFile = Files.createTempFile("outside-", ".txt");
-        Files.writeString(outsideFile, "do-not-delete");
+    void shouldRejectPathTraversalWhenGetFile() {
+        FileRecordPO fileRecordPO = new FileRecordPO();
+        fileRecordPO.setId(1L);
+        fileRecordPO.setObjectId(2L);
+        when(fileRecordMapper.selectById(1L)).thenReturn(fileRecordPO);
 
-        boolean deleted = localFileService.deleteFile("/../" + outsideFile.getFileName());
+        FileObjectPO fileObjectPO = new FileObjectPO();
+        fileObjectPO.setId(2L);
+        fileObjectPO.setStoragePath("../outside.txt");
+        when(fileObjectMapper.selectById(2L)).thenReturn(fileObjectPO);
 
+        assertThatThrownBy(() -> localFileService.getFile(1L))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("非法文件路径");
+    }
+
+    @Test
+    void shouldReturnFalseWhenDeleteFileIdIsNull() {
+        boolean deleted = localFileService.deleteFile(null);
         assertThat(deleted).isFalse();
-        assertThat(Files.exists(outsideFile)).isTrue();
-
-        Files.deleteIfExists(outsideFile);
     }
 }
