@@ -275,7 +275,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserPO> implements 
         }
 
         // 判断新密码和确认密码是否一致
-        if (passwordEncoder.matches(formData.getNewPassword(), formData.getConfirmPassword())) {
+        if (!StrUtil.equals(formData.getNewPassword(), formData.getConfirmPassword())) {
             throw new BusinessException("新密码和确认密码不一致");
         }
 
