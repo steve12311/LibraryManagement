@@ -1,5 +1,6 @@
 package org.dwtech.common.core.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Builder;
 import lombok.Data;
 
@@ -17,6 +18,7 @@ public class AuthenticationToken {
 
     private String accessToken;
 
+    @JsonIgnore
     private String refreshToken;
 
     private Integer expiresIn;

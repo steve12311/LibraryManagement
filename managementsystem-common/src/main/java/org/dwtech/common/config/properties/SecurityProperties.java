@@ -8,6 +8,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.annotation.Validated;
 
+import java.util.List;
+
 /**
  * 安全模块配置属性类
  *
@@ -46,6 +48,16 @@ public class SecurityProperties {
      */
     @NotEmpty
     private String[] unsecuredUrls;
+
+    /**
+     * CORS 配置
+     */
+    private CorsConfig cors = new CorsConfig();
+
+    /**
+     * Refresh Token Cookie 配置
+     */
+    private RefreshTokenCookieConfig refreshTokenCookie = new RefreshTokenCookieConfig();
 
     /**
      * 会话配置嵌套类
@@ -114,5 +126,78 @@ public class SecurityProperties {
          * <p>false - 新登录会使旧令牌失效</p>
          */
         private Boolean allowMultiLogin = true;
+    }
+
+    /**
+     * CORS 配置项
+     */
+    @Data
+    public static class CorsConfig {
+        /**
+         * 允许跨域来源白名单，禁止使用 *
+         */
+        private List<String> allowedOrigins = List.of("http://localhost:5173");
+
+        /**
+         * 允许的 HTTP 方法
+         */
+        private List<String> allowedMethods = List.of("GET", "POST", "PUT", "DELETE", "OPTIONS");
+
+        /**
+         * 允许的请求头
+         */
+        private List<String> allowedHeaders = List.of("*");
+
+        /**
+         * 是否允许携带凭证
+         */
+        private Boolean allowCredentials = true;
+
+        /**
+         * 预检缓存时间（秒）
+         */
+        @Min(0)
+        private Long maxAge = 1800L;
+    }
+
+    /**
+     * Refresh Token Cookie 配置项
+     */
+    @Data
+    public static class RefreshTokenCookieConfig {
+        /**
+         * Cookie 名称
+         */
+        @NotNull
+        private String name = "refreshToken";
+
+        /**
+         * Cookie 路径
+         */
+        @NotNull
+        private String path = "/api/v1/auth/refresh-token";
+
+        /**
+         * 是否 HttpOnly
+         */
+        @NotNull
+        private Boolean httpOnly = true;
+
+        /**
+         * 是否仅 HTTPS 发送
+         */
+        @NotNull
+        private Boolean secure = true;
+
+        /**
+         * SameSite 策略
+         */
+        @NotNull
+        private String sameSite = "None";
+
+        /**
+         * 可选的 Cookie 域名
+         */
+        private String domain;
     }
 }
