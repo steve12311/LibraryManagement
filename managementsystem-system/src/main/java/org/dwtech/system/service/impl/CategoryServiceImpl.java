@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 /**
@@ -41,11 +42,22 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, CategoryPO>
      * @return 结果列表
      */
     @Override
+    @Cacheable(
+            cacheNames = "category",
+            key = "'tree:all'",
+            condition = "#p0 == null || (((#p0.categoryName == null) || (#p0.categoryName.trim().isEmpty())) && #p0.status == null)",
+            sync = true
+    )
     public List<CategoryVO> listCategories(CategoryQuery queryParams) {
+        String categoryName = queryParams == null ? null : queryParams.getCategoryName();
+        Integer status = queryParams == null ? null : queryParams.getStatus();
+
         List<CategoryPO> categories = this.list(new LambdaQueryWrapper<CategoryPO>()
-                .like(StrUtil.isNotBlank(queryParams.getCategoryName()), CategoryPO::getName, queryParams.getCategoryName())
-                .eq(ObjectUtil.isNotNull(queryParams.getStatus()), CategoryPO::getVisible, queryParams.getStatus())
+                .select(CategoryPO::getId, CategoryPO::getParentId, CategoryPO::getTreePath, CategoryPO::getName, CategoryPO::getType, CategoryPO::getSort)
+                .like(StrUtil.isNotBlank(categoryName), CategoryPO::getName, categoryName)
+                .eq(ObjectUtil.isNotNull(status), CategoryPO::getVisible, status)
                 .orderByAsc(CategoryPO::getSort)
+                .orderByAsc(CategoryPO::getId)
         );
 
         if (CollectionUtil.isEmpty(categories)) {
@@ -57,19 +69,17 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, CategoryPO>
                 .map(CategoryPO::getId)
                 .collect(Collectors.toSet());
 
-        // 获取所有父级ID
-        Set<Long> parentIds = categories.stream()
+        // 获取根节点ID（递归的起点），即父节点ID中不包含在分类ID中的节点
+        List<Long> rootIds = categories.stream()
                 .map(CategoryPO::getParentId)
-                .collect(Collectors.toSet());
-
-        // 获取根节点ID（递归的起点），即父节点ID中不包含在部门ID中的节点，注意这里不能拿顶级菜单 O 作为根节点，因为菜单筛选的时候 O 会被过滤掉
-        List<Long> rootIds = parentIds.stream()
+                .distinct()
                 .filter(id -> !categoryIds.contains(id))
                 .toList();
 
-        // 使用递归函数来构建菜单树
+        Map<Long, List<CategoryPO>> categoryChildrenMap = groupCategoriesByParentId(categories);
+        // 使用递归函数构建分类树
         return rootIds.stream()
-                .flatMap(rootId -> buildCategoryTree(rootId, categories).stream())
+                .flatMap(rootId -> buildCategoryTree(rootId, categoryChildrenMap).stream())
                 .collect(Collectors.toList());
     }
 
@@ -83,52 +93,75 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, CategoryPO>
     @Cacheable(cacheNames = "category", key = "'options'")
     public List<Option<Long>> listCategoryOptions() {
         List<CategoryPO> list = this.list(new LambdaQueryWrapper<CategoryPO>()
-                .eq(CategoryPO::getVisible, true)
+                .select(CategoryPO::getId, CategoryPO::getParentId, CategoryPO::getName, CategoryPO::getSort)
+                .eq(CategoryPO::getVisible, 1)
                 .orderByAsc(CategoryPO::getSort)
+                .orderByAsc(CategoryPO::getId)
         );
-        return buildCategoryOptions(SystemConstants.ROOT_NODE_ID, list);
+        if (CollectionUtil.isEmpty(list)) {
+            return Collections.emptyList();
+        }
+        Map<Long, List<CategoryPO>> categoryChildrenMap = groupCategoriesByParentId(list);
+        return buildCategoryOptions(SystemConstants.ROOT_NODE_ID, categoryChildrenMap);
     }
 
     /**
      * 用途：构建 category tree。
      * 
      * @param parentId parent ID
-     * @param categories categories
+     * @param categoryChildrenMap categoryChildrenMap
      * @return 结果列表
      */
-    private List<CategoryVO> buildCategoryTree(Long parentId, List<CategoryPO> categories) {
-        return CollectionUtil.emptyIfNull(categories)
-                .stream()
-                .filter(category -> category.getParentId().equals(parentId))
+    private List<CategoryVO> buildCategoryTree(Long parentId, Map<Long, List<CategoryPO>> categoryChildrenMap) {
+        List<CategoryPO> children = categoryChildrenMap.get(parentId);
+        if (CollectionUtil.isEmpty(children)) {
+            return Collections.emptyList();
+        }
+        return children.stream()
                 .map(entity -> {
                     CategoryVO categoryVO = categoryConverter.toVo(entity);
-                    List<CategoryVO> children = buildCategoryTree(entity.getId(), categories);
-                    categoryVO.setChildren(children);
+                    List<CategoryVO> categoryChildren = buildCategoryTree(entity.getId(), categoryChildrenMap);
+                    categoryVO.setChildren(categoryChildren);
                     return categoryVO;
-                }).toList();
+                })
+                .toList();
     }
 
     /**
      * 用途：构建 category options。
      * 
      * @param parentId parent ID
-     * @param categories categories
+     * @param categoryChildrenMap categoryChildrenMap
      * @return 结果列表
      */
-    private List<Option<Long>> buildCategoryOptions(Long parentId, List<CategoryPO> categories) {
-        List<Option<Long>> categoryOptions = new ArrayList<>();
-
-        for (CategoryPO category : categories) {
-            if (category.getParentId().equals(parentId)) {
-                Option<Long> option = new Option<>(category.getId(), category.getName());
-                List<Option<Long>> children = buildCategoryOptions(category.getId(), categories);
-                if (!children.isEmpty()) {
-                    option.setChildren(children);
-                }
-                categoryOptions.add(option);
-            }
+    private List<Option<Long>> buildCategoryOptions(Long parentId, Map<Long, List<CategoryPO>> categoryChildrenMap) {
+        List<CategoryPO> children = categoryChildrenMap.get(parentId);
+        if (CollectionUtil.isEmpty(children)) {
+            return Collections.emptyList();
         }
 
-        return categoryOptions;
+        // 显式使用 ArrayList，避免 Stream#toList 返回不可变 ListN 导致 Redis 缓存类型信息不稳定
+        List<Option<Long>> options = new ArrayList<>(children.size());
+        for (CategoryPO category : children) {
+            Option<Long> option = new Option<>(category.getId(), category.getName());
+            List<Option<Long>> subOptions = buildCategoryOptions(category.getId(), categoryChildrenMap);
+            if (CollectionUtil.isNotEmpty(subOptions)) {
+                option.setChildren(subOptions);
+            }
+            options.add(option);
+        }
+        return options;
+    }
+
+    /**
+     * 用途：按父节点分组分类数据，避免递归阶段重复全量扫描。
+     *
+     * @param categories 分类列表
+     * @return 父节点到子分类的映射
+     */
+    private Map<Long, List<CategoryPO>> groupCategoriesByParentId(List<CategoryPO> categories) {
+        return CollectionUtil.emptyIfNull(categories)
+                .stream()
+                .collect(Collectors.groupingBy(CategoryPO::getParentId));
     }
 }
