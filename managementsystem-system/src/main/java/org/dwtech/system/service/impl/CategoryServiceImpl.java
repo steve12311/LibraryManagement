@@ -10,6 +10,7 @@ import org.dwtech.common.constant.SystemConstants;
 import org.dwtech.common.model.Option;
 import org.dwtech.system.model.entity.CategoryPO;
 import org.dwtech.system.model.query.CategoryQuery;
+import org.dwtech.system.model.vo.CategoryOptionVO;
 import org.dwtech.system.model.vo.CategoryVO;
 import org.dwtech.system.converter.CategoryConverter;
 import org.dwtech.system.mapper.CategoryMapper;
@@ -103,6 +104,75 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, CategoryPO>
         }
         Map<Long, List<CategoryPO>> categoryChildrenMap = groupCategoriesByParentId(list);
         return buildCategoryOptions(SystemConstants.ROOT_NODE_ID, categoryChildrenMap);
+    }
+
+    /**
+     * 用途：按父节点懒加载 category options 列表。
+     *
+     * @param parentId 父节点 ID，空值视为根节点
+     * @return 结果列表
+     */
+    @Override
+    @Cacheable(cacheNames = "category", key = "'lazy:' + (#p0 == null ? 0 : #p0)", sync = true)
+    public List<CategoryOptionVO> listCategoryLazyOptions(Long parentId) {
+        Long targetParentId = ObjectUtil.defaultIfNull(parentId, SystemConstants.ROOT_NODE_ID);
+        List<CategoryPO> children = this.list(new LambdaQueryWrapper<CategoryPO>()
+                .select(CategoryPO::getId, CategoryPO::getName, CategoryPO::getSort)
+                .eq(CategoryPO::getVisible, 1)
+                .eq(CategoryPO::getParentId, targetParentId)
+                .orderByAsc(CategoryPO::getSort)
+                .orderByAsc(CategoryPO::getId)
+        );
+        if (CollectionUtil.isEmpty(children)) {
+            return Collections.emptyList();
+        }
+
+        List<Long> childIds = children.stream()
+                .map(CategoryPO::getId)
+                .toList();
+
+        Set<Long> nonLeafIds = this.list(new LambdaQueryWrapper<CategoryPO>()
+                        .select(CategoryPO::getParentId)
+                        .eq(CategoryPO::getVisible, 1)
+                        .in(CategoryPO::getParentId, childIds)
+                        .groupBy(CategoryPO::getParentId)
+                ).stream()
+                .map(CategoryPO::getParentId)
+                .collect(Collectors.toSet());
+
+        return children.stream()
+                .map(item -> new CategoryOptionVO(item.getId(), item.getName(), !nonLeafIds.contains(item.getId())))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 用途：按 ID 查询单个 category option（用于前端回显）。
+     *
+     * @param categoryId 分类 ID
+     * @return 单个节点信息
+     */
+    @Override
+    @Cacheable(cacheNames = "category", key = "'node:' + #p0", condition = "#p0 != null", sync = true)
+    public CategoryOptionVO getCategoryOptionById(Long categoryId) {
+        if (ObjectUtil.isNull(categoryId)) {
+            return null;
+        }
+
+        CategoryPO category = this.getOne(new LambdaQueryWrapper<CategoryPO>()
+                .select(CategoryPO::getId, CategoryPO::getName)
+                .eq(CategoryPO::getId, categoryId)
+                .eq(CategoryPO::getVisible, 1)
+                .last("LIMIT 1")
+        );
+        if (ObjectUtil.isNull(category)) {
+            return null;
+        }
+
+        boolean hasChildren = this.exists(new LambdaQueryWrapper<CategoryPO>()
+                .eq(CategoryPO::getVisible, 1)
+                .eq(CategoryPO::getParentId, categoryId)
+        );
+        return new CategoryOptionVO(category.getId(), category.getName(), !hasChildren);
     }
 
     /**
