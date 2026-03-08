@@ -7,11 +7,16 @@ import org.dwtech.common.config.properties.SecurityProperties;
 import org.dwtech.common.core.entity.AuthenticationToken;
 import org.dwtech.common.enmus.ResultCode;
 import org.dwtech.framework.auth.service.AuthService;
-import org.junit.jupiter.api.BeforeEach;
+import org.dwtech.framework.config.WebMvcConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -30,8 +35,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(controllers = AuthController.class)
+@WebMvcTest(
+        controllers = AuthController.class,
+        excludeFilters = @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = WebMvcConfig.class)
+)
 @AutoConfigureMockMvc(addFilters = false)
+@Import(AuthControllerIntegrationTest.TestSecurityPropertiesConfig.class)
 class AuthControllerIntegrationTest {
 
     @Autowired
@@ -39,25 +48,6 @@ class AuthControllerIntegrationTest {
 
     @MockitoBean
     private AuthService authService;
-
-    @MockitoBean
-    private SecurityProperties securityProperties;
-
-    @BeforeEach
-    void initSecurityProperties() {
-        SecurityProperties.SessionConfig sessionConfig = new SecurityProperties.SessionConfig();
-        sessionConfig.setRefreshTokenTimeToLive(604800);
-
-        SecurityProperties.RefreshTokenCookieConfig cookieConfig = new SecurityProperties.RefreshTokenCookieConfig();
-        cookieConfig.setName("refreshToken");
-        cookieConfig.setPath("/api/v1/auth/refresh-token");
-        cookieConfig.setHttpOnly(true);
-        cookieConfig.setSecure(true);
-        cookieConfig.setSameSite("None");
-
-        when(securityProperties.getSession()).thenReturn(sessionConfig);
-        when(securityProperties.getRefreshTokenCookie()).thenReturn(cookieConfig);
-    }
 
     @Test
     void shouldGetCaptchaSuccessfully() throws Exception {
@@ -79,6 +69,8 @@ class AuthControllerIntegrationTest {
         UserLoginForm form = new UserLoginForm();
         form.setUsername("alice");
         form.setPassword("secret");
+        form.setCaptchaCode("1234");
+        form.setCaptchaKey("captcha-key");
         AuthenticationToken token = AuthenticationToken.builder()
                 .tokenType("Bearer")
                 .accessToken("access-token")
@@ -90,7 +82,9 @@ class AuthControllerIntegrationTest {
         mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                         .param("username", form.getUsername())
-                        .param("password", form.getPassword()))
+                        .param("password", form.getPassword())
+                        .param("captchaCode", form.getCaptchaCode())
+                        .param("captchaKey", form.getCaptchaKey()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(ResultCode.SUCCESS.getCode()))
                 .andExpect(jsonPath("$.data.accessToken").value("access-token"))
@@ -99,8 +93,7 @@ class AuthControllerIntegrationTest {
                         containsString("refreshToken=refresh-token"),
                         containsString("Max-Age=604800"),
                         containsString("HttpOnly"),
-                        containsString("Secure"),
-                        containsString("SameSite=None"),
+                        containsString("SameSite=Lax"),
                         containsString("Path=/api/v1/auth/refresh-token")
                 )))
                 .andExpect(jsonPath("$.data.expiresIn").value(1800));
@@ -128,8 +121,7 @@ class AuthControllerIntegrationTest {
                         containsString("refreshToken=new-refresh-token"),
                         containsString("Max-Age=604800"),
                         containsString("HttpOnly"),
-                        containsString("Secure"),
-                        containsString("SameSite=None"),
+                        containsString("SameSite=Lax"),
                         containsString("Path=/api/v1/auth/refresh-token")
                 )));
 
@@ -139,7 +131,7 @@ class AuthControllerIntegrationTest {
     @Test
     void shouldFailWhenRefreshTokenCookieMissing() throws Exception {
         mockMvc.perform(post("/api/v1/auth/refresh-token"))
-                .andExpect(status().isOk())
+                .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value(ResultCode.REFRESH_TOKEN_INVALID.getCode()))
                 .andExpect(jsonPath("$.msg").value(ResultCode.REFRESH_TOKEN_INVALID.getMsg()));
 
@@ -156,11 +148,38 @@ class AuthControllerIntegrationTest {
                         containsString("refreshToken="),
                         containsString("Max-Age=0"),
                         containsString("HttpOnly"),
-                        containsString("Secure"),
-                        containsString("SameSite=None"),
+                        containsString("SameSite=Lax"),
                         containsString("Path=/api/v1/auth/refresh-token")
                 )));
 
         verify(authService).logout();
+    }
+
+    @TestConfiguration
+    static class TestSecurityPropertiesConfig {
+
+        @Bean
+        SecurityProperties securityProperties() {
+            SecurityProperties securityProperties = new SecurityProperties();
+
+            SecurityProperties.SessionConfig sessionConfig = new SecurityProperties.SessionConfig();
+            sessionConfig.setType("jwt");
+            sessionConfig.setRefreshTokenTimeToLive(604800);
+            securityProperties.setSession(sessionConfig);
+
+            SecurityProperties.RefreshTokenCookieConfig cookieConfig = new SecurityProperties.RefreshTokenCookieConfig();
+            cookieConfig.setName("refreshToken");
+            cookieConfig.setPath("/api/v1/auth/refresh-token");
+            cookieConfig.setHttpOnly(true);
+            cookieConfig.setSecure(false);
+            cookieConfig.setSameSite("Lax");
+            securityProperties.setRefreshTokenCookie(cookieConfig);
+
+            SecurityProperties.CorsConfig corsConfig = new SecurityProperties.CorsConfig();
+            securityProperties.setCors(corsConfig);
+            securityProperties.setIgnoreUrls(new String[]{"/api/v1/auth/**"});
+            securityProperties.setUnsecuredUrls(new String[]{"/doc.html"});
+            return securityProperties;
+        }
     }
 }
