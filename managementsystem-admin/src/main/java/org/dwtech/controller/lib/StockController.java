@@ -40,6 +40,7 @@ public class StockController {
      * @return 返回结果
      */
     @GetMapping("/page")
+    @PreAuthorize("@ss.hasPerm('sys:stock:list')")
     public PageResult<StockPageVO> getStockPage(@Valid StockPageQuery queryParams) {
         IPage<StockPageVO> result = stockService.getStockPage(queryParams);
         return PageResult.success(result);
@@ -52,6 +53,7 @@ public class StockController {
      * @return 返回结果
      */
     @GetMapping("/{isbn}")
+    @PreAuthorize("@ss.hasPerm('sys:stock:view')")
     public Result<StockForm> getStock(@PathVariable("isbn") String isbn) {
         StockForm result = stockService.getStockFormData(isbn);
         return Result.success(result);

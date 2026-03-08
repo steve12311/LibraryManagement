@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.dwtech.common.enmus.DataScopeEnum;
 import org.dwtech.system.model.bo.BorrowBO;
 import org.dwtech.system.model.form.BorrowForm;
 import org.dwtech.system.model.form.StockForm;
@@ -12,6 +13,7 @@ import org.dwtech.system.model.entity.BorrowPO;
 import org.dwtech.system.model.query.BorrowPageQuery;
 import org.dwtech.system.model.vo.BorrowVO;
 import org.dwtech.common.exception.BusinessException;
+import org.dwtech.common.utils.SecurityUtils;
 import org.dwtech.common.utils.uuid.UUID;
 import org.dwtech.system.converter.BorrowConverter;
 import org.dwtech.system.mapper.BorrowMapper;
@@ -62,6 +64,7 @@ public class BorrowServiceImpl extends ServiceImpl<BorrowMapper, BorrowPO> imple
     @Override
     @Transactional
     public boolean saveBorrow(BorrowForm formData) {
+        bindCurrentUserForSelfScope(formData);
         String uuid = UUID.randomUUID().toString();
         String bookName = bookService.getBookByIsbn(formData.getIsbn()).getName();
 
@@ -87,7 +90,6 @@ public class BorrowServiceImpl extends ServiceImpl<BorrowMapper, BorrowPO> imple
     @Override
     @Transactional
     public boolean updateBorrow(String borrowId, BorrowForm formData) {
-        BorrowPO borrow = borrowConverter.toPo(formData);
         BorrowPO borrowPO = this.getById(borrowId);
         if (borrowPO == null) {
             throw new BusinessException("借阅记录不存在");
@@ -95,6 +97,9 @@ public class BorrowServiceImpl extends ServiceImpl<BorrowMapper, BorrowPO> imple
         if (borrowPO.getRealityReturnTime() != null) {
             throw new BusinessException("已还书的不可操作");
         }
+        validateBorrowWriteScope(borrowPO);
+        formData.setUserId(borrowPO.getUserId());
+        BorrowPO borrow = borrowConverter.toPo(formData);
         borrow.setId(borrowId);
         if (borrow.getRealityReturnTime() != null) {
             StockForm stockForm = new StockForm();
@@ -103,5 +108,45 @@ public class BorrowServiceImpl extends ServiceImpl<BorrowMapper, BorrowPO> imple
             stockService.borrowEnter(stockForm);
         }
         return this.updateById(borrow);
+    }
+
+    /**
+     * SELF 数据权限用户只能为自己创建借阅记录。
+     */
+    private void bindCurrentUserForSelfScope(BorrowForm formData) {
+        if (!isSelfDataScope()) {
+            return;
+        }
+        Long currentUserId = requireCurrentUserId();
+        Long borrowUserId = formData.getUserId();
+        if (borrowUserId != null && !currentUserId.equals(borrowUserId)) {
+            throw new BusinessException("无权为他人创建借阅记录");
+        }
+        formData.setUserId(currentUserId);
+    }
+
+    /**
+     * SELF 数据权限用户只能操作自己的借阅记录。
+     */
+    private void validateBorrowWriteScope(BorrowPO borrowPO) {
+        if (!isSelfDataScope()) {
+            return;
+        }
+        Long currentUserId = requireCurrentUserId();
+        if (!currentUserId.equals(borrowPO.getUserId())) {
+            throw new BusinessException("无权操作他人借阅记录");
+        }
+    }
+
+    private boolean isSelfDataScope() {
+        return DataScopeEnum.SELF.getValue().equals(SecurityUtils.getDataScope());
+    }
+
+    private Long requireCurrentUserId() {
+        Long currentUserId = SecurityUtils.getUserId();
+        if (currentUserId == null) {
+            throw new BusinessException("未获取到当前登录用户");
+        }
+        return currentUserId;
     }
 }

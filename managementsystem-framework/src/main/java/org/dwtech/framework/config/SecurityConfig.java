@@ -10,7 +10,6 @@ import org.dwtech.framework.security.filter.CaptchaValidationFilter;
 import org.dwtech.framework.security.filter.TokenAuthenticationFilter;
 import org.dwtech.framework.security.service.SysUserDetailService;
 import org.dwtech.common.token.TokenManager;
-import org.springframework.http.HttpMethod;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -59,7 +58,6 @@ public class SecurityConfig {
                     if (ArrayUtil.isNotEmpty(ignoreUrls)) {
                         requests.requestMatchers(ignoreUrls).permitAll();
                     }
-                    requests.requestMatchers(HttpMethod.GET, "/api/v1/files/**").permitAll();
                     requests.dispatcherTypeMatchers(DispatcherType.ASYNC).permitAll();
                     requests.anyRequest().authenticated();
                 })

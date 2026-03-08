@@ -34,6 +34,7 @@ public class MenuController {
      * @return 返回结果
      */
     @GetMapping
+    @PreAuthorize("@ss.hasPerm('sys:menu:list')")
     public Result<List<MenuVO>> getMenus(MenuQuery queryParams) {
         List<MenuVO> menuList = menuService.listMenus(queryParams);
         return Result.success(menuList);
@@ -46,6 +47,7 @@ public class MenuController {
      * @return 返回结果
      */
     @GetMapping("/options")
+    @PreAuthorize("@ss.hasPerm('sys:menu:list')")
     public Result<List<Option<Long>>> getMenuOptions(
             @RequestParam(required = false, defaultValue = "false", value = "onlyParent") boolean onlyParent
     ) {

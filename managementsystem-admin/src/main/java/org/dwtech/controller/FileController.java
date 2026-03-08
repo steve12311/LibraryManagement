@@ -11,6 +11,7 @@ import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -36,6 +37,7 @@ public class FileController {
      */
     @PostMapping
     @RepeatSubmit
+    @PreAuthorize("isAuthenticated()")
     public Result<FileInfo> uploadFile(@RequestParam("file") MultipartFile file) {
         FileInfo fileInfo = fileService.uploadFile(file);
         return Result.success(fileInfo);
@@ -48,6 +50,7 @@ public class FileController {
      * @return 文件二进制流
      */
     @GetMapping("/{fileId}")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<UrlResource> getFile(@PathVariable("fileId") Long fileId) throws Exception {
         FileDownloadBO fileDownloadBO = fileService.getFile(fileId);
         UrlResource resource = new UrlResource(fileDownloadBO.getFilePath().toUri());
@@ -76,6 +79,7 @@ public class FileController {
      * @return 返回结果
      */
     @DeleteMapping("/{fileId}")
+    @PreAuthorize("isAuthenticated()")
     public Result<Boolean> deleteFile(@PathVariable("fileId") Long fileId) {
         boolean deleted = fileService.deleteFile(fileId);
         return Result.success(deleted);

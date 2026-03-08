@@ -21,6 +21,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.nio.charset.StandardCharsets;
@@ -68,6 +71,13 @@ class LocalFileServiceImplTest {
         localFileService = new LocalFileServiceImpl(fileObjectMapper, fileRecordMapper, redisTemplate);
         ReflectionTestUtils.setField(localFileService, "storagePath", tempDir.toString());
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(
+                        "root",
+                        null,
+                        java.util.List.of(new SimpleGrantedAuthority("ROLE_ROOT"))
+                )
+        );
     }
 
     @Test
@@ -173,6 +183,7 @@ class LocalFileServiceImplTest {
         fileRecordPO.setId(9L);
         fileRecordPO.setObjectId(3L);
         fileRecordPO.setOriginalName("cover.png");
+        fileRecordPO.setOwnerUserId(1001L);
         when(fileRecordMapper.selectById(9L)).thenReturn(fileRecordPO);
 
         FileObjectPO fileObjectPO = new FileObjectPO();
@@ -200,6 +211,7 @@ class LocalFileServiceImplTest {
         FileMetaCacheBO cacheBO = new FileMetaCacheBO();
         cacheBO.setFileId(20L);
         cacheBO.setOriginalName("avatar.jpg");
+        cacheBO.setOwnerUserId(1001L);
         cacheBO.setStoragePath(".objects/aa/bb/from-cache");
         cacheBO.setMimeType("image/jpeg");
         cacheBO.setFileSize(13L);
@@ -240,6 +252,7 @@ class LocalFileServiceImplTest {
         FileRecordPO fileRecordPO = new FileRecordPO();
         fileRecordPO.setId(7L);
         fileRecordPO.setObjectId(88L);
+        fileRecordPO.setOwnerUserId(1001L);
         when(fileRecordMapper.selectById(7L)).thenReturn(fileRecordPO);
         when(fileRecordMapper.deleteById(7L)).thenReturn(1);
 

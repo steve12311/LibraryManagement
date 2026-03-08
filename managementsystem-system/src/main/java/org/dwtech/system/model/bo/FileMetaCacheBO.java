@@ -27,6 +27,11 @@ public class FileMetaCacheBO {
     private String originalName;
 
     /**
+     * 文件所属用户ID
+     */
+    private Long ownerUserId;
+
+    /**
      * 存储相对路径
      */
     private String storagePath;

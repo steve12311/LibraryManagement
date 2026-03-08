@@ -41,6 +41,7 @@ public class UserController {
      * @return 返回结果
      */
     @GetMapping("/page")
+    @PreAuthorize("@ss.hasPerm('sys:user:list')")
     public PageResult<UserPageVO> getUserPage(@Valid UserPageQuery queryParams) {
         IPage<UserPageVO> result = userService.getUserPage(queryParams);
         return PageResult.success(result);
@@ -166,6 +167,7 @@ public class UserController {
      * @return 返回结果
      */
     @GetMapping("/options")
+    @PreAuthorize("@ss.hasPerm('sys:user:list')")
     public Result<List<Option<String>>> listUserOptions() {
         List<Option<String>> list = userService.listUserOptions();
         return Result.success(list);

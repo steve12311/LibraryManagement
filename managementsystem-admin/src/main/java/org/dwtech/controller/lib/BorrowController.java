@@ -11,6 +11,7 @@ import org.dwtech.system.model.form.BorrowForm;
 import org.dwtech.system.model.query.BorrowPageQuery;
 import org.dwtech.system.model.vo.BorrowVO;
 import org.dwtech.system.service.BorrowService;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 /**
  * BorrowController
@@ -33,6 +34,7 @@ public class BorrowController {
      * @return 返回结果
      */
     @GetMapping("/page")
+    @PreAuthorize("@ss.hasPerm('lib:borrow:list')")
     public PageResult<BorrowVO> getBorrowPage(@Valid BorrowPageQuery borrowPageQuery) {
         IPage<BorrowVO> result = borrowService.getBorrowPage(borrowPageQuery);
         return PageResult.success(result);
@@ -46,6 +48,7 @@ public class BorrowController {
      */
     @PostMapping
     @RepeatSubmit
+    @PreAuthorize("@ss.hasPerm('lib:borrow:add')")
     public Result<?> saveBorrow(@Valid @RequestBody BorrowForm formData) {
         boolean result = borrowService.saveBorrow(formData);
         return Result.judge(result);
@@ -60,6 +63,7 @@ public class BorrowController {
      */
     @PutMapping("/{borrowId}")
     @RepeatSubmit
+    @PreAuthorize("@ss.hasPerm('lib:borrow:edit')")
     public Result<?> updateBorrow(@PathVariable("borrowId") String borrowId, @Valid @RequestBody BorrowForm formData) {
         boolean result = borrowService.updateBorrow(borrowId, formData);
         return Result.judge(result);

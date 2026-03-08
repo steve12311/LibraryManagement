@@ -9,6 +9,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.dwtech.common.constant.RedisConstants;
 import org.dwtech.common.core.entity.FileInfo;
+import org.dwtech.common.enmus.ResultCode;
+import org.dwtech.common.exception.BusinessException;
 import org.dwtech.common.utils.SecurityUtils;
 import org.dwtech.system.mapper.FileObjectMapper;
 import org.dwtech.system.mapper.FileRecordMapper;
@@ -150,6 +152,7 @@ public class LocalFileServiceImpl implements FileService {
             }
             cacheFileMeta(fileMetaCacheBO);
         }
+        validateFileAccess(fileMetaCacheBO.getOwnerUserId());
 
         Path targetPath = resolveSafePath(fileMetaCacheBO.getStoragePath());
         if (!Files.exists(targetPath) || Files.isDirectory(targetPath)) {
@@ -184,6 +187,7 @@ public class LocalFileServiceImpl implements FileService {
         if (fileRecord == null) {
             return false;
         }
+        validateFileAccess(fileRecord.getOwnerUserId());
 
         int removed = fileRecordMapper.deleteById(fileId);
         if (removed == 0) {
@@ -336,6 +340,7 @@ public class LocalFileServiceImpl implements FileService {
         fileMetaCacheBO.setFileId(fileId);
         fileMetaCacheBO.setObjectId(fileObject.getId());
         fileMetaCacheBO.setOriginalName(fileRecord.getOriginalName());
+        fileMetaCacheBO.setOwnerUserId(fileRecord.getOwnerUserId());
         fileMetaCacheBO.setStoragePath(fileObject.getStoragePath());
         fileMetaCacheBO.setMimeType(fileObject.getMimeType());
         fileMetaCacheBO.setFileSize(fileObject.getFileSize());
@@ -430,6 +435,7 @@ public class LocalFileServiceImpl implements FileService {
         fileMetaCacheBO.setFileId(toLong(mapValue.get("fileId")));
         fileMetaCacheBO.setObjectId(toLong(mapValue.get("objectId")));
         fileMetaCacheBO.setOriginalName(toStringValue(mapValue.get("originalName")));
+        fileMetaCacheBO.setOwnerUserId(toLong(mapValue.get("ownerUserId")));
         fileMetaCacheBO.setStoragePath(toStringValue(mapValue.get("storagePath")));
         fileMetaCacheBO.setMimeType(toStringValue(mapValue.get("mimeType")));
         fileMetaCacheBO.setFileSize(toLong(mapValue.get("fileSize")));
@@ -438,6 +444,16 @@ public class LocalFileServiceImpl implements FileService {
             return null;
         }
         return fileMetaCacheBO;
+    }
+
+    private void validateFileAccess(Long ownerUserId) {
+        if (SecurityUtils.isRoot()) {
+            return;
+        }
+        Long currentUserId = SecurityUtils.getUserId();
+        if (currentUserId == null || ownerUserId == null || !ownerUserId.equals(currentUserId)) {
+            throw new BusinessException(ResultCode.ACCESS_UNAUTHORIZED, "无权访问该文件");
+        }
     }
 
     private Long toLong(Object value) {

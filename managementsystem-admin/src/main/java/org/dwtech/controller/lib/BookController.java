@@ -37,6 +37,7 @@ public class BookController {
      * @return 返回结果
      */
     @GetMapping({"/{isbn}/form"})
+    @PreAuthorize("@ss.hasPerm('sys:stock:edit')")
     public Result<BookForm> getBookFormData(@PathVariable("isbn") String isbn) {
         BookForm bookForm = bookService.getBookByIsbn(isbn);
         return Result.success(bookForm);
@@ -68,6 +69,7 @@ public class BookController {
      * @return 返回结果
      */
     @GetMapping("/options")
+    @PreAuthorize("@ss.hasPerm('sys:stock:list')")
     public Result<List<Option<Long>>> listBookOptions() {
         List<Option<Long>> list = bookService.listBookOptions();
         return Result.success(list);

@@ -7,6 +7,7 @@ import org.dwtech.system.model.query.CategoryQuery;
 import org.dwtech.system.model.vo.CategoryOptionVO;
 import org.dwtech.system.model.vo.CategoryVO;
 import org.dwtech.system.service.CategoryService;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -34,6 +35,7 @@ public class CategoryController {
      * @return 返回结果
      */
     @GetMapping
+    @PreAuthorize("@ss.hasPerm('lib:category:list')")
     public Result<List<CategoryVO>> listCategories(CategoryQuery queryParams) {
         List<CategoryVO> categoryList = categoryService.listCategories(queryParams);
         return Result.success(categoryList);
@@ -46,6 +48,7 @@ public class CategoryController {
      * @return 返回结果
      */
     @GetMapping("/options")
+    @PreAuthorize("@ss.hasPerm('lib:category:list')")
     public Result<List<Option<Long>>> listCategoryOptions() {
         List<Option<Long>> list = categoryService.listCategoryOptions();
         return Result.success(list);
@@ -58,6 +61,7 @@ public class CategoryController {
      * @return 返回结果
      */
     @GetMapping("/options/lazy")
+    @PreAuthorize("@ss.hasPerm('lib:category:list')")
     public Result<List<CategoryOptionVO>> listCategoryLazyOptions(@RequestParam(value = "parentId", required = false) Long parentId) {
         List<CategoryOptionVO> list = categoryService.listCategoryLazyOptions(parentId);
         return Result.success(list);
@@ -70,6 +74,7 @@ public class CategoryController {
      * @return 返回结果
      */
     @GetMapping("/options/node/{categoryId}")
+    @PreAuthorize("@ss.hasPerm('lib:category:view')")
     public Result<CategoryOptionVO> getCategoryOptionById(@PathVariable("categoryId") Long categoryId) {
         CategoryOptionVO node = categoryService.getCategoryOptionById(categoryId);
         return Result.success(node);

@@ -37,6 +37,7 @@ public class RoleController {
      * @return 返回结果
      */
     @GetMapping("/page")
+    @PreAuthorize("@ss.hasPerm('sys:role:list')")
     public PageResult<RolePageVO> getRolePage(
             RolePageQuery queryParams
     ) {
@@ -51,6 +52,7 @@ public class RoleController {
      * @return 返回结果
      */
     @GetMapping("/options")
+    @PreAuthorize("@ss.hasPerm('sys:role:list')")
     public Result<List<Option<Long>>> listRoleOptions() {
         List<Option<Long>> list = roleService.listRoleOptions();
         return Result.success(list);
@@ -151,6 +153,7 @@ public class RoleController {
      */
     @Operation(summary = "获取角色的菜单ID集合")
     @GetMapping("/{roleId}/menuIds")
+    @PreAuthorize("@ss.hasPerm('sys:role:edit')")
     public Result<List<Long>> getRoleMenuIds(
             @Parameter(description = "角色ID") @PathVariable("roleId") Long roleId
     ) {

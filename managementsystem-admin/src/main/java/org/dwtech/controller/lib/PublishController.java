@@ -35,6 +35,7 @@ public class PublishController {
      * @return 返回结果
      */
     @GetMapping("/page")
+    @PreAuthorize("@ss.hasPerm('lib:publish:view')")
     public PageResult<PublishPageVO> getPublishPage(@Valid PublishPageQuery queryParams) {
         IPage<PublishPageVO> result = publishService.getPublishPage(queryParams);
         return PageResult.success(result);
@@ -47,6 +48,7 @@ public class PublishController {
      * @return 返回结果
      */
     @GetMapping("/options")
+    @PreAuthorize("@ss.hasPerm('lib:publish:view')")
     public Result<List<Option<Long>>> listPublishOptions() {
         List<Option<Long>> list = publishService.listPublishOptions();
         return Result.success(list);
