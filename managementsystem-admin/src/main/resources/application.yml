@@ -2,6 +2,10 @@ server:
   port: 8080
 
 spring:
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 5MB
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: ${DB_URL:jdbc:mysql://127.0.0.1:3306/ms?zeroDateTimeBehavior=convertToNull&useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&autoReconnect=true&allowMultiQueries=true}
@@ -134,3 +138,9 @@ file:
     enabled: true
     meta-ttl-seconds: 86400
     null-ttl-seconds: 60
+  upload:
+    max-size-bytes: 5242880
+    allowed-extensions: jpg,jpeg,png,gif
+    allowed-mime-types: image/jpeg,image/png,image/gif
+  download:
+    inline-allowed-mime-types: image/jpeg,image/png,image/gif

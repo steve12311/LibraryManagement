@@ -115,9 +115,9 @@ public class GlobalExceptionHandler {
         }
         log.warn("客户端异常, exceptionType={}, resultCode={}, message={}",
                 HttpMessageNotReadableException.class.getSimpleName(),
-                ResultCode.SYSTEM_ERROR.getCode(),
+                ResultCode.INVALID_USER_INPUT.getCode(),
                 sanitizeMessage(errorMessage));
-        return Result.failed(errorMessage);
+        return Result.failed(ResultCode.INVALID_USER_INPUT, errorMessage);
     }
 
     /**
@@ -153,7 +153,7 @@ public class GlobalExceptionHandler {
      * @return 返回结果
      */
     @ExceptionHandler(Exception.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public <T> Result<T> handleException(Exception e) throws Exception {
         // 将 Spring Security 异常继续抛出，以便交给自定义处理器处理
         if (e instanceof AccessDeniedException
@@ -161,7 +161,7 @@ public class GlobalExceptionHandler {
             throw e;
         }
         log.error("unknown exception", e);
-        return Result.failed("系统繁忙，请稍后再试");
+        return Result.failed(ResultCode.SYSTEM_ERROR, "系统繁忙，请稍后再试");
     }
 
     /**

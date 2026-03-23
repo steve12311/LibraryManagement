@@ -39,6 +39,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -113,6 +114,23 @@ class BorrowControllerIntegrationTest {
                 .hasCauseInstanceOf(AuthorizationDeniedException.class);
 
         verify(permissionService, atLeastOnce()).hasPerm("lib:borrow:add");
+        verifyNoInteractions(borrowService);
+    }
+
+    @Test
+    void shouldRejectBorrowQueryFieldOutsideWhitelist() throws Exception {
+        authenticateAsLibrarian();
+        when(permissionService.hasPerm("lib:borrow:list")).thenReturn(true);
+
+        mockMvc.perform(get("/api/v1/borrow/page")
+                        .param("pageNum", "1")
+                        .param("pageSize", "10")
+                        .param("field", "bookName")
+                        .param("keyword", "Spring"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(ResultCode.INVALID_USER_INPUT.getCode()))
+                .andExpect(jsonPath("$.msg").value("非法字段"));
+
         verifyNoInteractions(borrowService);
     }
 

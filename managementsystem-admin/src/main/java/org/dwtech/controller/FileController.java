@@ -55,15 +55,22 @@ public class FileController {
         UrlResource resource = new UrlResource(fileDownloadBO.getFilePath().toUri());
 
         MediaType mediaType;
-        try {
-            mediaType = MediaType.parseMediaType(fileDownloadBO.getMimeType());
-        } catch (Exception e) {
+        ContentDisposition contentDisposition;
+        if (fileDownloadBO.isInlineAllowed()) {
+            try {
+                mediaType = MediaType.parseMediaType(fileDownloadBO.getMimeType());
+            } catch (Exception e) {
+                mediaType = MediaType.APPLICATION_OCTET_STREAM;
+            }
+            contentDisposition = ContentDisposition.inline()
+                    .filename(fileDownloadBO.getFileName(), StandardCharsets.UTF_8)
+                    .build();
+        } else {
             mediaType = MediaType.APPLICATION_OCTET_STREAM;
+            contentDisposition = ContentDisposition.attachment()
+                    .filename(fileDownloadBO.getFileName(), StandardCharsets.UTF_8)
+                    .build();
         }
-
-        ContentDisposition contentDisposition = ContentDisposition.inline()
-                .filename(fileDownloadBO.getFileName(), StandardCharsets.UTF_8)
-                .build();
         return ResponseEntity.ok()
                 .contentType(mediaType)
                 .contentLength(fileDownloadBO.getFileSize())

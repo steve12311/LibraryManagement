@@ -32,4 +32,9 @@ public class FileDownloadBO {
      * 文件大小（字节）
      */
     private Long fileSize;
+
+    /**
+     * 是否允许浏览器内联展示
+     */
+    private boolean inlineAllowed;
 }
