@@ -12,6 +12,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.SetOperations;
 import org.springframework.data.redis.core.ValueOperations;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -130,6 +132,41 @@ class RedisTokenManagerTest {
     }
 
     @Test
+    void shouldClearLegacySessionArtifactsWhenInvalidatingUserSessions() {
+        when(valueOperations.get(RedisConstants.Auth.USER_ACCESS_TOKEN.replace("{}", "1001"))).thenReturn("legacy-access");
+        when(valueOperations.get(RedisConstants.Auth.USER_REFRESH_TOKEN.replace("{}", "1001"))).thenReturn("legacy-refresh");
+
+        redisTokenManager.invalidateUserSessions(1001L);
+
+        verify(redisTemplate).delete(RedisConstants.Auth.ACCESS_TOKEN_USER.replace("{}", "legacy-access"));
+        verify(redisTemplate).delete(RedisConstants.Auth.REFRESH_TOKEN_USER.replace("{}", "legacy-refresh"));
+        verify(redisTemplate).delete(RedisConstants.Auth.SESSION_ACCESS_TOKEN.replace("{}", "legacy-refresh"));
+        verify(redisTemplate).delete(RedisConstants.Auth.USER_ACCESS_TOKEN.replace("{}", "1001"));
+        verify(redisTemplate).delete(RedisConstants.Auth.USER_REFRESH_TOKEN.replace("{}", "1001"));
+    }
+
+    @Test
+    void shouldClearLegacySessionArtifactsWhenSingleDeviceLoginEnabled() {
+        RedisTokenManager singleDeviceTokenManager = new RedisTokenManager(buildSecurityProperties(false), redisTemplate);
+        when(valueOperations.get(RedisConstants.Auth.USER_ACCESS_TOKEN.replace("{}", "1001"))).thenReturn("legacy-access");
+        when(valueOperations.get(RedisConstants.Auth.USER_REFRESH_TOKEN.replace("{}", "1001"))).thenReturn("legacy-refresh");
+
+        AuthenticationToken token = singleDeviceTokenManager.generateToken(new UsernamePasswordAuthenticationToken(
+                buildUserDetails(),
+                null,
+                buildUserDetails().getAuthorities()
+        ));
+
+        assertThat(token.getAccessToken()).isNotBlank();
+        assertThat(token.getRefreshToken()).isNotBlank();
+        verify(redisTemplate).delete(RedisConstants.Auth.ACCESS_TOKEN_USER.replace("{}", "legacy-access"));
+        verify(redisTemplate).delete(RedisConstants.Auth.REFRESH_TOKEN_USER.replace("{}", "legacy-refresh"));
+        verify(redisTemplate).delete(RedisConstants.Auth.SESSION_ACCESS_TOKEN.replace("{}", "legacy-refresh"));
+        verify(redisTemplate).delete(RedisConstants.Auth.USER_ACCESS_TOKEN.replace("{}", "1001"));
+        verify(redisTemplate).delete(RedisConstants.Auth.USER_REFRESH_TOKEN.replace("{}", "1001"));
+    }
+
+    @Test
     void shouldRejectAccessTokenAfterUserSessionInvalidated() {
         OnlineUser onlineUser = new OnlineUser(1001L, "alice", 2001L, 3, Set.of("ROLE_ADMIN"), 1000L);
         when(valueOperations.get(RedisConstants.Auth.ACCESS_TOKEN_USER.replace("{}", "access-token"))).thenReturn(onlineUser);
@@ -141,17 +178,32 @@ class RedisTokenManagerTest {
     }
 
     private SecurityProperties buildSecurityProperties() {
+        return buildSecurityProperties(true);
+    }
+
+    private SecurityProperties buildSecurityProperties(boolean allowMultiLogin) {
         SecurityProperties securityProperties = new SecurityProperties();
         SecurityProperties.SessionConfig sessionConfig = new SecurityProperties.SessionConfig();
         sessionConfig.setType("redis-token");
         sessionConfig.setAccessTokenTimeToLive(1800);
         sessionConfig.setRefreshTokenTimeToLive(7200);
         SecurityProperties.RedisTokenConfig redisTokenConfig = new SecurityProperties.RedisTokenConfig();
-        redisTokenConfig.setAllowMultiLogin(true);
+        redisTokenConfig.setAllowMultiLogin(allowMultiLogin);
         sessionConfig.setRedisToken(redisTokenConfig);
         securityProperties.setSession(sessionConfig);
         securityProperties.setIgnoreUrls(new String[]{"/api/v1/auth/**"});
         securityProperties.setUnsecuredUrls(new String[]{"/doc.html"});
         return securityProperties;
+    }
+
+    private org.dwtech.common.core.entity.SysUserDetails buildUserDetails() {
+        org.dwtech.common.core.entity.SysUserDetails userDetails = new org.dwtech.common.core.entity.SysUserDetails();
+        userDetails.setUserId(1001L);
+        userDetails.setUsername("alice");
+        userDetails.setDeptId(2001L);
+        userDetails.setDataScope(3);
+        userDetails.setEnabled(true);
+        userDetails.setAuthorities(Set.of(new SimpleGrantedAuthority("ROLE_ADMIN")));
+        return userDetails;
     }
 }

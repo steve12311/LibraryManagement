@@ -503,8 +503,22 @@ public class RedisTokenManager implements TokenManager {
         if (userId == null) {
             return;
         }
-        redisTemplate.delete(StrUtil.format(RedisConstants.Auth.USER_ACCESS_TOKEN, userId));
-        redisTemplate.delete(StrUtil.format(RedisConstants.Auth.USER_REFRESH_TOKEN, userId));
+        String userAccessKey = StrUtil.format(RedisConstants.Auth.USER_ACCESS_TOKEN, userId);
+        Object legacyAccessToken = redisTemplate.opsForValue().get(userAccessKey);
+        if (legacyAccessToken != null) {
+            redisTemplate.delete(formatTokenKey(String.valueOf(legacyAccessToken)));
+        }
+
+        String userRefreshKey = StrUtil.format(RedisConstants.Auth.USER_REFRESH_TOKEN, userId);
+        Object legacyRefreshToken = redisTemplate.opsForValue().get(userRefreshKey);
+        if (legacyRefreshToken != null) {
+            String refreshToken = String.valueOf(legacyRefreshToken);
+            redisTemplate.delete(formatRefreshTokenKey(refreshToken));
+            redisTemplate.delete(formatSessionAccessKey(refreshToken));
+        }
+
+        redisTemplate.delete(userAccessKey);
+        redisTemplate.delete(userRefreshKey);
     }
 
     /**
