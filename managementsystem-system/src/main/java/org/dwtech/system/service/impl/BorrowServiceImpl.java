@@ -9,12 +9,15 @@ import org.dwtech.common.enmus.ResultCode;
 import org.dwtech.common.exception.BusinessException;
 import org.dwtech.common.utils.uuid.UUID;
 import org.dwtech.system.model.bo.BorrowBO;
+import org.dwtech.system.model.bo.MyBorrowBO;
 import org.dwtech.system.model.form.BookForm;
 import org.dwtech.system.model.form.BorrowForm;
 import org.dwtech.system.model.form.StockForm;
 import org.dwtech.system.model.entity.BorrowPO;
 import org.dwtech.system.model.query.BorrowPageQuery;
+import org.dwtech.system.model.query.MyBorrowPageQuery;
 import org.dwtech.system.model.vo.BorrowVO;
+import org.dwtech.system.model.vo.MyBorrowPageVO;
 import org.dwtech.system.converter.BorrowConverter;
 import org.dwtech.system.mapper.BorrowMapper;
 import org.dwtech.system.service.BookService;
@@ -53,6 +56,20 @@ public class BorrowServiceImpl extends ServiceImpl<BorrowMapper, BorrowPO> imple
         Page<BorrowBO> borrowPage = this.baseMapper.getBorrowPage(page, queryParams);
 
         return borrowConverter.toPageVo(borrowPage);
+    }
+
+    /**
+     * 用途：获取当前登录用户的 borrow page 信息。
+     *
+     * @param userId 当前登录用户 ID
+     * @param queryParams query params
+     * @return 分页结果
+     */
+    @Override
+    public IPage<MyBorrowPageVO> getCurrentUserBorrowPage(Long userId, MyBorrowPageQuery queryParams) {
+        Page<MyBorrowBO> page = new Page<>(queryParams.getPageNum(), queryParams.getPageSize());
+        Page<MyBorrowBO> borrowPage = this.baseMapper.getCurrentUserBorrowPage(page, userId, queryParams);
+        return borrowConverter.toMyBorrowPageVo(borrowPage);
     }
 
     /**

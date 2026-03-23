@@ -4,15 +4,19 @@ import org.dwtech.common.enmus.ResultCode;
 import org.dwtech.common.exception.BusinessException;
 import org.dwtech.system.converter.BorrowConverter;
 import org.dwtech.system.mapper.BorrowMapper;
+import org.dwtech.system.model.bo.MyBorrowBO;
 import org.dwtech.system.model.entity.BorrowPO;
 import org.dwtech.system.model.form.BookForm;
 import org.dwtech.system.model.form.BorrowForm;
 import org.dwtech.system.model.form.StockForm;
+import org.dwtech.system.model.query.MyBorrowPageQuery;
+import org.dwtech.system.model.vo.MyBorrowPageVO;
 import org.dwtech.system.service.BookService;
 import org.dwtech.system.service.StockService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -21,6 +25,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -46,6 +51,27 @@ class BorrowServiceImplTest {
     void setUp() {
         borrowService = new BorrowServiceImpl(borrowConverter, bookService, stockService);
         ReflectionTestUtils.setField(borrowService, "baseMapper", borrowMapper);
+    }
+
+    @Test
+    void shouldQueryCurrentUserBorrowPageWithCurrentUserId() {
+        MyBorrowPageQuery queryParams = new MyBorrowPageQuery();
+        queryParams.setPageNum(2);
+        queryParams.setPageSize(5);
+        queryParams.setStatus(1);
+
+        Page<MyBorrowBO> mapperPage = new Page<>(2, 5);
+        Page<MyBorrowPageVO> convertedPage = new Page<>(2, 5);
+        when(borrowMapper.getCurrentUserBorrowPage(any(Page.class), eq(2002L), eq(queryParams))).thenReturn(mapperPage);
+        when(borrowConverter.toMyBorrowPageVo(mapperPage)).thenReturn(convertedPage);
+
+        assertThat(borrowService.getCurrentUserBorrowPage(2002L, queryParams)).isSameAs(convertedPage);
+
+        ArgumentCaptor<Page<MyBorrowBO>> pageCaptor = ArgumentCaptor.forClass(Page.class);
+        verify(borrowMapper).getCurrentUserBorrowPage(pageCaptor.capture(), eq(2002L), eq(queryParams));
+        assertThat(pageCaptor.getValue().getCurrent()).isEqualTo(2);
+        assertThat(pageCaptor.getValue().getSize()).isEqualTo(5);
+        verify(borrowConverter).toMyBorrowPageVo(mapperPage);
     }
 
     @Test

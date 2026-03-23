@@ -16,6 +16,20 @@
         FROM lib_borrow AS bw
                  LEFT JOIN sys_user AS u ON u.id = bw.user_id
     </sql>
+    <sql id="myBorrowView">
+        SELECT bw.id,
+               bw.isbn,
+               b.cover,
+               bw.book_name,
+               bw.return_time,
+               CASE
+                   WHEN bw.reality_return_time IS NOT NULL THEN 0
+                   WHEN bw.return_time >= NOW() THEN 1
+                   ELSE 2
+                   END AS status
+        FROM lib_borrow AS bw
+                 LEFT JOIN lib_book AS b ON b.isbn = bw.isbn
+    </sql>
     <select id="getBorrowPage" resultType="org.dwtech.system.model.bo.BorrowBO">
         <include refid="borrowView"/>
         <where>
@@ -51,6 +65,28 @@
             </if>
         </where>
         ORDER BY bw.create_time DESC, bw.id DESC
+    </select>
+    <select id="getCurrentUserBorrowPage" resultType="org.dwtech.system.model.bo.MyBorrowBO">
+        <include refid="myBorrowView"/>
+        <where>
+            bw.user_id = #{userId}
+            <if test="queryParams.status != null">
+                <choose>
+                    <when test="queryParams.status == 0">
+                        AND bw.reality_return_time IS NOT NULL
+                    </when>
+                    <when test="queryParams.status == 1">
+                        AND bw.reality_return_time IS NULL
+                        AND bw.return_time &gt;= NOW()
+                    </when>
+                    <when test="queryParams.status == 2">
+                        AND bw.reality_return_time IS NULL
+                        AND bw.return_time &lt; NOW()
+                    </when>
+                </choose>
+            </if>
+        </where>
+        ORDER BY bw.return_time ASC, bw.id DESC
     </select>
 
 </mapper>
