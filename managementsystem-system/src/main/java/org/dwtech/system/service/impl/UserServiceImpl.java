@@ -37,6 +37,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 /**
  * UserServiceImpl
@@ -135,8 +136,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserPO> implements 
     @Override
     @Transactional
     public boolean updateUser(Long userId, UserForm userForm) {
-
         String username = userForm.getUsername();
+        UserPO currentUser = this.getById(userId);
 
         long count = this.count(
                 new LambdaQueryWrapper<UserPO>()
@@ -147,14 +148,22 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserPO> implements 
 
         // form -> entity
         UserPO entity = userConverter.toPo(userForm);
+        // 更新目标一律以路径 userId 为准，避免请求体中的 id 干扰更新对象。
+        entity.setId(userId);
         entity.setUpdateBy(SecurityUtils.getUserId());
+        boolean statusChanged = currentUser != null
+                && entity.getStatus() != null
+                && !Objects.equals(currentUser.getStatus(), entity.getStatus());
 
         // 修改用户
         boolean result = this.updateById(entity);
 
         if (result) {
             // 保存用户角色
-            userRoleService.saveUserRoles(entity.getId(), userForm.getRoleIds());
+            userRoleService.saveUserRoles(userId, userForm.getRoleIds());
+            if (statusChanged) {
+                tokenManager.invalidateUserSessions(userId);
+            }
         }
         return result;
     }
