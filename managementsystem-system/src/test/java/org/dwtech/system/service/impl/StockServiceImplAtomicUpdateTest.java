@@ -1,5 +1,7 @@
 package org.dwtech.system.service.impl;
 
+import org.dwtech.common.enmus.ResultCode;
+import org.dwtech.common.exception.BusinessException;
 import org.dwtech.system.converter.StockConverter;
 import org.dwtech.system.model.bo.StockBO;
 import org.dwtech.system.model.entity.BookPO;
@@ -96,8 +98,32 @@ class StockServiceImplAtomicUpdateTest {
         when(stockMapper.selectById("9787300000001")).thenReturn(existingStock);
 
         assertThatThrownBy(() -> stockService.borrowOut(stockForm))
-                .isInstanceOf(RuntimeException.class)
+                .isInstanceOf(BusinessException.class)
+                .extracting("resultCode")
+                .isEqualTo(ResultCode.USER_OPERATION_EXCEPTION);
+        assertThatThrownBy(() -> stockService.borrowOut(stockForm))
+                .isInstanceOf(BusinessException.class)
                 .hasMessage("书籍数量不足");
+    }
+
+    @Test
+    void shouldRejectBorrowOutWhenStockRecordMissing() {
+        StockForm stockForm = buildStockForm("9787300000001", 1);
+        StockPO convertedStock = new StockPO();
+        convertedStock.setIsbn("9787300000001");
+        convertedStock.setStock(1);
+
+        when(stockConverter.toPo(stockForm)).thenReturn(convertedStock);
+        when(stockMapper.decreaseCurrentStock("9787300000001", 1)).thenReturn(0);
+        when(stockMapper.selectById("9787300000001")).thenReturn(null);
+
+        assertThatThrownBy(() -> stockService.borrowOut(stockForm))
+                .isInstanceOf(BusinessException.class)
+                .extracting("resultCode")
+                .isEqualTo(ResultCode.USER_RESOURCE_NOT_FOUND);
+        assertThatThrownBy(() -> stockService.borrowOut(stockForm))
+                .isInstanceOf(BusinessException.class)
+                .hasMessage("库存记录不存在");
     }
 
     @Test
@@ -130,6 +156,26 @@ class StockServiceImplAtomicUpdateTest {
 
         assertThat(result).isTrue();
         verify(stockMapper).increaseCurrentStock("9787300000001", 1);
+    }
+
+    @Test
+    void shouldRejectBorrowEnterWhenStockRecordMissing() {
+        StockForm stockForm = buildStockForm("9787300000001", 1);
+        StockPO convertedStock = new StockPO();
+        convertedStock.setIsbn("9787300000001");
+        convertedStock.setStock(1);
+
+        when(stockConverter.toPo(stockForm)).thenReturn(convertedStock);
+        when(stockMapper.increaseCurrentStock("9787300000001", 1)).thenReturn(0);
+        when(stockMapper.selectById("9787300000001")).thenReturn(null);
+
+        assertThatThrownBy(() -> stockService.borrowEnter(stockForm))
+                .isInstanceOf(BusinessException.class)
+                .extracting("resultCode")
+                .isEqualTo(ResultCode.USER_RESOURCE_NOT_FOUND);
+        assertThatThrownBy(() -> stockService.borrowEnter(stockForm))
+                .isInstanceOf(BusinessException.class)
+                .hasMessage("库存记录不存在");
     }
 
     private StockForm buildStockForm(String isbn, Integer stock) {

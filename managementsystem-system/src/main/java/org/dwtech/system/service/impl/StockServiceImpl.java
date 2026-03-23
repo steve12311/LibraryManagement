@@ -5,6 +5,8 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.dwtech.common.enmus.ResultCode;
+import org.dwtech.common.exception.BusinessException;
 import org.dwtech.system.converter.StockConverter;
 import org.dwtech.system.model.bo.StockBO;
 import org.dwtech.system.model.entity.BookPO;
@@ -182,8 +184,8 @@ public class StockServiceImpl extends ServiceImpl<StockMapper, StockPO> implemen
     private void throwStockMutationException(String isbn, String insufficientMessage) {
         StockPO currentStock = this.getById(isbn);
         if (currentStock == null) {
-            throw new RuntimeException("库存记录不存在");
+            throw new BusinessException(ResultCode.USER_RESOURCE_NOT_FOUND, "库存记录不存在");
         }
-        throw new RuntimeException(insufficientMessage);
+        throw new BusinessException(ResultCode.USER_OPERATION_EXCEPTION, insufficientMessage);
     }
 }
