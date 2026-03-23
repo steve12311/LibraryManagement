@@ -1,5 +1,6 @@
 package org.dwtech.common.exception;
 
+import cn.hutool.core.util.StrUtil;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
@@ -42,8 +43,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BindException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public <T> Result<T> processException(BindException e) {
-        log.error("BindException:{}", e.getMessage());
         String msg = e.getAllErrors().stream().map(DefaultMessageSourceResolvable::getDefaultMessage).collect(Collectors.joining("；"));
+        log.warn("客户端异常, exceptionType={}, resultCode={}, message={}",
+                BindException.class.getSimpleName(),
+                ResultCode.USER_REQUEST_PARAMETER_ERROR.getCode(),
+                sanitizeMessage(msg));
         return Result.failed(ResultCode.USER_REQUEST_PARAMETER_ERROR, msg);
     }
 
@@ -61,8 +65,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ConstraintViolationException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public <T> Result<T> processException(ConstraintViolationException e) {
-        log.error("ConstraintViolationException:{}", e.getMessage());
         String msg = e.getConstraintViolations().stream().map(ConstraintViolation::getMessage).collect(Collectors.joining("；"));
+        log.warn("客户端异常, exceptionType={}, resultCode={}, message={}",
+                ConstraintViolationException.class.getSimpleName(),
+                ResultCode.INVALID_USER_INPUT.getCode(),
+                sanitizeMessage(msg));
         return Result.failed(ResultCode.INVALID_USER_INPUT, msg);
     }
 
@@ -80,8 +87,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public <T> Result<T> processException(MethodArgumentNotValidException e) {
-        log.error("MethodArgumentNotValidException:{}", e.getMessage());
         String msg = e.getBindingResult().getAllErrors().stream().map(DefaultMessageSourceResolvable::getDefaultMessage).collect(Collectors.joining("；"));
+        log.warn("客户端异常, exceptionType={}, resultCode={}, message={}",
+                MethodArgumentNotValidException.class.getSimpleName(),
+                ResultCode.INVALID_USER_INPUT.getCode(),
+                sanitizeMessage(msg));
         return Result.failed(ResultCode.INVALID_USER_INPUT, msg);
     }
 
@@ -98,12 +108,15 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(HttpMessageNotReadableException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public <T> Result<T> processException(HttpMessageNotReadableException e) {
-        log.error(e.getMessage(), e);
         String errorMessage = "请求体不可为空";
         Throwable cause = e.getCause();
         if (cause != null) {
             errorMessage = convertMessage(cause);
         }
+        log.warn("客户端异常, exceptionType={}, resultCode={}, message={}",
+                HttpMessageNotReadableException.class.getSimpleName(),
+                ResultCode.SYSTEM_ERROR.getCode(),
+                sanitizeMessage(errorMessage));
         return Result.failed(errorMessage);
     }
 
@@ -120,7 +133,9 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BusinessException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public <T> Result<T> handleBizException(BusinessException e) {
-        log.error("biz exception", e);
+        log.warn("业务异常, exceptionType={}, resultCode={}",
+                BusinessException.class.getSimpleName(),
+                resolveResultCode(e));
         if (e.getResultCode() != null) {
             return Result.failed(e.getResultCode(), e.getMessage());
         }
@@ -170,5 +185,31 @@ public class GlobalExceptionHandler {
             group += matchString;
         }
         return group;
+    }
+
+    /**
+     * 获取业务异常的结果码，避免日志格式不一致。
+     *
+     * @param exception 业务异常
+     * @return 结果码
+     */
+    private String resolveResultCode(BusinessException exception) {
+        if (exception.getResultCode() == null) {
+            return "UNKNOWN";
+        }
+        return exception.getResultCode().getCode();
+    }
+
+    /**
+     * 清洗日志消息，避免空值与过长文本污染结构化日志。
+     *
+     * @param message 原始消息
+     * @return 清洗后的消息
+     */
+    private String sanitizeMessage(String message) {
+        if (StrUtil.isBlank(message)) {
+            return "unknown";
+        }
+        return StrUtil.maxLength(message.replaceAll("[\\r\\n]+", " "), 120);
     }
 }
