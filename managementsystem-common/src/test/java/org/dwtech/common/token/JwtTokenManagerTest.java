@@ -21,12 +21,15 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -106,6 +109,29 @@ class JwtTokenManagerTest {
         );
 
         assertThat(exception.getResultCode()).isEqualTo(ResultCode.REFRESH_TOKEN_INVALID);
+    }
+
+    @Test
+    void shouldRotateRefreshTokenWhenRefreshing() {
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        AtomicReference<String> blacklistedKey = new AtomicReference<>();
+        when(redisTemplate.hasKey(anyString())).thenAnswer(invocation ->
+                invocation.getArgument(0, String.class).equals(blacklistedKey.get()));
+        AuthenticationToken originalToken = jwtTokenManager.generateToken(buildAuthentication());
+        doAnswer(invocation -> {
+            blacklistedKey.set(invocation.getArgument(0, String.class));
+            return null;
+        }).when(valueOperations).set(anyString(), isNull(), anyLong(), eq(TimeUnit.SECONDS));
+
+        AuthenticationToken refreshedToken = jwtTokenManager.refreshToken(originalToken.getRefreshToken());
+
+        assertThat(refreshedToken.getAccessToken()).isNotBlank();
+        assertThat(refreshedToken.getRefreshToken()).isNotBlank();
+        assertThat(refreshedToken.getAccessToken()).isNotEqualTo(originalToken.getAccessToken());
+        assertThat(refreshedToken.getRefreshToken()).isNotEqualTo(originalToken.getRefreshToken());
+        assertThat(jwtTokenManager.validateRefreshToken(originalToken.getRefreshToken())).isFalse();
+        assertThat(jwtTokenManager.validateRefreshToken(refreshedToken.getRefreshToken())).isTrue();
+        verify(valueOperations).set(anyString(), isNull(), anyLong(), eq(TimeUnit.SECONDS));
     }
 
     private SecurityProperties buildSecurityProperties() {

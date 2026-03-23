@@ -8,6 +8,7 @@ import cn.hutool.core.util.StrUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.dwtech.common.config.properties.CaptchaProperties;
+import org.dwtech.common.config.properties.SecurityProperties;
 import org.dwtech.common.constant.RedisConstants;
 import org.dwtech.common.constant.SecurityConstants;
 import org.dwtech.common.core.entity.AuthenticationToken;
@@ -15,7 +16,9 @@ import org.dwtech.common.enmus.CaptchaTypeEnum;
 import org.dwtech.auth.model.vo.CaptchaVO;
 import org.dwtech.common.enmus.ResultCode;
 import org.dwtech.common.exception.BusinessException;
+import org.dwtech.common.utils.RefreshTokenCookieUtils;
 import org.dwtech.common.utils.SecurityUtils;
+import org.dwtech.common.utils.ServletUtils;
 import org.dwtech.framework.auth.service.AuthService;
 import org.dwtech.common.token.TokenManager;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -26,6 +29,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.context.request.RequestContextHolder;
 
 import java.awt.*;
 import java.util.concurrent.TimeUnit;
@@ -46,6 +50,7 @@ public class AuthServiceImpl implements AuthService {
     private final CodeGenerator codeGenerator;
     private final RedisTemplate<String, Object> redisTemplate;
     private final CaptchaProperties captchaProperties;
+    private final SecurityProperties securityProperties;
 
     /**
      * 生成登录验证码并写入 Redis 缓存。
@@ -123,14 +128,19 @@ public class AuthServiceImpl implements AuthService {
      */
     @Override
     public void logout() {
-        String token = SecurityUtils.getTokenFromRequest();
-        if (StrUtil.isNotBlank(token) && token.startsWith(SecurityConstants.BEARER_TOKEN_PREFIX)) {
-            token = token.substring(SecurityConstants.BEARER_TOKEN_PREFIX.length());
-            // 将JWT令牌加入黑名单
-            tokenManager.invalidateToken(token);
-            // 清除Security上下文
-            SecurityContextHolder.clearContext();
+        String accessToken = SecurityUtils.getTokenFromRequest();
+        if (StrUtil.isNotBlank(accessToken) && accessToken.startsWith(SecurityConstants.BEARER_TOKEN_PREFIX)) {
+            accessToken = accessToken.substring(SecurityConstants.BEARER_TOKEN_PREFIX.length());
+            tokenManager.invalidateToken(accessToken);
         }
+        String refreshToken = null;
+        if (RequestContextHolder.getRequestAttributes() != null) {
+            refreshToken = RefreshTokenCookieUtils.getRefreshToken(ServletUtils.getRequest(), securityProperties);
+        }
+        if (StrUtil.isNotBlank(refreshToken)) {
+            tokenManager.invalidateToken(refreshToken);
+        }
+        SecurityContextHolder.clearContext();
     }
 
     /**

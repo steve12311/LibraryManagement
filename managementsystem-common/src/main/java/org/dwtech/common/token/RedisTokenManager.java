@@ -176,7 +176,7 @@ public class RedisTokenManager implements TokenManager {
      */
     @Override
     public void invalidateToken(String token) {
-        OnlineUser onlineUser = (OnlineUser) redisTemplate.opsForValue().get(formatTokenKey(token));
+        OnlineUser onlineUser = resolveOnlineUser(token);
         if (onlineUser != null) {
             Long userId = onlineUser.getUserId();
             // 1. 删除访问令牌相关
@@ -195,6 +195,23 @@ public class RedisTokenManager implements TokenManager {
                 redisTemplate.delete(userRefreshKey);
             }
         }
+    }
+
+    /**
+     * 兼容访问令牌和刷新令牌两种输入，解析对应的在线用户。
+     *
+     * @param token 访问令牌或刷新令牌
+     * @return 在线用户，不存在时返回 {@code null}
+     */
+    private OnlineUser resolveOnlineUser(String token) {
+        if (StrUtil.isBlank(token)) {
+            return null;
+        }
+        OnlineUser onlineUser = (OnlineUser) redisTemplate.opsForValue().get(formatTokenKey(token));
+        if (onlineUser != null) {
+            return onlineUser;
+        }
+        return (OnlineUser) redisTemplate.opsForValue().get(formatRefreshTokenKey(token));
     }
 
     /**

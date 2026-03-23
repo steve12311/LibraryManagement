@@ -2,6 +2,7 @@ package org.dwtech.framework.auth.service.impl;
 
 import cn.hutool.captcha.generator.CodeGenerator;
 import org.dwtech.common.config.properties.CaptchaProperties;
+import org.dwtech.common.config.properties.SecurityProperties;
 import org.dwtech.common.core.entity.AuthenticationToken;
 import org.dwtech.common.enmus.ResultCode;
 import org.dwtech.common.exception.BusinessException;
@@ -23,6 +24,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
+import jakarta.servlet.http.Cookie;
 import java.awt.Font;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -50,17 +52,25 @@ class AuthServiceImplTest {
     @Mock
     private CaptchaProperties captchaProperties;
 
+    private SecurityProperties securityProperties;
+
     private AuthServiceImpl authService;
 
     @BeforeEach
     void setUp() {
+        securityProperties = new SecurityProperties();
+        SecurityProperties.RefreshTokenCookieConfig refreshTokenCookieConfig =
+                new SecurityProperties.RefreshTokenCookieConfig();
+        refreshTokenCookieConfig.setName("refreshToken");
+        securityProperties.setRefreshTokenCookie(refreshTokenCookieConfig);
         authService = new AuthServiceImpl(
                 tokenManager,
                 new Font("Dialog", Font.PLAIN, 16),
                 authenticationManager,
                 codeGenerator,
                 redisTemplate,
-                captchaProperties
+                captchaProperties,
+                securityProperties
         );
         SecurityContextHolder.clearContext();
     }
@@ -123,32 +133,36 @@ class AuthServiceImplTest {
     }
 
     @Test
-    void shouldInvalidateTokenAndClearContextOnLogout() {
+    void shouldInvalidateAccessAndRefreshTokenOnLogout() {
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken("user", null)
         );
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader("Authorization", "Bearer access-token");
+        request.setCookies(new Cookie("refreshToken", "refresh-token"));
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
 
         authService.logout();
 
         verify(tokenManager).invalidateToken("access-token");
+        verify(tokenManager).invalidateToken("refresh-token");
         assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
     }
 
     @Test
-    void shouldNotInvalidateTokenWhenAuthorizationHeaderIsNotBearer() {
+    void shouldInvalidateRefreshTokenEvenWithoutBearerAccessToken() {
         Authentication authentication = new UsernamePasswordAuthenticationToken("user", null);
         SecurityContextHolder.getContext().setAuthentication(authentication);
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader("Authorization", "Basic token");
+        request.setCookies(new Cookie("refreshToken", "refresh-token"));
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
 
         authService.logout();
 
-        verify(tokenManager, never()).invalidateToken(any());
-        assertThat(SecurityContextHolder.getContext().getAuthentication()).isEqualTo(authentication);
+        verify(tokenManager, never()).invalidateToken("access-token");
+        verify(tokenManager).invalidateToken("refresh-token");
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
     }
 
     @Test

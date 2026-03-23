@@ -213,7 +213,7 @@ public class JwtTokenManager implements TokenManager {
      * 使用刷新令牌换发新的访问令牌。
      *
      * @param refreshToken 刷新令牌
-     * @return 新令牌响应对象，复用原刷新令牌并返回新访问令牌
+     * @return 新令牌响应对象，返回新访问令牌和新刷新令牌
      * @throws BusinessException 当刷新令牌无效时抛出
      */
     @Override
@@ -223,14 +223,9 @@ public class JwtTokenManager implements TokenManager {
             throw new BusinessException(ResultCode.REFRESH_TOKEN_INVALID);
         }
         Authentication authentication = parseToken(refreshToken);
-        int accessTokenExpiration = securityProperties.getSession().getAccessTokenTimeToLive();
-        String newAccessToken = generateToken(authentication, accessTokenExpiration);
-        return AuthenticationToken.builder()
-                .accessToken(newAccessToken)
-                .refreshToken(refreshToken)
-                .tokenType("Bearer")
-                .expiresIn(accessTokenExpiration)
-                .build();
+        AuthenticationToken newToken = generateToken(authentication);
+        invalidateToken(refreshToken);
+        return newToken;
     }
 
     /**
