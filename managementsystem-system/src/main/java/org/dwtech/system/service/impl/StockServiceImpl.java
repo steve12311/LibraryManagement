@@ -5,6 +5,8 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.dwtech.common.enmus.ResultCode;
+import org.dwtech.common.exception.BusinessException;
 import org.dwtech.system.converter.StockConverter;
 import org.dwtech.system.model.bo.StockBO;
 import org.dwtech.system.model.entity.BookPO;
@@ -92,23 +94,12 @@ public class StockServiceImpl extends ServiceImpl<StockMapper, StockPO> implemen
     public boolean addStock(StockForm stockForm) {
         log.info("书籍入库开始：{}", stockForm);
         StockBO stockBo = stockConverter.toBo(stockForm);
-
         StockPO stock = stockConverter.toPo(stockBo);
-        StockPO nowStock = this.getById(stock.getIsbn());
-        if (nowStock != null) {
-            stock.setCurrentStock(nowStock.getCurrentStock() + stock.getStock());
-            stock.setStock(nowStock.getStock() + stock.getStock());
-        } else {
-            stock.setCurrentStock(stock.getStock());
-        }
-        this.saveOrUpdate(stock);
+        this.baseMapper.upsertStock(stock.getIsbn(), stock.getStock());
         log.info("书籍入库步骤一完成：{}", stock);
-
-        if (nowStock == null) {
-            BookPO book = stockConverter.toBookPo(stockBo);
-            bookService.saveOrUpdate(book);
-            log.info("书籍入库步骤二完成：{}", book);
-        }
+        BookPO book = stockConverter.toBookPo(stockBo);
+        bookService.saveBookIfAbsent(book);
+        log.info("书籍入库步骤二完成：{}", book);
         return true;
     }
 
@@ -123,15 +114,10 @@ public class StockServiceImpl extends ServiceImpl<StockMapper, StockPO> implemen
     public boolean outStock(StockForm stockForm) {
         log.info("书籍出库开始：{}", stockForm);
         StockPO stockPo = stockConverter.toPo(stockForm);
-        // 出库数量不能大于当前剩余数量
-        StockPO nowStock = this.getById(stockPo.getIsbn());
-        if (stockPo.getStock() > nowStock.getCurrentStock()) {
-            throw new RuntimeException("出库数量不能大于当前剩余数量");
+        int updated = this.baseMapper.decreaseStockAndCurrentStock(stockPo.getIsbn(), stockPo.getStock());
+        if (updated == 0) {
+            throwStockMutationException(stockPo.getIsbn(), "出库数量不能大于当前剩余数量");
         }
-
-        nowStock.setStock(nowStock.getStock() - stockPo.getStock());
-        nowStock.setCurrentStock(nowStock.getCurrentStock() - stockPo.getStock());
-        this.saveOrUpdate(nowStock);
 
         log.info("书籍出库完成：{}", stockPo);
         return true;
@@ -148,13 +134,10 @@ public class StockServiceImpl extends ServiceImpl<StockMapper, StockPO> implemen
     public boolean borrowOut(StockForm stockForm) {
         log.info("书籍出借库存开始：{}", stockForm);
         StockPO stockPo = stockConverter.toPo(stockForm);
-        StockPO nowStock = this.getById(stockPo.getIsbn());
-        if (stockPo.getStock() > nowStock.getCurrentStock()) {
-            throw new RuntimeException("书籍数量不足");
+        int updated = this.baseMapper.decreaseCurrentStock(stockPo.getIsbn(), stockPo.getStock());
+        if (updated == 0) {
+            throwStockMutationException(stockPo.getIsbn(), "书籍数量不足");
         }
-
-        nowStock.setCurrentStock(nowStock.getCurrentStock() - stockPo.getStock());
-        this.saveOrUpdate(nowStock);
 
         log.info("书籍出借出库完成：{}", stockPo);
         return true;
@@ -167,13 +150,14 @@ public class StockServiceImpl extends ServiceImpl<StockMapper, StockPO> implemen
      * @return 操作结果，true 表示成功，false 表示失败
      */
     @Override
+    @Transactional
     public boolean borrowEnter(StockForm stockForm) {
         log.info("书籍还书库存开始：{}", stockForm);
         StockPO stockPo = stockConverter.toPo(stockForm);
-        StockPO nowStock = this.getById(stockPo.getIsbn());
-        nowStock.setCurrentStock(nowStock.getCurrentStock() + stockPo.getStock());
-
-        this.saveOrUpdate(nowStock);
+        int updated = this.baseMapper.increaseCurrentStock(stockPo.getIsbn(), stockPo.getStock());
+        if (updated == 0) {
+            throwStockMutationException(stockPo.getIsbn(), "库存记录不存在");
+        }
         log.info("书籍还书入库完成：{}", stockPo);
         return true;
     }
@@ -188,5 +172,20 @@ public class StockServiceImpl extends ServiceImpl<StockMapper, StockPO> implemen
     public StockForm getStockFormData(String isbn) {
         StockBO stock = this.baseMapper.selectStockById(isbn);
         return stockConverter.toForm(stock);
+    }
+
+    /**
+     * 用途：在原子更新失败后区分库存不存在与数量不足。
+     *
+     * @param isbn isbn
+     * @param insufficientMessage 数量不足时的异常信息
+     * 返回：无。
+     */
+    private void throwStockMutationException(String isbn, String insufficientMessage) {
+        StockPO currentStock = this.getById(isbn);
+        if (currentStock == null) {
+            throw new BusinessException(ResultCode.USER_RESOURCE_NOT_FOUND, "库存记录不存在");
+        }
+        throw new BusinessException(ResultCode.USER_OPERATION_EXCEPTION, insufficientMessage);
     }
 }

@@ -23,6 +23,14 @@ public interface BookService extends IService<BookPO> {
     boolean saveOrUpdateBook(BookForm bookForm);
 
     /**
+     * 用途：仅当图书不存在时保存图书元数据。
+     *
+     * @param book 图书实体
+     * @return 操作结果，true 表示插入成功，false 表示已存在
+     */
+    boolean saveBookIfAbsent(BookPO book);
+
+    /**
      * 用途：获取 book by isbn 信息。
      * 
      * @param isbn isbn

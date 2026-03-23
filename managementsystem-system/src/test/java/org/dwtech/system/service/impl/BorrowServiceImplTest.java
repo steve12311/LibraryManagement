@@ -1,5 +1,6 @@
 package org.dwtech.system.service.impl;
 
+import org.dwtech.common.enmus.ResultCode;
 import org.dwtech.common.exception.BusinessException;
 import org.dwtech.system.converter.BorrowConverter;
 import org.dwtech.system.mapper.BorrowMapper;
@@ -57,6 +58,25 @@ class BorrowServiceImplTest {
                 .hasMessage("代借用户不能为空");
 
         verifyNoInteractions(bookService, borrowConverter, stockService, borrowMapper);
+    }
+
+    @Test
+    void shouldRejectSaveBorrowWhenBookMissing() {
+        BorrowForm formData = new BorrowForm();
+        formData.setUserId(2002L);
+        formData.setIsbn("9787300000001");
+
+        when(bookService.getBookByIsbn("9787300000001")).thenReturn(null);
+
+        assertThatThrownBy(() -> borrowService.saveBorrow(formData))
+                .isInstanceOf(BusinessException.class)
+                .extracting("resultCode")
+                .isEqualTo(ResultCode.USER_RESOURCE_NOT_FOUND);
+        assertThatThrownBy(() -> borrowService.saveBorrow(formData))
+                .isInstanceOf(BusinessException.class)
+                .hasMessage("图书不存在");
+
+        verifyNoInteractions(borrowConverter, stockService, borrowMapper);
     }
 
     @Test

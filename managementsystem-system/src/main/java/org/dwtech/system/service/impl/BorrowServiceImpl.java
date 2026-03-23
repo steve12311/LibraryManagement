@@ -5,14 +5,16 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.dwtech.common.enmus.ResultCode;
+import org.dwtech.common.exception.BusinessException;
+import org.dwtech.common.utils.uuid.UUID;
 import org.dwtech.system.model.bo.BorrowBO;
+import org.dwtech.system.model.form.BookForm;
 import org.dwtech.system.model.form.BorrowForm;
 import org.dwtech.system.model.form.StockForm;
 import org.dwtech.system.model.entity.BorrowPO;
 import org.dwtech.system.model.query.BorrowPageQuery;
 import org.dwtech.system.model.vo.BorrowVO;
-import org.dwtech.common.exception.BusinessException;
-import org.dwtech.common.utils.uuid.UUID;
 import org.dwtech.system.converter.BorrowConverter;
 import org.dwtech.system.mapper.BorrowMapper;
 import org.dwtech.system.service.BookService;
@@ -64,7 +66,11 @@ public class BorrowServiceImpl extends ServiceImpl<BorrowMapper, BorrowPO> imple
     public boolean saveBorrow(BorrowForm formData) {
         validateBorrowUserId(formData);
         String uuid = UUID.randomUUID().toString();
-        String bookName = bookService.getBookByIsbn(formData.getIsbn()).getName();
+        BookForm bookForm = bookService.getBookByIsbn(formData.getIsbn());
+        if (bookForm == null) {
+            throw new BusinessException(ResultCode.USER_RESOURCE_NOT_FOUND, "图书不存在");
+        }
+        String bookName = bookForm.getName();
 
         BorrowPO borrow = borrowConverter.toPo(formData);
         borrow.setBookName(bookName);

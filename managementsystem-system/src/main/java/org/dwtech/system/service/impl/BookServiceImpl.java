@@ -3,11 +3,10 @@ package org.dwtech.system.service.impl;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.dwtech.common.model.Option;
-import org.dwtech.system.model.form.BookForm;
-import org.dwtech.common.service.MilvusService;
 import org.dwtech.system.converter.BookConverter;
 import org.dwtech.system.mapper.BookMapper;
 import org.dwtech.system.model.entity.BookPO;
+import org.dwtech.system.model.form.BookForm;
 import org.dwtech.system.service.BookService;
 import org.springframework.stereotype.Service;
 
@@ -34,6 +33,17 @@ public class BookServiceImpl extends ServiceImpl<BookMapper, BookPO> implements 
     public boolean saveOrUpdateBook(BookForm bookForm) {
         BookPO bookPo = bookConverter.toPo(bookForm);
         return this.saveOrUpdate(bookPo);
+    }
+
+    /**
+     * 用途：仅当图书不存在时保存图书元数据。
+     *
+     * @param book 图书实体
+     * @return 操作结果，true 表示插入成功，false 表示已存在
+     */
+    @Override
+    public boolean saveBookIfAbsent(BookPO book) {
+        return this.baseMapper.insertIfAbsent(book) > 0;
     }
 
     /**

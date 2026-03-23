@@ -5,10 +5,8 @@ import lombok.RequiredArgsConstructor;
 import org.dwtech.common.annontation.RepeatSubmit;
 import org.dwtech.common.core.entity.Result;
 import org.dwtech.common.model.Option;
+import org.dwtech.service.lib.LibraryCatalogWriteService;
 import org.dwtech.system.model.form.BookForm;
-import org.dwtech.common.service.MilvusService;
-import org.dwtech.common.utils.PrepareMilvusJson;
-import org.dwtech.framework.ai.tools.VectorTool;
 import org.dwtech.system.service.BookService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -26,9 +24,7 @@ import java.util.List;
 @RequestMapping("/api/v1/book")
 public class BookController {
     private final BookService bookService;
-    private final MilvusService milvusService;
-    private final VectorTool vectorTool;
-    private final PrepareMilvusJson prepareMilvusJson;
+    private final LibraryCatalogWriteService libraryCatalogWriteService;
 
     /**
      * 用途：获取 book form data 信息。
@@ -53,12 +49,7 @@ public class BookController {
     @RepeatSubmit
     @PreAuthorize("@ss.hasPerm('sys:stock:edit')")
     public Result<?> updateBook(@Valid @RequestBody BookForm bookForm) {
-        boolean result = bookService.saveOrUpdateBook(bookForm);
-        List<float[]> vector = vectorTool.getVectors(List.of(bookForm.getIntro()));
-        if (vector == null || vector.isEmpty()) {
-            return Result.failed("向量为空");
-        }
-        milvusService.insertVectors(prepareMilvusJson.prepareInsertJson(bookForm.getIsbn(), vector.getFirst()));
+        boolean result = libraryCatalogWriteService.updateBook(bookForm);
         return Result.judge(result);
     }
 
