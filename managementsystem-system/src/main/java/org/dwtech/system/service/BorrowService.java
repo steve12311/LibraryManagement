@@ -4,7 +4,9 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import jakarta.validation.Valid;
 import org.dwtech.system.model.form.BorrowForm;
 import org.dwtech.system.model.query.BorrowPageQuery;
+import org.dwtech.system.model.query.MyBorrowPageQuery;
 import org.dwtech.system.model.vo.BorrowVO;
+import org.dwtech.system.model.vo.MyBorrowPageVO;
 /**
  * BorrowService
  *
@@ -20,6 +22,15 @@ public interface BorrowService {
      * @return 分页结果
      */
     IPage<BorrowVO> getBorrowPage(@Valid BorrowPageQuery queryParams);
+
+    /**
+     * 用途：获取当前登录用户的 borrow page 信息。
+     *
+     * @param userId 当前登录用户 ID
+     * @param queryParams query params
+     * @return 分页结果
+     */
+    IPage<MyBorrowPageVO> getCurrentUserBorrowPage(Long userId, @Valid MyBorrowPageQuery queryParams);
 
     /**
      * 用途：保存 borrow。

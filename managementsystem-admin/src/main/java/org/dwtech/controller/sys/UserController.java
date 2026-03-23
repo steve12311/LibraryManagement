@@ -11,11 +11,14 @@ import org.dwtech.common.model.Option;
 import org.dwtech.system.model.form.PasswordUpdateForm;
 import org.dwtech.system.model.form.UserForm;
 import org.dwtech.system.model.form.UserProfileForm;
+import org.dwtech.system.model.query.MyBorrowPageQuery;
 import org.dwtech.system.model.query.UserPageQuery;
+import org.dwtech.system.model.vo.MyBorrowPageVO;
 import org.dwtech.system.model.vo.CurrentUserVO;
 import org.dwtech.system.model.vo.UserPageVO;
 import org.dwtech.system.model.vo.UserProfileVO;
 import org.dwtech.common.utils.SecurityUtils;
+import org.dwtech.system.service.BorrowService;
 import org.dwtech.system.service.UserService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -33,6 +36,7 @@ import java.util.List;
 @RequestMapping("/api/v1/users")
 public class UserController {
     private final UserService userService;
+    private final BorrowService borrowService;
 
     /**
      * 用途：获取 user page 信息。
@@ -130,6 +134,20 @@ public class UserController {
     public Result<CurrentUserVO> getCurrentUser() {
         CurrentUserVO currentUser = userService.getCurrentUserInfo();
         return Result.success(currentUser);
+    }
+
+    /**
+     * 用途：获取当前登录用户借阅订单分页信息。
+     *
+     * @param queryParams query params
+     * @return 返回结果
+     */
+    @GetMapping("/me/borrows/page")
+    @PreAuthorize("isAuthenticated()")
+    public PageResult<MyBorrowPageVO> getCurrentUserBorrowPage(@Valid MyBorrowPageQuery queryParams) {
+        Long userId = SecurityUtils.getUserId();
+        IPage<MyBorrowPageVO> result = borrowService.getCurrentUserBorrowPage(userId, queryParams);
+        return PageResult.success(result);
     }
 
     /**

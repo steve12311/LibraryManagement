@@ -12,8 +12,10 @@ import org.dwtech.framework.config.SecurityConfig;
 import org.dwtech.framework.config.WebMvcConfig;
 import org.dwtech.framework.security.service.SysUserDetailService;
 import org.dwtech.system.model.vo.CurrentUserVO;
+import org.dwtech.system.model.vo.MyBorrowPageVO;
 import org.dwtech.system.model.vo.RouteVO;
 import org.dwtech.system.model.vo.UserProfileVO;
+import org.dwtech.system.service.BorrowService;
 import org.dwtech.system.service.MenuService;
 import org.dwtech.system.service.UserService;
 import org.junit.jupiter.api.AfterEach;
@@ -35,6 +37,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 
 import java.util.List;
 import java.util.Set;
@@ -63,6 +66,9 @@ class AuthenticatedAccessIntegrationTest {
 
     @MockitoBean
     private UserService userService;
+
+    @MockitoBean
+    private BorrowService borrowService;
 
     @MockitoBean
     private MenuService menuService;
@@ -111,6 +117,61 @@ class AuthenticatedAccessIntegrationTest {
                 .andExpect(jsonPath("$.data.username").value("reader01"));
 
         verify(userService).getCurrentUserInfo();
+    }
+
+    @Test
+    void shouldRejectAnonymousGetCurrentUserBorrows() throws Exception {
+        assertThatThrownBy(() -> mockMvc.perform(get("/api/v1/users/me/borrows/page")))
+                .hasCauseInstanceOf(AuthenticationCredentialsNotFoundException.class);
+
+        verifyNoInteractions(borrowService);
+    }
+
+    @Test
+    void shouldAllowAuthenticatedGetCurrentUserBorrows() throws Exception {
+        authenticateCurrentUser(1001L, "reader01");
+
+        MyBorrowPageVO borrowPageVO = new MyBorrowPageVO();
+        borrowPageVO.setBorrowId("borrow-1");
+        borrowPageVO.setIsbn("9787300000001");
+        borrowPageVO.setCover("/api/v1/files/12");
+        borrowPageVO.setBookName("Spring Boot 实战");
+        borrowPageVO.setStatus(1);
+
+        Page<MyBorrowPageVO> borrowPage = new Page<>(1, 10);
+        borrowPage.setRecords(List.of(borrowPageVO));
+        borrowPage.setTotal(1);
+        when(borrowService.getCurrentUserBorrowPage(any(), any())).thenReturn(borrowPage);
+
+        mockMvc.perform(get("/api/v1/users/me/borrows/page")
+                        .param("pageNum", "1")
+                        .param("pageSize", "10")
+                        .param("status", "1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(ResultCode.SUCCESS.getCode()))
+                .andExpect(jsonPath("$.data.list[0].borrowId").value("borrow-1"))
+                .andExpect(jsonPath("$.data.list[0].isbn").value("9787300000001"))
+                .andExpect(jsonPath("$.data.list[0].cover").value("/api/v1/files/12"))
+                .andExpect(jsonPath("$.data.list[0].bookName").value("Spring Boot 实战"))
+                .andExpect(jsonPath("$.data.list[0].status").value(1))
+                .andExpect(jsonPath("$.data.total").value(1));
+
+        verify(borrowService).getCurrentUserBorrowPage(any(), any());
+    }
+
+    @Test
+    void shouldRejectCurrentUserBorrowStatusOutsideRange() throws Exception {
+        authenticateCurrentUser(1001L, "reader01");
+
+        mockMvc.perform(get("/api/v1/users/me/borrows/page")
+                        .param("pageNum", "1")
+                        .param("pageSize", "10")
+                        .param("status", "9"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(ResultCode.INVALID_USER_INPUT.getCode()))
+                .andExpect(jsonPath("$.msg").value("状态值不合法"));
+
+        verifyNoInteractions(borrowService);
     }
 
     @Test

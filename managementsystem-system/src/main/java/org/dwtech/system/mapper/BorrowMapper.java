@@ -5,8 +5,10 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.dwtech.system.model.bo.BorrowBO;
+import org.dwtech.system.model.bo.MyBorrowBO;
 import org.dwtech.system.model.entity.BorrowPO;
 import org.dwtech.system.model.query.BorrowPageQuery;
+import org.dwtech.system.model.query.MyBorrowPageQuery;
 /**
  * BorrowMapper
  *
@@ -24,4 +26,16 @@ public interface BorrowMapper extends BaseMapper<BorrowPO> {
      * @return 分页结果
      */
     Page<BorrowBO> getBorrowPage(Page<BorrowBO> page, @Param("queryParams") BorrowPageQuery queryParams);
+
+    /**
+     * 用途：获取当前登录用户借阅订单分页信息。
+     *
+     * @param page page
+     * @param userId 当前登录用户 ID
+     * @param queryParams query params
+     * @return 分页结果
+     */
+    Page<MyBorrowBO> getCurrentUserBorrowPage(Page<MyBorrowBO> page,
+                                              @Param("userId") Long userId,
+                                              @Param("queryParams") MyBorrowPageQuery queryParams);
 }
