@@ -74,6 +74,7 @@ class FileControllerIntegrationTest {
         fileDownloadBO.setFileName("cover.png");
         fileDownloadBO.setMimeType("image/png");
         fileDownloadBO.setFileSize(Files.size(filePath));
+        fileDownloadBO.setInlineAllowed(true);
         when(fileService.getFile(9L)).thenReturn(fileDownloadBO);
 
         mockMvc.perform(get("/api/v1/files/9"))
@@ -82,6 +83,27 @@ class FileControllerIntegrationTest {
                 .andExpect(header().string("Content-Disposition", org.hamcrest.Matchers.containsString("cover.png")));
 
         verify(fileService).getFile(9L);
+    }
+
+    @Test
+    void shouldForceAttachmentForUnsafeMimeType() throws Exception {
+        Path filePath = tempDir.resolve("note.html");
+        Files.writeString(filePath, "<html>unsafe</html>");
+
+        FileDownloadBO fileDownloadBO = new FileDownloadBO();
+        fileDownloadBO.setFilePath(filePath);
+        fileDownloadBO.setFileName("note.html");
+        fileDownloadBO.setMimeType("text/html");
+        fileDownloadBO.setFileSize(Files.size(filePath));
+        fileDownloadBO.setInlineAllowed(false);
+        when(fileService.getFile(10L)).thenReturn(fileDownloadBO);
+
+        mockMvc.perform(get("/api/v1/files/10"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Type", "application/octet-stream"))
+                .andExpect(header().string("Content-Disposition", org.hamcrest.Matchers.containsString("attachment")));
+
+        verify(fileService).getFile(10L);
     }
 
     @TestConfiguration

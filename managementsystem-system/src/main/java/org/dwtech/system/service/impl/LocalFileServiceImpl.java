@@ -38,15 +38,21 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URLConnection;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
+import java.util.Arrays;
 import java.util.HexFormat;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import javax.imageio.ImageIO;
 /**
  * LocalFileServiceImpl
  *
@@ -77,6 +83,18 @@ public class LocalFileServiceImpl implements FileService {
     @Value("${file.cache.null-ttl-seconds:60}")
     private long fileMetaNullTtlSeconds = 60L;
 
+    @Value("${file.upload.max-size-bytes:5242880}")
+    private long maxUploadSizeBytes = 5L * 1024 * 1024;
+
+    @Value("${file.upload.allowed-extensions:jpg,jpeg,png,gif}")
+    private String allowedUploadExtensions = "jpg,jpeg,png,gif";
+
+    @Value("${file.upload.allowed-mime-types:image/jpeg,image/png,image/gif}")
+    private String allowedUploadMimeTypes = "image/jpeg,image/png,image/gif";
+
+    @Value("${file.download.inline-allowed-mime-types:image/jpeg,image/png,image/gif}")
+    private String inlineAllowedMimeTypes = "image/jpeg,image/png,image/gif";
+
     private final FileObjectMapper fileObjectMapper;
     private final FileRecordMapper fileRecordMapper;
     private final BookMapper bookMapper;
@@ -96,7 +114,8 @@ public class LocalFileServiceImpl implements FileService {
         Assert.isFalse(file.isEmpty(), "上传文件不能为空");
 
         String originalFilename = normalizeFileName(file.getOriginalFilename());
-        String suffix = FileUtil.getSuffix(originalFilename);
+        String suffix = StrUtil.blankToDefault(FileUtil.getSuffix(originalFilename), "").toLowerCase(Locale.ROOT);
+        validateUploadRequest(file, suffix);
 
         UploadDigest uploadDigest;
         try {
@@ -107,9 +126,10 @@ public class LocalFileServiceImpl implements FileService {
         }
 
         try {
+            String mimeType = validateAndResolveUploadMimeType(uploadDigest.tempFilePath(), suffix);
             FileObjectPO fileObject = findByHash(uploadDigest.sha256(), uploadDigest.fileSize());
             if (fileObject == null) {
-                fileObject = createFileObject(uploadDigest, suffix, file.getContentType());
+                fileObject = createFileObject(uploadDigest, suffix, mimeType);
             } else {
                 incrementRefCount(fileObject.getId());
             }
@@ -128,6 +148,8 @@ public class LocalFileServiceImpl implements FileService {
             FileMetaCacheBO fileMetaCacheBO = toFileMetaCache(fileRecord.getId(), fileRecord, fileObject);
             runAfterCommitOrNow(() -> cacheFileMeta(fileMetaCacheBO));
             return fileInfo;
+        } catch (BusinessException e) {
+            throw e;
         } catch (Exception e) {
             log.error("文件上传失败", e);
             throw new RuntimeException("文件上传失败");
@@ -176,6 +198,7 @@ public class LocalFileServiceImpl implements FileService {
         fileDownloadBO.setFileName(StrUtil.blankToDefault(fileMetaCacheBO.getOriginalName(), fileMetaCacheBO.getSha256()));
         fileDownloadBO.setMimeType(StrUtil.blankToDefault(mimeType, MediaType.APPLICATION_OCTET_STREAM_VALUE));
         fileDownloadBO.setFileSize(fileSize);
+        fileDownloadBO.setInlineAllowed(isInlineMimeType(mimeType));
         return fileDownloadBO;
     }
 
@@ -254,6 +277,15 @@ public class LocalFileServiceImpl implements FileService {
         return StrUtil.blankToDefault(originalFilename, "file");
     }
 
+    private void validateUploadRequest(MultipartFile file, String suffix) {
+        if (file.getSize() > maxUploadSizeBytes) {
+            throw new BusinessException(ResultCode.UPLOAD_IMAGE_TOO_LARGE);
+        }
+        if (StrUtil.isBlank(suffix) || !parseConfigSet(allowedUploadExtensions).contains(suffix)) {
+            throw new BusinessException(ResultCode.UPLOAD_FILE_TYPE_MISMATCH, "仅支持 jpg、jpeg、png、gif 图片上传");
+        }
+    }
+
     private UploadDigest cacheFileAndDigest(MultipartFile file) throws Exception {
         Path storageRoot = getStorageRoot();
         Files.createDirectories(storageRoot);
@@ -273,6 +305,25 @@ public class LocalFileServiceImpl implements FileService {
         }
         String sha256 = HexFormat.of().formatHex(messageDigest.digest());
         return new UploadDigest(tempFilePath, sha256, fileSize);
+    }
+
+    private String validateAndResolveUploadMimeType(Path tempFilePath, String suffix) {
+        if (!isSupportedImagePayload(tempFilePath)) {
+            throw new BusinessException(ResultCode.UPLOAD_FILE_TYPE_MISMATCH, "上传内容不是有效的图片文件");
+        }
+
+        String detectedMimeType = normalizeMimeType(detectMimeType(tempFilePath));
+        String expectedMimeType = expectedMimeType(suffix);
+        if (StrUtil.isBlank(detectedMimeType)) {
+            detectedMimeType = expectedMimeType;
+        }
+        if (StrUtil.isBlank(detectedMimeType) || !parseConfigSet(allowedUploadMimeTypes).contains(detectedMimeType)) {
+            throw new BusinessException(ResultCode.UPLOAD_FILE_TYPE_MISMATCH, "仅支持 jpg、jpeg、png、gif 图片上传");
+        }
+        if (StrUtil.isNotBlank(expectedMimeType) && !StrUtil.equals(expectedMimeType, detectedMimeType)) {
+            throw new BusinessException(ResultCode.UPLOAD_FILE_TYPE_MISMATCH, "文件后缀与真实内容类型不匹配");
+        }
+        return detectedMimeType;
     }
 
     private FileObjectPO findByHash(String sha256, long fileSize) {
@@ -324,6 +375,14 @@ public class LocalFileServiceImpl implements FileService {
     private String probeMimeType(Path targetPath) {
         try {
             return Files.probeContentType(targetPath);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private String detectMimeType(Path targetPath) {
+        try (InputStream inputStream = Files.newInputStream(targetPath)) {
+            return URLConnection.guessContentTypeFromStream(inputStream);
         } catch (Exception e) {
             return null;
         }
@@ -456,6 +515,42 @@ public class LocalFileServiceImpl implements FileService {
             return null;
         }
         return fileMetaCacheBO;
+    }
+
+    private boolean isInlineMimeType(String mimeType) {
+        return parseConfigSet(inlineAllowedMimeTypes).contains(normalizeMimeType(mimeType));
+    }
+
+    private boolean isSupportedImagePayload(Path targetPath) {
+        try (InputStream inputStream = Files.newInputStream(targetPath)) {
+            return ImageIO.read(inputStream) != null;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private String expectedMimeType(String suffix) {
+        return switch (StrUtil.blankToDefault(suffix, "").toLowerCase(Locale.ROOT)) {
+            case "jpg", "jpeg" -> MediaType.IMAGE_JPEG_VALUE;
+            case "png" -> MediaType.IMAGE_PNG_VALUE;
+            case "gif" -> MediaType.IMAGE_GIF_VALUE;
+            default -> null;
+        };
+    }
+
+    private Set<String> parseConfigSet(String configValue) {
+        return Arrays.stream(StrUtil.blankToDefault(configValue, "").split(","))
+                .map(String::trim)
+                .filter(StrUtil::isNotBlank)
+                .map(value -> value.toLowerCase(Locale.ROOT))
+                .collect(Collectors.toSet());
+    }
+
+    private String normalizeMimeType(String mimeType) {
+        if (StrUtil.isBlank(mimeType)) {
+            return null;
+        }
+        return mimeType.split(";", 2)[0].trim().toLowerCase(Locale.ROOT);
     }
 
     private void validateFileReadAccess(FileMetaCacheBO fileMetaCacheBO) {

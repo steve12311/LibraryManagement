@@ -32,6 +32,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
+import java.util.Base64;
 import java.util.HexFormat;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.TimeUnit;
@@ -78,7 +79,7 @@ class LocalFileServiceImplTest {
     void setUp() {
         localFileService = new LocalFileServiceImpl(fileObjectMapper, fileRecordMapper, bookMapper, permissionService, redisTemplate);
         ReflectionTestUtils.setField(localFileService, "storagePath", tempDir.toString());
-        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        org.mockito.Mockito.lenient().when(redisTemplate.opsForValue()).thenReturn(valueOperations);
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken(
                         "root",
@@ -90,13 +91,13 @@ class LocalFileServiceImplTest {
 
     @Test
     void shouldUploadFileAndReturnFileIdUrlWhenObjectNotExists() throws Exception {
-        byte[] content = "hello-library".getBytes(StandardCharsets.UTF_8);
+        byte[] content = pngBytes();
         String expectedSha256 = HexFormat.of()
                 .formatHex(MessageDigest.getInstance("SHA-256").digest(content));
         MockMultipartFile multipartFile = new MockMultipartFile(
                 "file",
-                "book.txt",
-                "text/plain",
+                "cover.png",
+                "image/png",
                 content
         );
 
@@ -114,7 +115,7 @@ class LocalFileServiceImplTest {
 
         FileInfo fileInfo = localFileService.uploadFile(multipartFile);
 
-        assertThat(fileInfo.getName()).isEqualTo("book.txt");
+        assertThat(fileInfo.getName()).isEqualTo("cover.png");
         assertThat(fileInfo.getUrl()).isEqualTo("/101");
         String metaKey = "system:file:meta:101";
         String nullKey = "system:file:meta:null:101";
@@ -126,30 +127,31 @@ class LocalFileServiceImplTest {
         FileObjectPO insertedObject = objectCaptor.getValue();
         assertThat(insertedObject.getSha256()).isEqualTo(expectedSha256);
         assertThat(insertedObject.getRefCount()).isEqualTo(1);
+        assertThat(insertedObject.getMimeType()).isEqualTo("image/png");
         assertThat(insertedObject.getStoragePath()).startsWith(".objects/");
         Path storedFile = tempDir.resolve(insertedObject.getStoragePath());
         assertThat(Files.exists(storedFile)).isTrue();
-        assertThat(Files.readString(storedFile)).isEqualTo("hello-library");
+        assertThat(Files.readAllBytes(storedFile)).isEqualTo(content);
 
         ArgumentCaptor<FileRecordPO> recordCaptor = ArgumentCaptor.forClass(FileRecordPO.class);
         verify(fileRecordMapper).insert(recordCaptor.capture());
         assertThat(recordCaptor.getValue().getObjectId()).isEqualTo(11L);
-        assertThat(recordCaptor.getValue().getOriginalName()).isEqualTo("book.txt");
+        assertThat(recordCaptor.getValue().getOriginalName()).isEqualTo("cover.png");
     }
 
     @Test
     void shouldReuseObjectWhenUploadDuplicateFile() {
-        byte[] content = "same-content".getBytes(StandardCharsets.UTF_8);
+        byte[] content = pngBytes();
         MockMultipartFile multipartFile1 = new MockMultipartFile(
                 "file",
-                "a.txt",
-                "text/plain",
+                "a.png",
+                "image/png",
                 content
         );
         MockMultipartFile multipartFile2 = new MockMultipartFile(
                 "file",
-                "b.txt",
-                "text/plain",
+                "b.png",
+                "image/png",
                 content
         );
 
@@ -182,6 +184,51 @@ class LocalFileServiceImplTest {
     }
 
     @Test
+    void shouldRejectUploadWhenFileTypeIsNotAllowed() {
+        MockMultipartFile multipartFile = new MockMultipartFile(
+                "file",
+                "cover.svg",
+                "image/svg+xml",
+                "<svg xmlns=\"http://www.w3.org/2000/svg\"></svg>".getBytes(StandardCharsets.UTF_8)
+        );
+
+        assertThatThrownBy(() -> localFileService.uploadFile(multipartFile))
+                .isInstanceOf(org.dwtech.common.exception.BusinessException.class)
+                .extracting("resultCode")
+                .isEqualTo(org.dwtech.common.enmus.ResultCode.UPLOAD_FILE_TYPE_MISMATCH);
+    }
+
+    @Test
+    void shouldRejectUploadWhenFileSizeExceedsLimit() {
+        ReflectionTestUtils.setField(localFileService, "maxUploadSizeBytes", 8L);
+        MockMultipartFile multipartFile = new MockMultipartFile(
+                "file",
+                "cover.png",
+                "image/png",
+                pngBytes()
+        );
+
+        assertThatThrownBy(() -> localFileService.uploadFile(multipartFile))
+                .isInstanceOf(org.dwtech.common.exception.BusinessException.class)
+                .extracting("resultCode")
+                .isEqualTo(org.dwtech.common.enmus.ResultCode.UPLOAD_IMAGE_TOO_LARGE);
+    }
+
+    @Test
+    void shouldRejectUploadWhenImagePayloadIsInvalid() {
+        MockMultipartFile multipartFile = new MockMultipartFile(
+                "file",
+                "cover.png",
+                "image/png",
+                "not-an-image".getBytes(StandardCharsets.UTF_8)
+        );
+
+        assertThatThrownBy(() -> localFileService.uploadFile(multipartFile))
+                .isInstanceOf(org.dwtech.common.exception.BusinessException.class)
+                .hasMessage("上传内容不是有效的图片文件");
+    }
+
+    @Test
     void shouldGetFileByFileId() throws Exception {
         Path objectPath = tempDir.resolve(".objects/aa/bb/abcdef");
         Files.createDirectories(objectPath.getParent());
@@ -208,6 +255,7 @@ class LocalFileServiceImplTest {
         assertThat(fileDownloadBO.getFileName()).isEqualTo("cover.png");
         assertThat(fileDownloadBO.getMimeType()).isEqualTo("image/png");
         assertThat(fileDownloadBO.getFileSize()).isEqualTo(11L);
+        assertThat(fileDownloadBO.isInlineAllowed()).isTrue();
     }
 
     @Test
@@ -257,6 +305,7 @@ class LocalFileServiceImplTest {
         FileDownloadBO fileDownloadBO = localFileService.getFile(20L);
 
         assertThat(fileDownloadBO.getFileName()).isEqualTo("avatar.jpg");
+        assertThat(fileDownloadBO.isInlineAllowed()).isTrue();
         verify(fileRecordMapper, never()).selectById(any());
         verify(fileObjectMapper, never()).selectById(any());
     }
@@ -315,5 +364,11 @@ class LocalFileServiceImplTest {
         assertThatThrownBy(() -> localFileService.getFile(999L))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("文件不存在");
+    }
+
+    private byte[] pngBytes() {
+        return Base64.getDecoder().decode(
+                "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jp0QAAAAASUVORK5CYII="
+        );
     }
 }
