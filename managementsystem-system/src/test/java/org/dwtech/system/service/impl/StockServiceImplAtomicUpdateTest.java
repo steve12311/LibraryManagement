@@ -2,6 +2,7 @@ package org.dwtech.system.service.impl;
 
 import org.dwtech.system.converter.StockConverter;
 import org.dwtech.system.model.bo.StockBO;
+import org.dwtech.system.model.entity.BookPO;
 import org.dwtech.system.model.entity.StockPO;
 import org.dwtech.system.model.form.StockForm;
 import org.dwtech.system.mapper.StockMapper;
@@ -15,7 +16,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -41,27 +42,27 @@ class StockServiceImplAtomicUpdateTest {
     }
 
     @Test
-    void shouldIncreaseExistingStockAtomically() {
+    void shouldUpsertStockAndEnsureBookMetadataWhenAddingStock() {
         StockForm stockForm = buildStockForm("9787300000001", 3);
         StockBO stockBo = new StockBO();
         StockPO convertedStock = new StockPO();
         convertedStock.setIsbn("9787300000001");
         convertedStock.setStock(3);
-        StockPO existingStock = new StockPO();
-        existingStock.setIsbn("9787300000001");
-        existingStock.setStock(5);
-        existingStock.setCurrentStock(4);
+        BookPO convertedBook = new BookPO();
+        convertedBook.setIsbn("9787300000001");
 
         when(stockConverter.toBo(stockForm)).thenReturn(stockBo);
         when(stockConverter.toPo(stockBo)).thenReturn(convertedStock);
-        when(stockMapper.selectById("9787300000001")).thenReturn(existingStock);
-        when(stockMapper.increaseStockAndCurrentStock("9787300000001", 3)).thenReturn(1);
+        when(stockConverter.toBookPo(stockBo)).thenReturn(convertedBook);
+        when(stockMapper.upsertStock("9787300000001", 3)).thenReturn(1);
+        when(bookService.saveBookIfAbsent(convertedBook)).thenReturn(true);
 
         boolean result = stockService.addStock(stockForm);
 
         assertThat(result).isTrue();
-        verify(stockMapper).increaseStockAndCurrentStock("9787300000001", 3);
-        verify(bookService, never()).saveOrUpdate(any());
+        verify(stockMapper).upsertStock("9787300000001", 3);
+        verify(bookService).saveBookIfAbsent(convertedBook);
+        verify(stockMapper, never()).selectById(anyString());
     }
 
     @Test

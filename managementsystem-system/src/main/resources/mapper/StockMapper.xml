@@ -125,4 +125,11 @@
             update_time = CURRENT_TIMESTAMP
         WHERE isbn = #{isbn}
     </update>
+    <insert id="upsertStock">
+        INSERT INTO lib_stock (isbn, stock, current_stock, create_time, update_time)
+        VALUES (#{isbn}, #{amount}, #{amount}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        ON DUPLICATE KEY UPDATE stock = stock + VALUES(stock),
+                                current_stock = current_stock + VALUES(current_stock),
+                                update_time = CURRENT_TIMESTAMP
+    </insert>
 </mapper>

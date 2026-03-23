@@ -88,4 +88,13 @@ public interface StockMapper extends BaseMapper<StockPO> {
      * @return 影响行数
      */
     int increaseCurrentStock(@Param("isbn") String isbn, @Param("amount") Integer amount);
+
+    /**
+     * 用途：执行库存首次入库或已存在库存的原子 upsert。
+     *
+     * @param isbn isbn
+     * @param amount 变更数量
+     * @return 影响行数
+     */
+    int upsertStock(@Param("isbn") String isbn, @Param("amount") Integer amount);
 }

@@ -92,25 +92,12 @@ public class StockServiceImpl extends ServiceImpl<StockMapper, StockPO> implemen
     public boolean addStock(StockForm stockForm) {
         log.info("书籍入库开始：{}", stockForm);
         StockBO stockBo = stockConverter.toBo(stockForm);
-
         StockPO stock = stockConverter.toPo(stockBo);
-        StockPO nowStock = this.getById(stock.getIsbn());
-        if (nowStock != null) {
-            int updated = this.baseMapper.increaseStockAndCurrentStock(stock.getIsbn(), stock.getStock());
-            if (updated == 0) {
-                throw new RuntimeException("库存更新失败");
-            }
-        } else {
-            stock.setCurrentStock(stock.getStock());
-            this.saveOrUpdate(stock);
-        }
+        this.baseMapper.upsertStock(stock.getIsbn(), stock.getStock());
         log.info("书籍入库步骤一完成：{}", stock);
-
-        if (nowStock == null) {
-            BookPO book = stockConverter.toBookPo(stockBo);
-            bookService.saveOrUpdate(book);
-            log.info("书籍入库步骤二完成：{}", book);
-        }
+        BookPO book = stockConverter.toBookPo(stockBo);
+        bookService.saveBookIfAbsent(book);
+        log.info("书籍入库步骤二完成：{}", book);
         return true;
     }
 
