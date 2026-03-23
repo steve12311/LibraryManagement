@@ -141,6 +141,22 @@ public class UserRoleServiceImpl extends ServiceImpl<UserRoleMapper, UserRolePO>
     }
 
     /**
+     * 用途：删除 users 对应的 role 关联。
+     *
+     * @param userIds user ID 列表
+     * 返回：无。
+     */
+    @Override
+    @Transactional
+    public void removeUserRolesByUserIds(List<Long> userIds) {
+        if (CollectionUtil.isEmpty(userIds)) {
+            return;
+        }
+        this.remove(new LambdaQueryWrapper<UserRolePO>()
+                .in(UserRolePO::getUserId, userIds));
+    }
+
+    /**
      * 用途：判断是否存在 assigned users。
      * 
      * @param roleId role ID

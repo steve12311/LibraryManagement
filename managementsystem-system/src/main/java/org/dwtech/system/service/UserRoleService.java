@@ -32,6 +32,14 @@ public interface UserRoleService {
     void assignUsersToRole(Long roleId, List<Long> userIds);
 
     /**
+     * 用途：删除 users 对应的 role 关联。
+     *
+     * @param userIds 用户ID列表
+     * 返回：无。
+     */
+    void removeUserRolesByUserIds(List<Long> userIds);
+
+    /**
      * 用途：判断是否存在 assigned users。
      * 
      * 判断角色是否存在绑定的用户

@@ -100,6 +100,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserPO> implements 
      * @return 操作结果，true 表示成功，false 表示失败
      */
     @Override
+    @Transactional
     public boolean saveUser(UserForm formData) {
         String username = formData.getUsername();
 
@@ -179,7 +180,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserPO> implements 
     @Transactional
     public boolean deleteUsers(List<Long> userIds) {
         Assert.isTrue(ArrayUtil.isNotEmpty(userIds), "删除的用户数据为空");
-        return this.removeByIds(userIds);
+        boolean result = this.removeByIds(userIds);
+        Assert.isTrue(result, "删除用户失败");
+        userRoleService.removeUserRolesByUserIds(userIds);
+        return true;
     }
 
     /**
