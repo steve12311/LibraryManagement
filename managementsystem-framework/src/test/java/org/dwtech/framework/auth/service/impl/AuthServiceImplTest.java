@@ -4,6 +4,7 @@ import cn.hutool.captcha.generator.CodeGenerator;
 import org.dwtech.common.config.properties.CaptchaProperties;
 import org.dwtech.common.config.properties.SecurityProperties;
 import org.dwtech.common.core.entity.AuthenticationToken;
+import org.dwtech.common.core.entity.SysUserDetails;
 import org.dwtech.common.enmus.ResultCode;
 import org.dwtech.common.exception.BusinessException;
 import org.dwtech.common.token.TokenManager;
@@ -14,11 +15,14 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -34,7 +38,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@ExtendWith(MockitoExtension.class)
+@ExtendWith({MockitoExtension.class, OutputCaptureExtension.class})
 class AuthServiceImplTest {
 
     @Mock
@@ -106,6 +110,9 @@ class AuthServiceImplTest {
 
     @Test
     void shouldThrowBusinessExceptionWhenBadCredentials() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader("x-forwarded-for", "10.0.0.8");
+        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
         when(authenticationManager.authenticate(any(Authentication.class)))
                 .thenThrow(new BadCredentialsException("bad credentials"));
 
@@ -116,6 +123,22 @@ class AuthServiceImplTest {
 
         assertThat(exception.getResultCode()).isEqualTo(ResultCode.USER_PASSWORD_ERROR);
         assertThat(exception.getMessage()).isEqualTo("验证用户名密码失败");
+    }
+
+    @Test
+    void shouldLogStructuredFailureWithoutLeakingExceptionMessageOnBadCredentials(CapturedOutput output) {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader("x-forwarded-for", "10.0.0.8");
+        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
+        when(authenticationManager.authenticate(any(Authentication.class)))
+                .thenThrow(new BadCredentialsException("bad credentials secret"));
+
+        assertThrows(BusinessException.class, () -> authService.login("alice", "wrong"));
+
+        assertThat(output).contains("action=login");
+        assertThat(output).contains("username=alice");
+        assertThat(output).contains(ResultCode.USER_PASSWORD_ERROR.getCode());
+        assertThat(output).doesNotContain("bad credentials secret");
     }
 
     @Test
@@ -134,12 +157,11 @@ class AuthServiceImplTest {
 
     @Test
     void shouldInvalidateAccessAndRefreshTokenOnLogout() {
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken("user", null)
-        );
+        SecurityContextHolder.getContext().setAuthentication(buildAuthentication());
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader("Authorization", "Bearer access-token");
         request.setCookies(new Cookie("refreshToken", "refresh-token"));
+        request.addHeader("x-forwarded-for", "10.0.0.8");
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
 
         authService.logout();
@@ -150,19 +172,22 @@ class AuthServiceImplTest {
     }
 
     @Test
-    void shouldInvalidateRefreshTokenEvenWithoutBearerAccessToken() {
-        Authentication authentication = new UsernamePasswordAuthenticationToken("user", null);
-        SecurityContextHolder.getContext().setAuthentication(authentication);
+    void shouldInvalidateRefreshTokenEvenWithoutBearerAccessToken(CapturedOutput output) {
+        SecurityContextHolder.getContext().setAuthentication(buildAuthentication());
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader("Authorization", "Basic token");
-        request.setCookies(new Cookie("refreshToken", "refresh-token"));
+        request.setCookies(new Cookie("refreshToken", "refresh-secret-token"));
+        request.addHeader("x-forwarded-for", "10.0.0.8");
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
 
         authService.logout();
 
         verify(tokenManager, never()).invalidateToken("access-token");
-        verify(tokenManager).invalidateToken("refresh-token");
+        verify(tokenManager).invalidateToken("refresh-secret-token");
         assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+        assertThat(output).contains("action=logout");
+        assertThat(output).contains("hadRefreshToken=true");
+        assertThat(output).doesNotContain("refresh-secret-token");
     }
 
     @Test
@@ -182,6 +207,21 @@ class AuthServiceImplTest {
     }
 
     @Test
+    void shouldLogStructuredRefreshFailureWithoutLeakingRefreshToken(CapturedOutput output) {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader("x-forwarded-for", "10.0.0.8");
+        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
+        when(tokenManager.refreshToken("refresh-secret-token"))
+                .thenThrow(new BusinessException(ResultCode.REFRESH_TOKEN_INVALID));
+
+        assertThrows(BusinessException.class, () -> authService.refreshToken("refresh-secret-token"));
+
+        assertThat(output).contains("action=refresh_token");
+        assertThat(output).contains(ResultCode.REFRESH_TOKEN_INVALID.getCode());
+        assertThat(output).doesNotContain("refresh-secret-token");
+    }
+
+    @Test
     void shouldThrowWhenCaptchaTypeIsInvalid() {
         CaptchaProperties.CodeProperties codeProperties = new CaptchaProperties.CodeProperties();
         codeProperties.setLength(4);
@@ -194,5 +234,14 @@ class AuthServiceImplTest {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> authService.getCaptcha());
 
         assertThat(exception.getMessage()).contains("Invalid captcha type");
+    }
+
+    private Authentication buildAuthentication() {
+        SysUserDetails userDetails = new SysUserDetails();
+        userDetails.setUserId(1001L);
+        userDetails.setUsername("alice");
+        userDetails.setEnabled(true);
+        userDetails.setAuthorities(java.util.Set.of(new SimpleGrantedAuthority("ROLE_ADMIN")));
+        return new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
     }
 }
