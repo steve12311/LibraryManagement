@@ -77,5 +77,14 @@ public interface TokenManager {
         // throw new UnsupportedOperationException("Not implemented");
     }
 
+    /**
+     * 按用户维度使其现有会话全部失效。
+     *
+     * @param userId 用户 ID
+     */
+    default void invalidateUserSessions(Long userId) {
+        // 默认实现可以是空的，具体由各令牌实现决定
+    }
+
 
 }

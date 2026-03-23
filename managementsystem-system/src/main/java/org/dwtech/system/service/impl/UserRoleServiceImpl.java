@@ -5,7 +5,6 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.dwtech.system.model.entity.UserRolePO;
-import org.dwtech.common.utils.SecurityUtils;
 import org.dwtech.system.mapper.UserRoleMapper;
 import org.dwtech.system.service.UserRoleService;
 import org.dwtech.common.token.TokenManager;
@@ -44,19 +43,21 @@ public class UserRoleServiceImpl extends ServiceImpl<UserRoleMapper, UserRolePO>
             return;
         }
 
-        if (CollectionUtil.isEmpty(roleIds)) {
-            this.remove(new LambdaQueryWrapper<UserRolePO>()
-                    .eq(UserRolePO::getUserId, userId));
-            return;
-        }
-
-        // 获取现有角色
         List<Long> userRoleIds = this.list(new LambdaQueryWrapper<UserRolePO>()
                         .select(UserRolePO::getRoleId)
                         .eq(UserRolePO::getUserId, userId))
                 .parallelStream()
                 .map(UserRolePO::getRoleId)
                 .toList();
+
+        if (CollectionUtil.isEmpty(roleIds)) {
+            this.remove(new LambdaQueryWrapper<UserRolePO>()
+                    .eq(UserRolePO::getUserId, userId));
+            if (CollectionUtil.isNotEmpty(userRoleIds)) {
+                tokenManager.invalidateUserSessions(userId);
+            }
+            return;
+        }
 
         // 使用Set提升对比效率
         Set<Long> oldRoles = new HashSet<>(userRoleIds);
@@ -87,9 +88,7 @@ public class UserRoleServiceImpl extends ServiceImpl<UserRoleMapper, UserRolePO>
 
         // 当权限变更时清除登录态
         if (rolesChanged) {
-            // 获取用户所有有效token（根据实际token存储实现）
-            String accessToken = SecurityUtils.getTokenFromRequest();
-            tokenManager.invalidateToken(accessToken);
+            tokenManager.invalidateUserSessions(userId);
         }
     }
 
@@ -108,12 +107,28 @@ public class UserRoleServiceImpl extends ServiceImpl<UserRoleMapper, UserRolePO>
             return;
         }
 
+        Set<Long> oldUserIds = new HashSet<>(this.list(new LambdaQueryWrapper<UserRolePO>()
+                        .select(UserRolePO::getUserId)
+                        .eq(UserRolePO::getRoleId, roleId))
+                .stream()
+                .map(UserRolePO::getUserId)
+                .toList());
+        Set<Long> newUserIds = CollectionUtil.isEmpty(userIds)
+                ? new HashSet<>()
+                : new HashSet<>(userIds);
+        Set<Long> changedUserIds = new HashSet<>(oldUserIds);
+        changedUserIds.addAll(newUserIds);
+        Set<Long> unchangedUserIds = new HashSet<>(oldUserIds);
+        unchangedUserIds.retainAll(newUserIds);
+        changedUserIds.removeAll(unchangedUserIds);
+
         // 先清空该角色已有的用户关联
         this.remove(new LambdaQueryWrapper<UserRolePO>()
                 .eq(UserRolePO::getRoleId, roleId)
         );
 
         if (CollectionUtil.isEmpty(userIds)) {
+            changedUserIds.forEach(tokenManager::invalidateUserSessions);
             return;
         }
 
@@ -122,6 +137,7 @@ public class UserRoleServiceImpl extends ServiceImpl<UserRoleMapper, UserRolePO>
                 .distinct()
                 .map(userId -> new UserRolePO(userId, roleId))
                 .toList());
+        changedUserIds.forEach(tokenManager::invalidateUserSessions);
     }
 
     /**

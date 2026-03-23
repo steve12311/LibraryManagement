@@ -70,14 +70,15 @@ public class RedisTokenManager implements TokenManager {
                 user.getDataScope(),
                 user.getAuthorities().stream()
                         .map(GrantedAuthority::getAuthority)
-                        .collect(Collectors.toSet())
+                        .collect(Collectors.toSet()),
+                System.currentTimeMillis()
         );
 
-        // 存储访问令牌、刷新令牌和刷新令牌映射
-        storeTokensInRedis(accessToken, refreshToken, onlineUser);
-
         // 单设备登录控制
-        handleSingleDeviceLogin(user.getUserId(), accessToken);
+        handleSingleDeviceLogin(user.getUserId());
+
+        // 存储访问令牌、刷新令牌和会话映射
+        storeTokensInRedis(accessToken, refreshToken, onlineUser);
 
         return AuthenticationToken.builder()
                 .accessToken(accessToken)
@@ -94,7 +95,7 @@ public class RedisTokenManager implements TokenManager {
      */
     @Override
     public Authentication parseToken(String token) {
-        OnlineUser onlineUser = (OnlineUser) redisTemplate.opsForValue().get(formatTokenKey(token));
+        OnlineUser onlineUser = resolveAccessOnlineUser(token);
         if (onlineUser == null) return null;
 
         // 构建用户权限集合
@@ -120,7 +121,7 @@ public class RedisTokenManager implements TokenManager {
      */
     @Override
     public boolean validateToken(String token) {
-        return redisTemplate.hasKey(formatTokenKey(token));
+        return resolveAccessOnlineUser(token) != null;
     }
 
     /**
@@ -131,7 +132,7 @@ public class RedisTokenManager implements TokenManager {
      */
     @Override
     public boolean validateRefreshToken(String refreshToken) {
-        return redisTemplate.hasKey(formatRefreshTokenKey(refreshToken));
+        return resolveRefreshOnlineUser(refreshToken) != null;
     }
 
     /**
@@ -145,21 +146,21 @@ public class RedisTokenManager implements TokenManager {
      */
     @Override
     public AuthenticationToken refreshToken(String refreshToken) {
-        OnlineUser onlineUser = (OnlineUser) redisTemplate.opsForValue().get(StrUtil.format(RedisConstants.Auth.REFRESH_TOKEN_USER, refreshToken));
+        OnlineUser onlineUser = resolveRefreshOnlineUser(refreshToken);
         if (onlineUser == null) {
             throw new BusinessException(ResultCode.REFRESH_TOKEN_INVALID);
         }
 
-        String oldAccessToken = (String) redisTemplate.opsForValue().get(StrUtil.format(RedisConstants.Auth.USER_ACCESS_TOKEN, onlineUser.getUserId()));
+        String oldAccessToken = resolveSessionAccessToken(refreshToken, onlineUser.getUserId());
 
         // 删除旧的访问令牌记录
-        if (oldAccessToken != null) {
+        if (StrUtil.isNotBlank(oldAccessToken)) {
             redisTemplate.delete(formatTokenKey(oldAccessToken));
         }
 
         // 生成新访问令牌并存储
         String newAccessToken = IdUtil.fastSimpleUUID();
-        storeAccessToken(newAccessToken, onlineUser);
+        storeAccessToken(refreshToken, newAccessToken, onlineUser);
 
         int accessTtl = securityProperties.getSession().getAccessTokenTimeToLive();
         return AuthenticationToken.builder()
@@ -170,35 +171,94 @@ public class RedisTokenManager implements TokenManager {
     }
 
     /**
+     * 按用户维度使其 Redis 会话整体失效。
+     *
+     * @param userId 用户 ID
+     */
+    @Override
+    public void invalidateUserSessions(Long userId) {
+        if (userId == null) {
+            return;
+        }
+        Set<Object> refreshTokens = redisTemplate.opsForSet().members(formatUserSessionSetKey(userId));
+        if (CollectionUtil.isNotEmpty(refreshTokens)) {
+            for (Object refreshTokenValue : refreshTokens) {
+                String refreshToken = refreshTokenValue == null ? null : String.valueOf(refreshTokenValue);
+                clearSession(refreshToken, resolveSessionAccessToken(refreshToken, userId), userId);
+            }
+        }
+        cleanupLegacyUserTokenMappings(userId);
+
+        String invalidAfterKey = StrUtil.format(RedisConstants.Auth.USER_SESSION_INVALID_AFTER, userId);
+        long invalidAfter = System.currentTimeMillis();
+        int sessionTtl = resolveSessionInvalidationTtl();
+        if (sessionTtl == -1) {
+            redisTemplate.opsForValue().set(invalidAfterKey, invalidAfter);
+            return;
+        }
+        redisTemplate.opsForValue().set(invalidAfterKey, invalidAfter, sessionTtl, TimeUnit.SECONDS);
+    }
+
+    /**
      * 注销访问令牌并清理该用户的令牌映射。
      *
      * @param token 访问令牌
      */
     @Override
     public void invalidateToken(String token) {
-        OnlineUser onlineUser = (OnlineUser) redisTemplate.opsForValue().get(formatTokenKey(token));
-        if (onlineUser != null) {
-            Long userId = onlineUser.getUserId();
-            // 1. 删除访问令牌相关
-            String userAccessKey = StrUtil.format(RedisConstants.Auth.USER_ACCESS_TOKEN, userId);
-            String accessToken = (String) redisTemplate.opsForValue().get(userAccessKey);
-            if (accessToken != null) {
-                redisTemplate.delete(formatTokenKey(accessToken));
-                redisTemplate.delete(userAccessKey);
-            }
+        if (StrUtil.isBlank(token)) {
+            return;
+        }
+        OnlineUser accessOnlineUser = resolveAccessOnlineUser(token);
+        if (accessOnlineUser != null) {
+            Long userId = accessOnlineUser.getUserId();
+            String refreshToken = resolveRefreshTokenByAccessToken(userId, token);
+            clearSession(refreshToken, token, userId);
+            return;
+        }
 
-            // 2. 删除刷新令牌相关
-            String userRefreshKey = StrUtil.format(RedisConstants.Auth.USER_REFRESH_TOKEN, userId);
-            String refreshToken = (String) redisTemplate.opsForValue().get(userRefreshKey);
-            if (refreshToken != null) {
-                redisTemplate.delete(StrUtil.format(RedisConstants.Auth.REFRESH_TOKEN_USER, refreshToken));
-                redisTemplate.delete(userRefreshKey);
-            }
+        OnlineUser refreshOnlineUser = resolveRefreshOnlineUser(token);
+        if (refreshOnlineUser != null) {
+            clearSession(token, resolveSessionAccessToken(token, refreshOnlineUser.getUserId()), refreshOnlineUser.getUserId());
         }
     }
 
     /**
-     * 持久化访问令牌、刷新令牌以及用户维度映射。
+     * 解析访问令牌对应的在线用户，并校验是否已被用户级失效时间覆盖。
+     *
+     * @param token 访问令牌
+     * @return 在线用户，不存在或已失效时返回 {@code null}
+     */
+    private OnlineUser resolveAccessOnlineUser(String token) {
+        if (StrUtil.isBlank(token)) {
+            return null;
+        }
+        OnlineUser onlineUser = (OnlineUser) redisTemplate.opsForValue().get(formatTokenKey(token));
+        if (onlineUser == null || isUserSessionInvalidated(onlineUser)) {
+            return null;
+        }
+        return onlineUser;
+    }
+
+    /**
+     * 解析刷新令牌对应的在线用户，并校验是否已被用户级失效时间覆盖。
+     *
+     * @param refreshToken 刷新令牌
+     * @return 在线用户，不存在或已失效时返回 {@code null}
+     */
+    private OnlineUser resolveRefreshOnlineUser(String refreshToken) {
+        if (StrUtil.isBlank(refreshToken)) {
+            return null;
+        }
+        OnlineUser onlineUser = (OnlineUser) redisTemplate.opsForValue().get(formatRefreshTokenKey(refreshToken));
+        if (onlineUser == null || isUserSessionInvalidated(onlineUser)) {
+            return null;
+        }
+        return onlineUser;
+    }
+
+    /**
+     * 持久化访问令牌、刷新令牌以及会话维度映射。
      *
      * @param accessToken 访问令牌
      * @param refreshToken 刷新令牌
@@ -212,44 +272,46 @@ public class RedisTokenManager implements TokenManager {
         String refreshTokenKey = StrUtil.format(RedisConstants.Auth.REFRESH_TOKEN_USER, refreshToken);
         setRedisValue(refreshTokenKey, onlineUser, securityProperties.getSession().getRefreshTokenTimeToLive());
 
-        // 用户ID -> 刷新令牌
-        setRedisValue(StrUtil.format(RedisConstants.Auth.USER_REFRESH_TOKEN, onlineUser.getUserId()),
-                refreshToken,
+        // 刷新令牌 -> 当前访问令牌
+        setRedisValue(formatSessionAccessKey(refreshToken),
+                accessToken,
                 securityProperties.getSession().getRefreshTokenTimeToLive());
+
+        // 用户ID -> 刷新令牌集合
+        trackUserSession(onlineUser.getUserId(), refreshToken, securityProperties.getSession().getRefreshTokenTimeToLive());
     }
 
     /**
      * 根据配置执行单设备登录控制。
      *
-     * <p>当不允许多端登录时，会删除当前用户旧访问令牌，保证用户仅保留最新会话。</p>
+     * <p>当不允许多端登录时，会删除当前用户旧会话，保证用户仅保留最新会话。</p>
      *
      * @param userId 用户 ID
-     * @param accessToken 新访问令牌
      */
-    private void handleSingleDeviceLogin(Long userId, String accessToken) {
+    private void handleSingleDeviceLogin(Long userId) {
         Boolean allowMultiLogin = securityProperties.getSession().getRedisToken().getAllowMultiLogin();
-        String userAccessKey = StrUtil.format(RedisConstants.Auth.USER_ACCESS_TOKEN, userId);
-        // 单设备登录控制，删除旧的访问令牌
-        if (!allowMultiLogin) {
-            String oldAccessToken = (String) redisTemplate.opsForValue().get(userAccessKey);
-            if (oldAccessToken != null) {
-                redisTemplate.delete(formatTokenKey(oldAccessToken));
+        if (Boolean.FALSE.equals(allowMultiLogin)) {
+            Set<Object> refreshTokens = redisTemplate.opsForSet().members(formatUserSessionSetKey(userId));
+            if (CollectionUtil.isNotEmpty(refreshTokens)) {
+                for (Object refreshTokenValue : refreshTokens) {
+                    String refreshToken = refreshTokenValue == null ? null : String.valueOf(refreshTokenValue);
+                    clearSession(refreshToken, resolveSessionAccessToken(refreshToken, userId), userId);
+                }
             }
+            cleanupLegacyUserTokenMappings(userId);
         }
-        // 存储访问令牌映射（用户ID -> 访问令牌），用于单设备登录控制删除旧的访问令牌和刷新令牌时删除旧令牌
-        setRedisValue(userAccessKey, accessToken, securityProperties.getSession().getAccessTokenTimeToLive());
     }
 
     /**
-     * 存储新访问令牌并维护用户到令牌的映射。
+     * 为会话写入新的访问令牌并维护刷新令牌到访问令牌的映射。
      *
+     * @param refreshToken 刷新令牌
      * @param newAccessToken 新访问令牌
      * @param onlineUser 在线用户信息
      */
-    private void storeAccessToken(String newAccessToken, OnlineUser onlineUser) {
+    private void storeAccessToken(String refreshToken, String newAccessToken, OnlineUser onlineUser) {
         setRedisValue(StrUtil.format(RedisConstants.Auth.ACCESS_TOKEN_USER, newAccessToken), onlineUser, securityProperties.getSession().getAccessTokenTimeToLive());
-        String userAccessKey = StrUtil.format(RedisConstants.Auth.USER_ACCESS_TOKEN, onlineUser.getUserId());
-        setRedisValue(userAccessKey, newAccessToken, securityProperties.getSession().getAccessTokenTimeToLive());
+        setRedisValue(formatSessionAccessKey(refreshToken), newAccessToken, resolveRefreshSessionTtl(refreshToken));
     }
 
     /**
@@ -290,6 +352,26 @@ public class RedisTokenManager implements TokenManager {
     }
 
     /**
+     * 生成刷新令牌到当前访问令牌映射的 Redis key。
+     *
+     * @param refreshToken 刷新令牌
+     * @return Redis key
+     */
+    private String formatSessionAccessKey(String refreshToken) {
+        return StrUtil.format(RedisConstants.Auth.SESSION_ACCESS_TOKEN, refreshToken);
+    }
+
+    /**
+     * 生成用户会话集合的 Redis key。
+     *
+     * @param userId 用户 ID
+     * @return Redis key
+     */
+    private String formatUserSessionSetKey(Long userId) {
+        return StrUtil.format(RedisConstants.Auth.USER_SESSION_SET, userId);
+    }
+
+    /**
      * 按 TTL 规则写入 Redis。
      *
      * @param key Redis key
@@ -302,5 +384,193 @@ public class RedisTokenManager implements TokenManager {
         } else {
             redisTemplate.opsForValue().set(key, value); // ttl=-1时永不过期
         }
+    }
+
+    /**
+     * 将刷新令牌加入用户会话集合，并同步集合 TTL。
+     *
+     * @param userId 用户 ID
+     * @param refreshToken 刷新令牌
+     * @param ttl 会话 TTL
+     */
+    private void trackUserSession(Long userId, String refreshToken, int ttl) {
+        if (userId == null || StrUtil.isBlank(refreshToken)) {
+            return;
+        }
+        String userSessionSetKey = formatUserSessionSetKey(userId);
+        redisTemplate.opsForSet().add(userSessionSetKey, refreshToken);
+        if (ttl != -1) {
+            redisTemplate.expire(userSessionSetKey, ttl, TimeUnit.SECONDS);
+        }
+    }
+
+    /**
+     * 读取会话当前绑定的访问令牌。
+     *
+     * @param refreshToken 刷新令牌
+     * @return 访问令牌
+     */
+    private String resolveSessionAccessToken(String refreshToken) {
+        return resolveSessionAccessToken(refreshToken, null);
+    }
+
+    /**
+     * 读取会话当前绑定的访问令牌，并兼容旧版本用户级单值映射。
+     *
+     * @param refreshToken 刷新令牌
+     * @param userId 用户 ID
+     * @return 访问令牌
+     */
+    private String resolveSessionAccessToken(String refreshToken, Long userId) {
+        if (StrUtil.isBlank(refreshToken)) {
+            return null;
+        }
+        Object accessToken = redisTemplate.opsForValue().get(formatSessionAccessKey(refreshToken));
+        if (accessToken != null) {
+            return String.valueOf(accessToken);
+        }
+        if (userId == null) {
+            return null;
+        }
+        Object legacyRefreshToken = redisTemplate.opsForValue()
+                .get(StrUtil.format(RedisConstants.Auth.USER_REFRESH_TOKEN, userId));
+        if (legacyRefreshToken != null && StrUtil.equals(refreshToken, String.valueOf(legacyRefreshToken))) {
+            Object legacyAccessToken = redisTemplate.opsForValue()
+                    .get(StrUtil.format(RedisConstants.Auth.USER_ACCESS_TOKEN, userId));
+            return legacyAccessToken == null ? null : String.valueOf(legacyAccessToken);
+        }
+        return null;
+    }
+
+    /**
+     * 通过用户会话集合反查访问令牌对应的刷新令牌。
+     *
+     * @param userId 用户 ID
+     * @param accessToken 访问令牌
+     * @return 刷新令牌
+     */
+    private String resolveRefreshTokenByAccessToken(Long userId, String accessToken) {
+        if (userId == null || StrUtil.isBlank(accessToken)) {
+            return null;
+        }
+        Set<Object> refreshTokens = redisTemplate.opsForSet().members(formatUserSessionSetKey(userId));
+        if (CollectionUtil.isNotEmpty(refreshTokens)) {
+            for (Object refreshTokenValue : refreshTokens) {
+                String refreshToken = refreshTokenValue == null ? null : String.valueOf(refreshTokenValue);
+                if (StrUtil.equals(accessToken, resolveSessionAccessToken(refreshToken))) {
+                    return refreshToken;
+                }
+            }
+        }
+
+        Object legacyAccessToken = redisTemplate.opsForValue()
+                .get(StrUtil.format(RedisConstants.Auth.USER_ACCESS_TOKEN, userId));
+        if (legacyAccessToken != null && StrUtil.equals(accessToken, String.valueOf(legacyAccessToken))) {
+            Object legacyRefreshToken = redisTemplate.opsForValue()
+                    .get(StrUtil.format(RedisConstants.Auth.USER_REFRESH_TOKEN, userId));
+            return legacyRefreshToken == null ? null : String.valueOf(legacyRefreshToken);
+        }
+        return null;
+    }
+
+    /**
+     * 清理单个会话的访问令牌、刷新令牌和集合映射。
+     *
+     * @param refreshToken 刷新令牌
+     * @param accessToken 访问令牌
+     * @param userId 用户 ID
+     */
+    private void clearSession(String refreshToken, String accessToken, Long userId) {
+        if (StrUtil.isNotBlank(accessToken)) {
+            redisTemplate.delete(formatTokenKey(accessToken));
+        }
+        if (StrUtil.isNotBlank(refreshToken)) {
+            redisTemplate.delete(formatRefreshTokenKey(refreshToken));
+            redisTemplate.delete(formatSessionAccessKey(refreshToken));
+            if (userId != null) {
+                redisTemplate.opsForSet().remove(formatUserSessionSetKey(userId), refreshToken);
+            }
+        }
+        cleanupLegacyUserTokenMappings(userId);
+    }
+
+    /**
+     * 清理旧版本的用户级单值映射，避免兼容键干扰新会话模型。
+     *
+     * @param userId 用户 ID
+     */
+    private void cleanupLegacyUserTokenMappings(Long userId) {
+        if (userId == null) {
+            return;
+        }
+        String userAccessKey = StrUtil.format(RedisConstants.Auth.USER_ACCESS_TOKEN, userId);
+        Object legacyAccessToken = redisTemplate.opsForValue().get(userAccessKey);
+        if (legacyAccessToken != null) {
+            redisTemplate.delete(formatTokenKey(String.valueOf(legacyAccessToken)));
+        }
+
+        String userRefreshKey = StrUtil.format(RedisConstants.Auth.USER_REFRESH_TOKEN, userId);
+        Object legacyRefreshToken = redisTemplate.opsForValue().get(userRefreshKey);
+        if (legacyRefreshToken != null) {
+            String refreshToken = String.valueOf(legacyRefreshToken);
+            redisTemplate.delete(formatRefreshTokenKey(refreshToken));
+            redisTemplate.delete(formatSessionAccessKey(refreshToken));
+        }
+
+        redisTemplate.delete(userAccessKey);
+        redisTemplate.delete(userRefreshKey);
+    }
+
+    /**
+     * 判断在线用户对应会话是否被用户级失效时间覆盖。
+     *
+     * @param onlineUser 在线用户
+     * @return {@code true} 表示会话应视为失效
+     */
+    private boolean isUserSessionInvalidated(OnlineUser onlineUser) {
+        if (onlineUser == null || onlineUser.getUserId() == null || onlineUser.getLoginAt() == null) {
+            return false;
+        }
+        Object invalidAfterValue = redisTemplate.opsForValue()
+                .get(StrUtil.format(RedisConstants.Auth.USER_SESSION_INVALID_AFTER, onlineUser.getUserId()));
+        if (invalidAfterValue == null) {
+            return false;
+        }
+        Long invalidAfter = Long.valueOf(String.valueOf(invalidAfterValue));
+        return onlineUser.getLoginAt() <= invalidAfter;
+    }
+
+    /**
+     * 计算用户级会话失效标记的保留时长。
+     *
+     * @return TTL 秒数，-1 表示永久保留
+     */
+    private int resolveSessionInvalidationTtl() {
+        int accessTtl = securityProperties.getSession().getAccessTokenTimeToLive();
+        int refreshTtl = securityProperties.getSession().getRefreshTokenTimeToLive();
+        if (accessTtl == -1 || refreshTtl == -1) {
+            return -1;
+        }
+        return Math.max(accessTtl, refreshTtl);
+    }
+
+    /**
+     * 读取刷新令牌剩余生存时间，避免刷新访问令牌时意外延长会话总时长。
+     *
+     * @param refreshToken 刷新令牌
+     * @return TTL 秒数，-1 表示永久保留
+     */
+    private int resolveRefreshSessionTtl(String refreshToken) {
+        Long ttl = redisTemplate.getExpire(formatRefreshTokenKey(refreshToken), TimeUnit.SECONDS);
+        if (ttl == null) {
+            return securityProperties.getSession().getRefreshTokenTimeToLive();
+        }
+        if (ttl == -1L) {
+            return -1;
+        }
+        if (ttl <= 0L) {
+            return securityProperties.getSession().getRefreshTokenTimeToLive();
+        }
+        return ttl.intValue();
     }
 }
