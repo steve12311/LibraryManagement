@@ -25,22 +25,8 @@ class BorrowMapperDataPermissionTest {
     }
 
     @Test
-    void shouldAppendBorrowUserConditionWhenDataScopeIsSelf() throws Exception {
+    void shouldKeepOriginalConditionWhenBorrowMapperHasNoDataPermission() throws Exception {
         setCurrentUser(1001L, 2001L, DataScopeEnum.SELF.getValue());
-        Expression where = CCJSqlParserUtil.parseCondExpression("bw.isbn = '9787300000001'");
-
-        Expression actual = dataPermissionHandler.getSqlSegment(
-                where,
-                "org.dwtech.system.mapper.BorrowMapper.getBorrowPage"
-        );
-
-        assertThat(actual.toString()).contains("bw.user_id = 1001");
-        assertThat(actual.toString()).contains("bw.isbn");
-    }
-
-    @Test
-    void shouldKeepOriginalConditionWhenDataScopeIsAll() throws Exception {
-        setCurrentUser(1001L, 2001L, DataScopeEnum.ALL.getValue());
         Expression where = CCJSqlParserUtil.parseCondExpression("bw.isbn = '9787300000001'");
 
         Expression actual = dataPermissionHandler.getSqlSegment(
