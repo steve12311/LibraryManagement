@@ -52,4 +52,40 @@ public interface StockMapper extends BaseMapper<StockPO> {
      * @return 返回结果
      */
     StockBO selectStockById(String isbn);
+
+    /**
+     * 用途：对已存在库存执行原子入库累加。
+     *
+     * @param isbn isbn
+     * @param amount 变更数量
+     * @return 影响行数
+     */
+    int increaseStockAndCurrentStock(@Param("isbn") String isbn, @Param("amount") Integer amount);
+
+    /**
+     * 用途：执行带库存校验的原子出库。
+     *
+     * @param isbn isbn
+     * @param amount 变更数量
+     * @return 影响行数
+     */
+    int decreaseStockAndCurrentStock(@Param("isbn") String isbn, @Param("amount") Integer amount);
+
+    /**
+     * 用途：执行带剩余库存校验的原子借出。
+     *
+     * @param isbn isbn
+     * @param amount 变更数量
+     * @return 影响行数
+     */
+    int decreaseCurrentStock(@Param("isbn") String isbn, @Param("amount") Integer amount);
+
+    /**
+     * 用途：执行原子还书入库。
+     *
+     * @param isbn isbn
+     * @param amount 变更数量
+     * @return 影响行数
+     */
+    int increaseCurrentStock(@Param("isbn") String isbn, @Param("amount") Integer amount);
 }

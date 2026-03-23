@@ -96,4 +96,33 @@
         <include refid="stockView"/>
         WHERE b.isbn = #{isbn}
     </select>
+    <update id="increaseStockAndCurrentStock">
+        UPDATE lib_stock
+        SET stock = stock + #{amount},
+            current_stock = current_stock + #{amount},
+            update_time = CURRENT_TIMESTAMP
+        WHERE isbn = #{isbn}
+    </update>
+    <update id="decreaseStockAndCurrentStock">
+        UPDATE lib_stock
+        SET stock = stock - #{amount},
+            current_stock = current_stock - #{amount},
+            update_time = CURRENT_TIMESTAMP
+        WHERE isbn = #{isbn}
+          AND stock >= #{amount}
+          AND current_stock >= #{amount}
+    </update>
+    <update id="decreaseCurrentStock">
+        UPDATE lib_stock
+        SET current_stock = current_stock - #{amount},
+            update_time = CURRENT_TIMESTAMP
+        WHERE isbn = #{isbn}
+          AND current_stock >= #{amount}
+    </update>
+    <update id="increaseCurrentStock">
+        UPDATE lib_stock
+        SET current_stock = current_stock + #{amount},
+            update_time = CURRENT_TIMESTAMP
+        WHERE isbn = #{isbn}
+    </update>
 </mapper>
