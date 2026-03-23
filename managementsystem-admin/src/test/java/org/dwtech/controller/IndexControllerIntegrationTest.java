@@ -30,6 +30,7 @@ import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -109,6 +110,20 @@ class IndexControllerIntegrationTest {
                 .andExpect(jsonPath("$.data.list[0].createTime").doesNotExist());
 
         verify(stockService).getPublicBookPage(any(PublicBookPageQuery.class));
+        verifyNoInteractions(tokenManager);
+    }
+
+    @Test
+    void shouldRejectInvalidPaginationBoundaryForPublicBookPage() throws Exception {
+        mockMvc.perform(get("/api/v1/index/books/page")
+                        .param("pageNum", "0")
+                        .param("pageSize", "101"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(ResultCode.INVALID_USER_INPUT.getCode()))
+                .andExpect(jsonPath("$.msg", containsString("页码必须大于等于 1")))
+                .andExpect(jsonPath("$.msg", containsString("每页条数不能超过 100")));
+
+        verifyNoInteractions(stockService);
         verifyNoInteractions(tokenManager);
     }
 

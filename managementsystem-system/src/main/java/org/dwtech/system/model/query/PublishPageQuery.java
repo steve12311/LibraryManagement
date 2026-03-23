@@ -4,6 +4,7 @@ import org.dwtech.common.base.BasePageQuery;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.dwtech.common.annontation.ValidField;
 /**
  * PublishPageQuery
  *
@@ -14,6 +15,7 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = true)
 @Data
 public class PublishPageQuery extends BasePageQuery {
+    @ValidField(allowedValues = {"publishName", "address"})
     private String field;
     private String keyword;
 }
