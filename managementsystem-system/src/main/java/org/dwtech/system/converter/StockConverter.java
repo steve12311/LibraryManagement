@@ -2,9 +2,10 @@ package org.dwtech.system.converter;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.dwtech.system.model.bo.StockBO;
-import org.dwtech.system.model.form.StockForm;
 import org.dwtech.system.model.entity.BookPO;
 import org.dwtech.system.model.entity.StockPO;
+import org.dwtech.system.model.form.StockForm;
+import org.dwtech.system.model.vo.PublicBookPageVO;
 import org.dwtech.system.model.vo.StockPageVO;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -20,6 +21,21 @@ import java.util.List;
 
 @Mapper(componentModel = "spring")
 public interface StockConverter {
+    @Mappings({
+            @Mapping(target = "coverUrl",
+                    expression = "java(normalizePublicCoverUrl(bo.getCover()))"),
+            @Mapping(source = "pressName", target = "publishName"),
+            @Mapping(target = "available",
+                    expression = "java(bo.getCurrentStock() != null && bo.getCurrentStock() > 0)")
+    })
+    /**
+     * 用途：转换为公开书目分页视图。
+     *
+     * @param bo bo
+     * @return 返回结果
+     */
+    PublicBookPageVO toPublicPageVo(StockBO bo);
+
     @Mappings({
             @Mapping(source = "pressName", target = "publishName"),
             @Mapping(source = "stock", target = "stockNumber"),
@@ -75,6 +91,14 @@ public interface StockConverter {
     Page<StockPageVO> toPageVo(Page<StockBO> bo);
 
     /**
+     * 用途：转换为公开书目分页结果。
+     *
+     * @param bo bo
+     * @return 分页结果
+     */
+    Page<PublicBookPageVO> toPublicPageVo(Page<StockBO> bo);
+
+    /**
      * 用途：转换为 list vo。
      * 
      * @param bo bo
@@ -89,4 +113,23 @@ public interface StockConverter {
      * @return 返回结果
      */
     StockForm toForm(StockBO stock);
+
+    /**
+     * 用途：规范公开封面访问路径。
+     *
+     * @param cover cover
+     * @return 规范化后的访问路径
+     */
+    default String normalizePublicCoverUrl(String cover) {
+        if (cover == null || cover.isBlank()) {
+            return cover;
+        }
+        if (cover.startsWith("/api/v1/files/")) {
+            return cover;
+        }
+        if (cover.startsWith("/")) {
+            return "/api/v1/files" + cover;
+        }
+        return cover;
+    }
 }

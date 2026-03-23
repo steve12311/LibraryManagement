@@ -3,6 +3,22 @@
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="org.dwtech.system.mapper.StockMapper">
+    <sql id="publicBookView">
+        SELECT b.isbn,
+               b.cover,
+               b.name,
+               b.intro,
+               b.author,
+               p.name AS press_name,
+               b.publish_time,
+               c.name AS category_name,
+               b.price,
+               s.current_stock
+        FROM lib_book AS b
+                 LEFT JOIN lib_stock AS s ON s.isbn = b.isbn
+                 LEFT JOIN lib_publish AS p ON p.id = b.press_id
+                 LEFT JOIN lib_category AS c ON c.id = b.category_id
+    </sql>
     <sql id="stockView">
         SELECT b.isbn,
                b.cover,
@@ -24,6 +40,25 @@
                  LEFT JOIN lib_publish AS p ON p.id = b.press_id
                  LEFT JOIN lib_category AS c ON c.id = b.category_id
     </sql>
+    <select id="getPublicBookPage" resultType="org.dwtech.system.model.bo.StockBO">
+        <include refid="publicBookView"/>
+        <where>
+            <if test="queryParams.field != null and queryParams.field != '' and queryParams.keyword != null and queryParams.keyword != ''">
+                <choose>
+                    <when test="queryParams.field == 'isbn'">
+                        AND b.isbn LIKE CONCAT(#{queryParams.keyword},'%')
+                    </when>
+                    <when test="queryParams.field == 'name'">
+                        AND b.name LIKE CONCAT('%',#{queryParams.keyword},'%')
+                    </when>
+                    <when test="queryParams.field == 'author'">
+                        AND b.author LIKE CONCAT('%',#{queryParams.keyword},'%')
+                    </when>
+                </choose>
+            </if>
+        </where>
+        ORDER BY b.isbn DESC
+    </select>
     <select id="getStockPage" resultType="org.dwtech.system.model.bo.StockBO">
         <include refid="stockView"/>
         <where>

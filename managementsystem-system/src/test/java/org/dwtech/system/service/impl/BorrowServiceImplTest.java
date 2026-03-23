@@ -1,32 +1,25 @@
 package org.dwtech.system.service.impl;
 
-import org.dwtech.common.core.entity.SysUserDetails;
-import org.dwtech.common.enmus.DataScopeEnum;
 import org.dwtech.common.exception.BusinessException;
 import org.dwtech.system.converter.BorrowConverter;
 import org.dwtech.system.mapper.BorrowMapper;
 import org.dwtech.system.model.entity.BorrowPO;
+import org.dwtech.system.model.form.BookForm;
 import org.dwtech.system.model.form.BorrowForm;
+import org.dwtech.system.model.form.StockForm;
 import org.dwtech.system.service.BookService;
 import org.dwtech.system.service.StockService;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.util.ReflectionTestUtils;
-
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -54,43 +47,48 @@ class BorrowServiceImplTest {
         ReflectionTestUtils.setField(borrowService, "baseMapper", borrowMapper);
     }
 
-    @AfterEach
-    void tearDown() {
-        SecurityContextHolder.clearContext();
-    }
-
     @Test
-    void shouldRejectSaveBorrowForOtherUserWhenDataScopeIsSelf() {
-        setCurrentUser(1001L, DataScopeEnum.SELF.getValue());
+    void shouldRejectSaveBorrowWhenBorrowUserMissing() {
         BorrowForm formData = new BorrowForm();
-        formData.setUserId(2002L);
         formData.setIsbn("9787300000001");
 
         assertThatThrownBy(() -> borrowService.saveBorrow(formData))
                 .isInstanceOf(BusinessException.class)
-                .hasMessage("无权为他人创建借阅记录");
+                .hasMessage("代借用户不能为空");
 
         verifyNoInteractions(bookService, borrowConverter, stockService, borrowMapper);
     }
 
     @Test
-    void shouldRejectUpdateBorrowForOtherUserWhenDataScopeIsSelf() {
-        setCurrentUser(1001L, DataScopeEnum.SELF.getValue());
-        BorrowPO borrowPO = new BorrowPO();
-        borrowPO.setUserId(2002L);
-        when(borrowMapper.selectById("borrow-1")).thenReturn(borrowPO);
+    void shouldKeepAssignedBorrowUserWhenSaveBorrow() {
+        BookForm bookForm = new BookForm();
+        bookForm.setName("Spring Boot 实战");
+        when(bookService.getBookByIsbn("9787300000001")).thenReturn(bookForm);
 
-        assertThatThrownBy(() -> borrowService.updateBorrow("borrow-1", new BorrowForm()))
-                .isInstanceOf(BusinessException.class)
-                .hasMessage("无权操作他人借阅记录");
+        BorrowPO convertedBorrow = new BorrowPO();
+        when(borrowConverter.toPo(any(BorrowForm.class))).thenReturn(convertedBorrow);
 
-        verifyNoInteractions(borrowConverter, stockService);
-        verify(borrowMapper, never()).updateById(any(BorrowPO.class));
+        BorrowForm formData = new BorrowForm();
+        formData.setUserId(2002L);
+        formData.setIsbn("9787300000001");
+
+        boolean result = borrowService.saveBorrow(formData);
+
+        assertThat(result).isTrue();
+        ArgumentCaptor<BorrowForm> borrowFormCaptor = ArgumentCaptor.forClass(BorrowForm.class);
+        verify(borrowConverter).toPo(borrowFormCaptor.capture());
+        assertThat(borrowFormCaptor.getValue().getUserId()).isEqualTo(2002L);
+        assertThat(convertedBorrow.getBookName()).isEqualTo("Spring Boot 实战");
+        assertThat(convertedBorrow.getId()).isNotBlank();
+
+        ArgumentCaptor<StockForm> stockFormCaptor = ArgumentCaptor.forClass(StockForm.class);
+        verify(stockService).borrowOut(stockFormCaptor.capture());
+        assertThat(stockFormCaptor.getValue().getIsbn()).isEqualTo("9787300000001");
+        assertThat(stockFormCaptor.getValue().getStock()).isEqualTo(1);
     }
 
     @Test
     void shouldKeepOriginalBorrowUserWhenUpdateBorrow() {
-        setCurrentUser(1001L, DataScopeEnum.ALL.getValue());
         BorrowPO existingBorrow = new BorrowPO();
         existingBorrow.setUserId(2002L);
         when(borrowMapper.selectById("borrow-2")).thenReturn(existingBorrow);
@@ -109,19 +107,5 @@ class BorrowServiceImplTest {
         verify(borrowConverter).toPo(captor.capture());
         assertThat(captor.getValue().getUserId()).isEqualTo(2002L);
         assertThat(convertedBorrow.getId()).isEqualTo("borrow-2");
-    }
-
-    private void setCurrentUser(Long userId, Integer dataScope) {
-        SysUserDetails userDetails = new SysUserDetails();
-        userDetails.setUserId(userId);
-        userDetails.setDataScope(dataScope);
-        userDetails.setAuthorities(Set.of(new SimpleGrantedAuthority("ROLE_USER")));
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(
-                        userDetails,
-                        null,
-                        userDetails.getAuthorities()
-                )
-        );
     }
 }

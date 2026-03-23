@@ -5,13 +5,15 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.dwtech.system.converter.StockConverter;
 import org.dwtech.system.model.bo.StockBO;
-import org.dwtech.system.model.form.StockForm;
 import org.dwtech.system.model.entity.BookPO;
 import org.dwtech.system.model.entity.StockPO;
+import org.dwtech.system.model.form.StockForm;
+import org.dwtech.system.model.query.PublicBookPageQuery;
 import org.dwtech.system.model.query.StockPageQuery;
+import org.dwtech.system.model.vo.PublicBookPageVO;
 import org.dwtech.system.model.vo.StockPageVO;
-import org.dwtech.system.converter.StockConverter;
 import org.dwtech.system.mapper.StockMapper;
 import org.dwtech.system.service.BookService;
 import org.dwtech.system.service.StockService;
@@ -32,6 +34,20 @@ import java.util.List;
 public class StockServiceImpl extends ServiceImpl<StockMapper, StockPO> implements StockService {
     private final StockConverter stockConverter;
     private final BookService bookService;
+
+    /**
+     * 用途：获取公开书目分页信息。
+     *
+     * @param queryParams query params
+     * @return 分页结果
+     */
+    @Override
+    public IPage<PublicBookPageVO> getPublicBookPage(PublicBookPageQuery queryParams) {
+        log.info("获取公开书目分页：{}", queryParams);
+        Page<StockBO> page = new Page<>(queryParams.getPageNum(), queryParams.getPageSize());
+        Page<StockBO> stockPage = this.baseMapper.getPublicBookPage(page, queryParams);
+        return stockConverter.toPublicPageVo(stockPage);
+    }
 
     /**
      * 用途：获取 stock page 信息。

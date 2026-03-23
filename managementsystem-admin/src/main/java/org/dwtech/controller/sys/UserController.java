@@ -126,6 +126,7 @@ public class UserController {
      * @return 返回结果
      */
     @GetMapping("/me")
+    @PreAuthorize("isAuthenticated()")
     public Result<CurrentUserVO> getCurrentUser() {
         CurrentUserVO currentUser = userService.getCurrentUserInfo();
         return Result.success(currentUser);
@@ -153,6 +154,7 @@ public class UserController {
      * @return 返回结果
      */
     @PutMapping("/password")
+    @PreAuthorize("isAuthenticated()")
     @RepeatSubmit
     public Result<?> updatePassword(@RequestBody PasswordUpdateForm formData) {
         Long userId = SecurityUtils.getUserId();
@@ -181,6 +183,7 @@ public class UserController {
      */
     @Operation(summary = "获取个人中心用户信息")
     @GetMapping("/profile")
+    @PreAuthorize("isAuthenticated()")
     public Result<UserProfileVO> getUserProfile() {
         Long userId = SecurityUtils.getUserId();
         UserProfileVO userProfile = userService.getUserProfile(userId);
@@ -195,6 +198,7 @@ public class UserController {
      */
     @Operation(summary = "个人中心修改用户信息")
     @PutMapping("/profile")
+    @PreAuthorize("isAuthenticated()")
     @RepeatSubmit
     public Result<?> updateUserProfile(@RequestBody UserProfileForm formData) {
         boolean result = userService.updateUserProfile(formData);

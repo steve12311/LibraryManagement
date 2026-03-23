@@ -2,8 +2,10 @@ package org.dwtech.system.service.impl;
 
 import org.dwtech.system.mapper.FileObjectMapper;
 import org.dwtech.system.mapper.FileRecordMapper;
+import org.dwtech.system.mapper.BookMapper;
 import org.dwtech.system.model.entity.FileObjectPO;
 import org.dwtech.system.model.entity.FileRecordPO;
+import org.dwtech.common.service.PermissionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,6 +23,7 @@ import java.nio.file.Path;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
@@ -32,6 +35,12 @@ class LocalFileServiceImplSecurityTest {
 
     @Mock
     private FileRecordMapper fileRecordMapper;
+
+    @Mock
+    private BookMapper bookMapper;
+
+    @Mock
+    private PermissionService permissionService;
 
     @Mock
     private RedisTemplate<String, Object> redisTemplate;
@@ -46,7 +55,7 @@ class LocalFileServiceImplSecurityTest {
 
     @BeforeEach
     void setUp() {
-        localFileService = new LocalFileServiceImpl(fileObjectMapper, fileRecordMapper, redisTemplate);
+        localFileService = new LocalFileServiceImpl(fileObjectMapper, fileRecordMapper, bookMapper, permissionService, redisTemplate);
         ReflectionTestUtils.setField(localFileService, "storagePath", tempDir.toString());
         lenient().when(redisTemplate.opsForValue()).thenReturn(valueOperations);
         setRootUser();
@@ -107,6 +116,68 @@ class LocalFileServiceImplSecurityTest {
         assertThatThrownBy(() -> localFileService.deleteFile(3L))
                 .isInstanceOf(org.dwtech.common.exception.BusinessException.class)
                 .hasMessage("无权访问该文件");
+    }
+
+    @Test
+    void shouldAllowPublicBookCoverReadForAnonymousUser() throws Exception {
+        SecurityContextHolder.clearContext();
+        Path objectPath = tempDir.resolve(".objects/aa/bb/public-cover");
+        java.nio.file.Files.createDirectories(objectPath.getParent());
+        java.nio.file.Files.writeString(objectPath, "cover-bytes");
+
+        FileRecordPO fileRecordPO = new FileRecordPO();
+        fileRecordPO.setId(4L);
+        fileRecordPO.setObjectId(5L);
+        fileRecordPO.setOriginalName("cover.png");
+        fileRecordPO.setOwnerUserId(1001L);
+        when(fileRecordMapper.selectById(4L)).thenReturn(fileRecordPO);
+
+        FileObjectPO fileObjectPO = new FileObjectPO();
+        fileObjectPO.setId(5L);
+        fileObjectPO.setStoragePath(".objects/aa/bb/public-cover");
+        fileObjectPO.setMimeType("image/png");
+        fileObjectPO.setFileSize(11L);
+        fileObjectPO.setSha256("cover-sha");
+        when(fileObjectMapper.selectById(5L)).thenReturn(fileObjectPO);
+        when(bookMapper.selectCount(any())).thenReturn(1L);
+
+        org.dwtech.system.model.bo.FileDownloadBO fileDownloadBO = localFileService.getFile(4L);
+
+        assertThat(fileDownloadBO.getFilePath()).isEqualTo(objectPath.toAbsolutePath().normalize());
+        assertThat(fileDownloadBO.getFileName()).isEqualTo("cover.png");
+    }
+
+    @Test
+    void shouldRejectDeleteBookCoverWhenUserLacksStockEditPermission() {
+        setUser(2002L);
+        FileRecordPO fileRecordPO = new FileRecordPO();
+        fileRecordPO.setId(5L);
+        fileRecordPO.setObjectId(6L);
+        fileRecordPO.setOwnerUserId(1001L);
+        when(fileRecordMapper.selectById(5L)).thenReturn(fileRecordPO);
+        when(bookMapper.selectCount(any())).thenReturn(1L);
+        when(permissionService.hasPerm("sys:stock:edit")).thenReturn(false);
+
+        assertThatThrownBy(() -> localFileService.deleteFile(5L))
+                .isInstanceOf(org.dwtech.common.exception.BusinessException.class)
+                .hasMessage("无权删除书籍封面文件");
+    }
+
+    @Test
+    void shouldAllowDeleteBookCoverWhenUserHasStockEditPermission() {
+        setUser(2002L);
+        FileRecordPO fileRecordPO = new FileRecordPO();
+        fileRecordPO.setId(6L);
+        fileRecordPO.setOwnerUserId(1001L);
+        when(fileRecordMapper.selectById(6L)).thenReturn(fileRecordPO);
+        when(bookMapper.selectCount(any())).thenReturn(1L, 0L);
+        when(permissionService.hasPerm("sys:stock:edit")).thenReturn(true);
+        when(fileRecordMapper.deleteById(6L)).thenReturn(1);
+
+        boolean deleted = localFileService.deleteFile(6L);
+
+        assertThat(deleted).isTrue();
+        org.mockito.Mockito.verify(bookMapper).update(org.mockito.ArgumentMatchers.isNull(), any());
     }
 
     private void setRootUser() {

@@ -62,6 +62,7 @@ public class MenuController {
      * @return 返回结果
      */
     @GetMapping("/routes")
+    @PreAuthorize("isAuthenticated()")
     public Result<List<RouteVO>> getCurrentUserRoutes() {
         List<RouteVO> routeList = menuService.listCurrentUserRoutes();
         return Result.success(routeList);

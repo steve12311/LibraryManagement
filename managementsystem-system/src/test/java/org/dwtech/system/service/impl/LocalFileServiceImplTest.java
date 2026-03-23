@@ -5,6 +5,8 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import cn.hutool.core.util.StrUtil;
 import org.dwtech.common.constant.RedisConstants;
 import org.dwtech.common.core.entity.FileInfo;
+import org.dwtech.common.service.PermissionService;
+import org.dwtech.system.mapper.BookMapper;
 import org.dwtech.system.mapper.FileObjectMapper;
 import org.dwtech.system.mapper.FileRecordMapper;
 import org.dwtech.system.model.bo.FileDownloadBO;
@@ -59,6 +61,12 @@ class LocalFileServiceImplTest {
     private FileRecordMapper fileRecordMapper;
 
     @Mock
+    private BookMapper bookMapper;
+
+    @Mock
+    private PermissionService permissionService;
+
+    @Mock
     private RedisTemplate<String, Object> redisTemplate;
 
     @Mock
@@ -68,7 +76,7 @@ class LocalFileServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        localFileService = new LocalFileServiceImpl(fileObjectMapper, fileRecordMapper, redisTemplate);
+        localFileService = new LocalFileServiceImpl(fileObjectMapper, fileRecordMapper, bookMapper, permissionService, redisTemplate);
         ReflectionTestUtils.setField(localFileService, "storagePath", tempDir.toString());
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
         SecurityContextHolder.getContext().setAuthentication(
@@ -200,6 +208,33 @@ class LocalFileServiceImplTest {
         assertThat(fileDownloadBO.getFileName()).isEqualTo("cover.png");
         assertThat(fileDownloadBO.getMimeType()).isEqualTo("image/png");
         assertThat(fileDownloadBO.getFileSize()).isEqualTo(11L);
+    }
+
+    @Test
+    void shouldCachePublicBookCoverFlagWhenFileBoundToBookCover() {
+        FileRecordPO fileRecordPO = new FileRecordPO();
+        fileRecordPO.setId(9L);
+        fileRecordPO.setObjectId(3L);
+        fileRecordPO.setOriginalName("cover.png");
+        fileRecordPO.setOwnerUserId(1001L);
+        when(fileRecordMapper.selectById(9L)).thenReturn(fileRecordPO);
+
+        FileObjectPO fileObjectPO = new FileObjectPO();
+        fileObjectPO.setId(3L);
+        fileObjectPO.setStoragePath(".objects/aa/bb/abcdef");
+        fileObjectPO.setMimeType("image/png");
+        fileObjectPO.setFileSize(11L);
+        fileObjectPO.setSha256("abcdef");
+        when(fileObjectMapper.selectById(3L)).thenReturn(fileObjectPO);
+        when(bookMapper.selectCount(any())).thenReturn(1L);
+
+        assertThatThrownBy(() -> localFileService.getFile(9L))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("文件不存在");
+
+        ArgumentCaptor<FileMetaCacheBO> cacheCaptor = ArgumentCaptor.forClass(FileMetaCacheBO.class);
+        verify(valueOperations).set(eq("system:file:meta:9"), cacheCaptor.capture(), anyLong(), eq(TimeUnit.SECONDS));
+        assertThat(cacheCaptor.getValue().getPublicBookCover()).isTrue();
     }
 
     @Test

@@ -6,6 +6,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.dwtech.system.model.bo.StockBO;
 import org.dwtech.system.model.entity.StockPO;
+import org.dwtech.system.model.query.PublicBookPageQuery;
 import org.dwtech.system.model.query.StockPageQuery;
 
 import java.util.List;
@@ -18,6 +19,15 @@ import java.util.List;
 
 @Mapper
 public interface StockMapper extends BaseMapper<StockPO> {
+    /**
+     * 用途：获取公开书目分页信息。
+     *
+     * @param page page
+     * @param queryParams query params
+     * @return 分页结果
+     */
+    Page<StockBO> getPublicBookPage(Page<StockBO> page, @Param("queryParams") PublicBookPageQuery queryParams);
+
     /**
      * 用途：获取 stock page 信息。
      * 
