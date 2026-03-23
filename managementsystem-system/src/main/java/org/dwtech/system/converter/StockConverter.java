@@ -22,7 +22,8 @@ import java.util.List;
 @Mapper(componentModel = "spring")
 public interface StockConverter {
     @Mappings({
-            @Mapping(source = "cover", target = "coverUrl"),
+            @Mapping(target = "coverUrl",
+                    expression = "java(normalizePublicCoverUrl(bo.getCover()))"),
             @Mapping(source = "pressName", target = "publishName"),
             @Mapping(target = "available",
                     expression = "java(bo.getCurrentStock() != null && bo.getCurrentStock() > 0)")
@@ -112,4 +113,23 @@ public interface StockConverter {
      * @return 返回结果
      */
     StockForm toForm(StockBO stock);
+
+    /**
+     * 用途：规范公开封面访问路径。
+     *
+     * @param cover cover
+     * @return 规范化后的访问路径
+     */
+    default String normalizePublicCoverUrl(String cover) {
+        if (cover == null || cover.isBlank()) {
+            return cover;
+        }
+        if (cover.startsWith("/api/v1/files/")) {
+            return cover;
+        }
+        if (cover.startsWith("/")) {
+            return "/api/v1/files" + cover;
+        }
+        return cover;
+    }
 }

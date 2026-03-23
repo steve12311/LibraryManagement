@@ -3,7 +3,9 @@ package org.dwtech.system.service.impl;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -11,11 +13,14 @@ import org.dwtech.common.constant.RedisConstants;
 import org.dwtech.common.core.entity.FileInfo;
 import org.dwtech.common.enmus.ResultCode;
 import org.dwtech.common.exception.BusinessException;
+import org.dwtech.common.service.PermissionService;
 import org.dwtech.common.utils.SecurityUtils;
+import org.dwtech.system.mapper.BookMapper;
 import org.dwtech.system.mapper.FileObjectMapper;
 import org.dwtech.system.mapper.FileRecordMapper;
 import org.dwtech.system.model.bo.FileDownloadBO;
 import org.dwtech.system.model.bo.FileMetaCacheBO;
+import org.dwtech.system.model.entity.BookPO;
 import org.dwtech.system.model.entity.FileObjectPO;
 import org.dwtech.system.model.entity.FileRecordPO;
 import org.dwtech.system.service.FileService;
@@ -58,6 +63,7 @@ public class LocalFileServiceImpl implements FileService {
     private static final String OBJECT_DIR = ".objects";
     private static final String NULL_CACHE_VALUE = "__NULL__";
     private static final long CACHE_TTL_JITTER_MAX_SECONDS = 600L;
+    private static final String FILE_API_PREFIX = "/api/v1/files/";
 
     @Value("${oss.local.storage-path}")
     private String storagePath;
@@ -73,6 +79,8 @@ public class LocalFileServiceImpl implements FileService {
 
     private final FileObjectMapper fileObjectMapper;
     private final FileRecordMapper fileRecordMapper;
+    private final BookMapper bookMapper;
+    private final PermissionService permissionService;
     private final RedisTemplate<String, Object> redisTemplate;
 
     /**
@@ -152,7 +160,7 @@ public class LocalFileServiceImpl implements FileService {
             }
             cacheFileMeta(fileMetaCacheBO);
         }
-        validateFileAccess(fileMetaCacheBO.getOwnerUserId());
+        validateFileReadAccess(fileMetaCacheBO);
 
         Path targetPath = resolveSafePath(fileMetaCacheBO.getStoragePath());
         if (!Files.exists(targetPath) || Files.isDirectory(targetPath)) {
@@ -187,7 +195,9 @@ public class LocalFileServiceImpl implements FileService {
         if (fileRecord == null) {
             return false;
         }
-        validateFileAccess(fileRecord.getOwnerUserId());
+        boolean publicBookCover = isPublicBookCover(fileId);
+        validateFileDeleteAccess(publicBookCover, fileRecord.getOwnerUserId());
+        clearBookCoverBinding(publicBookCover, fileId);
 
         int removed = fileRecordMapper.deleteById(fileId);
         if (removed == 0) {
@@ -341,6 +351,7 @@ public class LocalFileServiceImpl implements FileService {
         fileMetaCacheBO.setObjectId(fileObject.getId());
         fileMetaCacheBO.setOriginalName(fileRecord.getOriginalName());
         fileMetaCacheBO.setOwnerUserId(fileRecord.getOwnerUserId());
+        fileMetaCacheBO.setPublicBookCover(isPublicBookCover(fileId));
         fileMetaCacheBO.setStoragePath(fileObject.getStoragePath());
         fileMetaCacheBO.setMimeType(fileObject.getMimeType());
         fileMetaCacheBO.setFileSize(fileObject.getFileSize());
@@ -436,6 +447,7 @@ public class LocalFileServiceImpl implements FileService {
         fileMetaCacheBO.setObjectId(toLong(mapValue.get("objectId")));
         fileMetaCacheBO.setOriginalName(toStringValue(mapValue.get("originalName")));
         fileMetaCacheBO.setOwnerUserId(toLong(mapValue.get("ownerUserId")));
+        fileMetaCacheBO.setPublicBookCover(toBoolean(mapValue.get("publicBookCover")));
         fileMetaCacheBO.setStoragePath(toStringValue(mapValue.get("storagePath")));
         fileMetaCacheBO.setMimeType(toStringValue(mapValue.get("mimeType")));
         fileMetaCacheBO.setFileSize(toLong(mapValue.get("fileSize")));
@@ -446,14 +458,62 @@ public class LocalFileServiceImpl implements FileService {
         return fileMetaCacheBO;
     }
 
-    private void validateFileAccess(Long ownerUserId) {
+    private void validateFileReadAccess(FileMetaCacheBO fileMetaCacheBO) {
+        if (isPublicBookCover(fileMetaCacheBO.getFileId())) {
+            return;
+        }
+        validatePrivateFileAccess(fileMetaCacheBO.getOwnerUserId(), "无权访问该文件");
+    }
+
+    private void validateFileDeleteAccess(boolean publicBookCover, Long ownerUserId) {
+        if (publicBookCover) {
+            if (SecurityUtils.isRoot() || permissionService.hasPerm("sys:stock:edit")) {
+                return;
+            }
+            throw new BusinessException(ResultCode.ACCESS_UNAUTHORIZED, "无权删除书籍封面文件");
+        }
+        validatePrivateFileAccess(ownerUserId, "无权访问该文件");
+    }
+
+    private void validatePrivateFileAccess(Long ownerUserId, String message) {
         if (SecurityUtils.isRoot()) {
             return;
         }
         Long currentUserId = SecurityUtils.getUserId();
         if (currentUserId == null || ownerUserId == null || !ownerUserId.equals(currentUserId)) {
-            throw new BusinessException(ResultCode.ACCESS_UNAUTHORIZED, "无权访问该文件");
+            throw new BusinessException(ResultCode.ACCESS_UNAUTHORIZED, message);
         }
+    }
+
+    private boolean isPublicBookCover(Long fileId) {
+        if (fileId == null) {
+            return false;
+        }
+        Long count = bookMapper.selectCount(
+                new QueryWrapper<BookPO>()
+                        .and(wrapper -> wrapper
+                                .eq("cover", "/" + fileId)
+                                .or()
+                                .eq("cover", FILE_API_PREFIX + fileId)
+                        )
+        );
+        return count != null && count > 0;
+    }
+
+    private void clearBookCoverBinding(boolean publicBookCover, Long fileId) {
+        if (!publicBookCover) {
+            return;
+        }
+        bookMapper.update(
+                null,
+                new UpdateWrapper<BookPO>()
+                        .and(wrapper -> wrapper
+                                .eq("cover", "/" + fileId)
+                                .or()
+                                .eq("cover", FILE_API_PREFIX + fileId)
+                        )
+                        .set("cover", null)
+        );
     }
 
     private Long toLong(Object value) {
@@ -472,6 +532,16 @@ public class LocalFileServiceImpl implements FileService {
 
     private String toStringValue(Object value) {
         return value == null ? null : String.valueOf(value);
+    }
+
+    private Boolean toBoolean(Object value) {
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof Boolean booleanValue) {
+            return booleanValue;
+        }
+        return Boolean.parseBoolean(String.valueOf(value));
     }
 
     private void runAfterCommitOrNow(Runnable runnable) {

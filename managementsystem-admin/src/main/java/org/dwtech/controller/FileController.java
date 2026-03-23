@@ -50,7 +50,6 @@ public class FileController {
      * @return 文件二进制流
      */
     @GetMapping("/{fileId}")
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<UrlResource> getFile(@PathVariable("fileId") Long fileId) throws Exception {
         FileDownloadBO fileDownloadBO = fileService.getFile(fileId);
         UrlResource resource = new UrlResource(fileDownloadBO.getFilePath().toUri());

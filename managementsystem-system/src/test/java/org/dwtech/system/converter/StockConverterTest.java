@@ -13,7 +13,7 @@ class StockConverterTest {
     @Test
     void shouldConvertStockToPublicBookPageWhenCurrentStockPositive() {
         StockBO stockBO = new StockBO();
-        stockBO.setCover("/api/v1/files/file-1");
+        stockBO.setCover("/101");
         stockBO.setName("深入理解 Java");
         stockBO.setIsbn("9787300000001");
         stockBO.setCurrentStock(3);
@@ -24,7 +24,7 @@ class StockConverterTest {
 
         PublicBookPageVO publicBook = stockConverter.toPublicPageVo(stockBO);
 
-        assertThat(publicBook.getCoverUrl()).isEqualTo("/api/v1/files/file-1");
+        assertThat(publicBook.getCoverUrl()).isEqualTo("/api/v1/files/101");
         assertThat(publicBook.getName()).isEqualTo("深入理解 Java");
         assertThat(publicBook.getIsbn()).isEqualTo("9787300000001");
         assertThat(publicBook.getAvailable()).isTrue();
@@ -42,5 +42,15 @@ class StockConverterTest {
         PublicBookPageVO publicBook = stockConverter.toPublicPageVo(stockBO);
 
         assertThat(publicBook.getAvailable()).isFalse();
+    }
+
+    @Test
+    void shouldKeepFullCoverUrlWhenAlreadyNormalized() {
+        StockBO stockBO = new StockBO();
+        stockBO.setCover("/api/v1/files/301");
+
+        PublicBookPageVO publicBook = stockConverter.toPublicPageVo(stockBO);
+
+        assertThat(publicBook.getCoverUrl()).isEqualTo("/api/v1/files/301");
     }
 }
