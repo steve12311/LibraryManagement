@@ -44,6 +44,10 @@ public interface RedisConstants {
         String BLACKLIST_TOKEN = "auth:token:blacklist:{}";
         // 用户级会话失效时间戳（userId -> invalidAfterMillis）
         String USER_SESSION_INVALID_AFTER = "auth:user:session:invalid-after:{}";
+        // 刷新令牌对应的当前访问令牌（refreshToken -> accessToken）
+        String SESSION_ACCESS_TOKEN = "auth:session:access:{}";
+        // 用户维度的刷新令牌集合（userId -> Set<refreshToken>）
+        String USER_SESSION_SET = "auth:user:sessions:{}";
     }
 
     /**
