@@ -12,9 +12,14 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.lenient;
 
 @ExtendWith(MockitoExtension.class)
 class RedisTokenManagerTest {
@@ -30,12 +35,13 @@ class RedisTokenManagerTest {
     @BeforeEach
     void setUp() {
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        lenient().when(valueOperations.get(org.mockito.ArgumentMatchers.anyString())).thenReturn(null);
         redisTokenManager = new RedisTokenManager(buildSecurityProperties(), redisTemplate);
     }
 
     @Test
     void shouldInvalidateSessionWhenRefreshTokenProvided() {
-        OnlineUser onlineUser = new OnlineUser(1001L, "alice", 2001L, 3, Set.of("ROLE_ADMIN"));
+        OnlineUser onlineUser = new OnlineUser(1001L, "alice", 2001L, 3, Set.of("ROLE_ADMIN"), System.currentTimeMillis());
         when(valueOperations.get(RedisConstants.Auth.ACCESS_TOKEN_USER.replace("{}", "refresh-token"))).thenReturn(null);
         when(valueOperations.get(RedisConstants.Auth.REFRESH_TOKEN_USER.replace("{}", "refresh-token"))).thenReturn(onlineUser);
         when(valueOperations.get(RedisConstants.Auth.USER_ACCESS_TOKEN.replace("{}", "1001"))).thenReturn("access-token");
@@ -47,6 +53,36 @@ class RedisTokenManagerTest {
         verify(redisTemplate).delete(RedisConstants.Auth.USER_ACCESS_TOKEN.replace("{}", "1001"));
         verify(redisTemplate).delete(RedisConstants.Auth.REFRESH_TOKEN_USER.replace("{}", "refresh-token"));
         verify(redisTemplate).delete(RedisConstants.Auth.USER_REFRESH_TOKEN.replace("{}", "1001"));
+    }
+
+    @Test
+    void shouldInvalidateUserSessionsByUserId() {
+        when(valueOperations.get(RedisConstants.Auth.USER_ACCESS_TOKEN.replace("{}", "1001"))).thenReturn("access-token");
+        when(valueOperations.get(RedisConstants.Auth.USER_REFRESH_TOKEN.replace("{}", "1001"))).thenReturn("refresh-token");
+
+        redisTokenManager.invalidateUserSessions(1001L);
+
+        verify(redisTemplate).delete(RedisConstants.Auth.ACCESS_TOKEN_USER.replace("{}", "access-token"));
+        verify(redisTemplate).delete(RedisConstants.Auth.USER_ACCESS_TOKEN.replace("{}", "1001"));
+        verify(redisTemplate).delete(RedisConstants.Auth.REFRESH_TOKEN_USER.replace("{}", "refresh-token"));
+        verify(redisTemplate).delete(RedisConstants.Auth.USER_REFRESH_TOKEN.replace("{}", "1001"));
+        verify(valueOperations).set(
+                eq(RedisConstants.Auth.USER_SESSION_INVALID_AFTER.replace("{}", "1001")),
+                anyLong(),
+                eq(7200L),
+                eq(TimeUnit.SECONDS)
+        );
+    }
+
+    @Test
+    void shouldRejectAccessTokenAfterUserSessionInvalidated() {
+        OnlineUser onlineUser = new OnlineUser(1001L, "alice", 2001L, 3, Set.of("ROLE_ADMIN"), 1000L);
+        when(valueOperations.get(RedisConstants.Auth.ACCESS_TOKEN_USER.replace("{}", "access-token"))).thenReturn(onlineUser);
+        when(valueOperations.get(RedisConstants.Auth.USER_SESSION_INVALID_AFTER.replace("{}", "1001"))).thenReturn(2000L);
+
+        boolean valid = redisTokenManager.validateToken("access-token");
+
+        assertThat(valid).isFalse();
     }
 
     private SecurityProperties buildSecurityProperties() {

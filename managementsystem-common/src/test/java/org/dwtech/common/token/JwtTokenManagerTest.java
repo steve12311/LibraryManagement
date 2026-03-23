@@ -30,6 +30,8 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -46,6 +48,8 @@ class JwtTokenManagerTest {
 
     @BeforeEach
     void setUp() {
+        lenient().when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        lenient().when(valueOperations.get(anyString())).thenReturn(null);
         jwtTokenManager = new JwtTokenManager(buildSecurityProperties(), redisTemplate);
     }
 
@@ -132,6 +136,34 @@ class JwtTokenManagerTest {
         assertThat(jwtTokenManager.validateRefreshToken(originalToken.getRefreshToken())).isFalse();
         assertThat(jwtTokenManager.validateRefreshToken(refreshedToken.getRefreshToken())).isTrue();
         verify(valueOperations).set(anyString(), isNull(), anyLong(), eq(TimeUnit.SECONDS));
+    }
+
+    @Test
+    void shouldInvalidateUserSessionsByUserId() {
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+
+        jwtTokenManager.invalidateUserSessions(1001L);
+
+        verify(valueOperations).set(
+                eq(RedisConstants.Auth.USER_SESSION_INVALID_AFTER.replace("{}", "1001")),
+                anyLong(),
+                eq(7200L),
+                eq(TimeUnit.SECONDS)
+        );
+    }
+
+    @Test
+    void shouldRejectTokenIssuedBeforeUserSessionInvalidAfter() {
+        when(redisTemplate.hasKey(anyString())).thenReturn(false);
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        AuthenticationToken token = jwtTokenManager.generateToken(buildAuthentication());
+        when(valueOperations.get(RedisConstants.Auth.USER_SESSION_INVALID_AFTER.replace("{}", "1001")))
+                .thenReturn(System.currentTimeMillis());
+
+        boolean valid = jwtTokenManager.validateToken(token.getAccessToken());
+
+        assertThat(valid).isFalse();
+        verify(valueOperations, never()).set(anyString(), isNull(), anyLong(), eq(TimeUnit.SECONDS));
     }
 
     private SecurityProperties buildSecurityProperties() {

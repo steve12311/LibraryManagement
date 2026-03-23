@@ -42,6 +42,8 @@ public interface RedisConstants {
         String USER_REFRESH_TOKEN = "auth:user:refresh:{}";
         // 黑名单 Token（用于退出登录或注销）
         String BLACKLIST_TOKEN = "auth:token:blacklist:{}";
+        // 用户级会话失效时间戳（userId -> invalidAfterMillis）
+        String USER_SESSION_INVALID_AFTER = "auth:user:session:invalid-after:{}";
     }
 
     /**

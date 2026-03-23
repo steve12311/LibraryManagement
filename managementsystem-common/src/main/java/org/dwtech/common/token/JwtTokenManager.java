@@ -163,6 +163,10 @@ public class JwtTokenManager implements TokenManager {
                 if (redisTemplate.hasKey(StrUtil.format(RedisConstants.Auth.BLACKLIST_TOKEN, jti))) {
                     return false;
                 }
+                Long userId = payloads.getLong(JwtClaimConstants.USER_ID);
+                if (isUserSessionInvalidated(userId, payloads.getDate(JWTPayload.ISSUED_AT))) {
+                    return false;
+                }
             }
             return isValid;
         } catch (Exception gitignore) {
@@ -207,6 +211,26 @@ public class JwtTokenManager implements TokenManager {
             redisTemplate.opsForValue().set(blacklistTokenKey, null);
         }
         ;
+    }
+
+    /**
+     * 按用户维度使其现有 JWT 会话全部失效。
+     *
+     * @param userId 用户 ID
+     */
+    @Override
+    public void invalidateUserSessions(Long userId) {
+        if (userId == null) {
+            return;
+        }
+        String invalidAfterKey = StrUtil.format(RedisConstants.Auth.USER_SESSION_INVALID_AFTER, userId);
+        long invalidAfter = System.currentTimeMillis();
+        int sessionTtl = resolveSessionInvalidationTtl();
+        if (sessionTtl == -1) {
+            redisTemplate.opsForValue().set(invalidAfterKey, invalidAfter);
+            return;
+        }
+        redisTemplate.opsForValue().set(invalidAfterKey, invalidAfter, sessionTtl, TimeUnit.SECONDS);
     }
 
     /**
@@ -277,6 +301,40 @@ public class JwtTokenManager implements TokenManager {
         payload.put(JWTPayload.JWT_ID, IdUtil.simpleUUID());
 
         return JWTUtil.createToken(payload, secretKey);
+    }
+
+    /**
+     * 判断用户级会话失效时间是否覆盖当前令牌。
+     *
+     * @param userId 用户 ID
+     * @param issuedAt 令牌签发时间
+     * @return {@code true} 表示该令牌应视为失效
+     */
+    private boolean isUserSessionInvalidated(Long userId, Date issuedAt) {
+        if (userId == null || issuedAt == null) {
+            return false;
+        }
+        Object invalidAfterValue = redisTemplate.opsForValue()
+                .get(StrUtil.format(RedisConstants.Auth.USER_SESSION_INVALID_AFTER, userId));
+        if (invalidAfterValue == null) {
+            return false;
+        }
+        Long invalidAfter = Convert.toLong(invalidAfterValue);
+        return invalidAfter != null && issuedAt.getTime() <= invalidAfter;
+    }
+
+    /**
+     * 计算用户级会话失效标记的保留时长。
+     *
+     * @return TTL 秒数，-1 表示永久保留
+     */
+    private int resolveSessionInvalidationTtl() {
+        int accessTtl = securityProperties.getSession().getAccessTokenTimeToLive();
+        int refreshTtl = securityProperties.getSession().getRefreshTokenTimeToLive();
+        if (accessTtl == -1 || refreshTtl == -1) {
+            return -1;
+        }
+        return Math.max(accessTtl, refreshTtl);
     }
 
 }

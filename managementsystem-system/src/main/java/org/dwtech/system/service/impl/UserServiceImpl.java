@@ -229,11 +229,15 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserPO> implements 
         if (StrUtil.isBlank(password)) {
             password = SystemConstants.DEFAULT_PASSWORD;
         }
-        return this.update(
+        boolean result = this.update(
                 new LambdaUpdateWrapper<UserPO>()
                         .eq(UserPO::getId, userId)
                         .set(UserPO::getPassword, passwordEncoder.encode(password))
         );
+        if (result) {
+            tokenManager.invalidateUserSessions(userId);
+        }
+        return result;
     }
 
     /**
@@ -245,10 +249,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserPO> implements 
      */
     @Override
     public boolean updateUserStatus(Long userId, Integer status) {
-        return this.update(
+        boolean result = this.update(
                 new LambdaUpdateWrapper<UserPO>()
                         .eq(UserPO::getId, userId)
                         .set(UserPO::getStatus, status));
+        if (result) {
+            tokenManager.invalidateUserSessions(userId);
+        }
+        return result;
     }
 
     /**
@@ -280,15 +288,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserPO> implements 
         }
 
         boolean result = this.update(
-                this.lambdaUpdate()
+                new LambdaUpdateWrapper<UserPO>()
                         .eq(UserPO::getId, userId)
                         .set(UserPO::getPassword, passwordEncoder.encode(formData.getNewPassword()))
         );
 
         if (result) {
-            // 加入黑名单，重新登录
-            String accessToken = SecurityUtils.getTokenFromRequest();
-            tokenManager.invalidateToken(accessToken);
+            tokenManager.invalidateUserSessions(userId);
         }
         return result;
     }

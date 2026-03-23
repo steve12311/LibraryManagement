@@ -70,7 +70,8 @@ public class RedisTokenManager implements TokenManager {
                 user.getDataScope(),
                 user.getAuthorities().stream()
                         .map(GrantedAuthority::getAuthority)
-                        .collect(Collectors.toSet())
+                        .collect(Collectors.toSet()),
+                System.currentTimeMillis()
         );
 
         // 存储访问令牌、刷新令牌和刷新令牌映射
@@ -94,7 +95,7 @@ public class RedisTokenManager implements TokenManager {
      */
     @Override
     public Authentication parseToken(String token) {
-        OnlineUser onlineUser = (OnlineUser) redisTemplate.opsForValue().get(formatTokenKey(token));
+        OnlineUser onlineUser = resolveAccessOnlineUser(token);
         if (onlineUser == null) return null;
 
         // 构建用户权限集合
@@ -120,7 +121,7 @@ public class RedisTokenManager implements TokenManager {
      */
     @Override
     public boolean validateToken(String token) {
-        return redisTemplate.hasKey(formatTokenKey(token));
+        return resolveAccessOnlineUser(token) != null;
     }
 
     /**
@@ -131,7 +132,7 @@ public class RedisTokenManager implements TokenManager {
      */
     @Override
     public boolean validateRefreshToken(String refreshToken) {
-        return redisTemplate.hasKey(formatRefreshTokenKey(refreshToken));
+        return resolveRefreshOnlineUser(refreshToken) != null;
     }
 
     /**
@@ -145,7 +146,7 @@ public class RedisTokenManager implements TokenManager {
      */
     @Override
     public AuthenticationToken refreshToken(String refreshToken) {
-        OnlineUser onlineUser = (OnlineUser) redisTemplate.opsForValue().get(StrUtil.format(RedisConstants.Auth.REFRESH_TOKEN_USER, refreshToken));
+        OnlineUser onlineUser = resolveRefreshOnlineUser(refreshToken);
         if (onlineUser == null) {
             throw new BusinessException(ResultCode.REFRESH_TOKEN_INVALID);
         }
@@ -167,6 +168,40 @@ public class RedisTokenManager implements TokenManager {
                 .refreshToken(refreshToken)
                 .expiresIn(accessTtl)
                 .build();
+    }
+
+    /**
+     * 按用户维度使其 Redis 会话整体失效。
+     *
+     * @param userId 用户 ID
+     */
+    @Override
+    public void invalidateUserSessions(Long userId) {
+        if (userId == null) {
+            return;
+        }
+        String userAccessKey = StrUtil.format(RedisConstants.Auth.USER_ACCESS_TOKEN, userId);
+        String accessToken = (String) redisTemplate.opsForValue().get(userAccessKey);
+        if (StrUtil.isNotBlank(accessToken)) {
+            redisTemplate.delete(formatTokenKey(accessToken));
+            redisTemplate.delete(userAccessKey);
+        }
+
+        String userRefreshKey = StrUtil.format(RedisConstants.Auth.USER_REFRESH_TOKEN, userId);
+        String refreshToken = (String) redisTemplate.opsForValue().get(userRefreshKey);
+        if (StrUtil.isNotBlank(refreshToken)) {
+            redisTemplate.delete(formatRefreshTokenKey(refreshToken));
+            redisTemplate.delete(userRefreshKey);
+        }
+
+        String invalidAfterKey = StrUtil.format(RedisConstants.Auth.USER_SESSION_INVALID_AFTER, userId);
+        long invalidAfter = System.currentTimeMillis();
+        int sessionTtl = resolveSessionInvalidationTtl();
+        if (sessionTtl == -1) {
+            redisTemplate.opsForValue().set(invalidAfterKey, invalidAfter);
+            return;
+        }
+        redisTemplate.opsForValue().set(invalidAfterKey, invalidAfter, sessionTtl, TimeUnit.SECONDS);
     }
 
     /**
@@ -207,11 +242,45 @@ public class RedisTokenManager implements TokenManager {
         if (StrUtil.isBlank(token)) {
             return null;
         }
-        OnlineUser onlineUser = (OnlineUser) redisTemplate.opsForValue().get(formatTokenKey(token));
+        OnlineUser onlineUser = resolveAccessOnlineUser(token);
         if (onlineUser != null) {
             return onlineUser;
         }
-        return (OnlineUser) redisTemplate.opsForValue().get(formatRefreshTokenKey(token));
+        return resolveRefreshOnlineUser(token);
+    }
+
+    /**
+     * 解析访问令牌对应的在线用户，并校验是否已被用户级失效时间覆盖。
+     *
+     * @param token 访问令牌
+     * @return 在线用户，不存在或已失效时返回 {@code null}
+     */
+    private OnlineUser resolveAccessOnlineUser(String token) {
+        if (StrUtil.isBlank(token)) {
+            return null;
+        }
+        OnlineUser onlineUser = (OnlineUser) redisTemplate.opsForValue().get(formatTokenKey(token));
+        if (onlineUser == null || isUserSessionInvalidated(onlineUser)) {
+            return null;
+        }
+        return onlineUser;
+    }
+
+    /**
+     * 解析刷新令牌对应的在线用户，并校验是否已被用户级失效时间覆盖。
+     *
+     * @param refreshToken 刷新令牌
+     * @return 在线用户，不存在或已失效时返回 {@code null}
+     */
+    private OnlineUser resolveRefreshOnlineUser(String refreshToken) {
+        if (StrUtil.isBlank(refreshToken)) {
+            return null;
+        }
+        OnlineUser onlineUser = (OnlineUser) redisTemplate.opsForValue().get(formatRefreshTokenKey(refreshToken));
+        if (onlineUser == null || isUserSessionInvalidated(onlineUser)) {
+            return null;
+        }
+        return onlineUser;
     }
 
     /**
@@ -319,5 +388,38 @@ public class RedisTokenManager implements TokenManager {
         } else {
             redisTemplate.opsForValue().set(key, value); // ttl=-1时永不过期
         }
+    }
+
+    /**
+     * 判断在线用户对应会话是否被用户级失效时间覆盖。
+     *
+     * @param onlineUser 在线用户
+     * @return {@code true} 表示会话应视为失效
+     */
+    private boolean isUserSessionInvalidated(OnlineUser onlineUser) {
+        if (onlineUser == null || onlineUser.getUserId() == null || onlineUser.getLoginAt() == null) {
+            return false;
+        }
+        Object invalidAfterValue = redisTemplate.opsForValue()
+                .get(StrUtil.format(RedisConstants.Auth.USER_SESSION_INVALID_AFTER, onlineUser.getUserId()));
+        if (invalidAfterValue == null) {
+            return false;
+        }
+        Long invalidAfter = Long.valueOf(String.valueOf(invalidAfterValue));
+        return onlineUser.getLoginAt() <= invalidAfter;
+    }
+
+    /**
+     * 计算用户级会话失效标记的保留时长。
+     *
+     * @return TTL 秒数，-1 表示永久保留
+     */
+    private int resolveSessionInvalidationTtl() {
+        int accessTtl = securityProperties.getSession().getAccessTokenTimeToLive();
+        int refreshTtl = securityProperties.getSession().getRefreshTokenTimeToLive();
+        if (accessTtl == -1 || refreshTtl == -1) {
+            return -1;
+        }
+        return Math.max(accessTtl, refreshTtl);
     }
 }

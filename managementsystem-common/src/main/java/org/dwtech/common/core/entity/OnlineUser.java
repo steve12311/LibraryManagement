@@ -43,4 +43,9 @@ public class OnlineUser {
      */
     private Set<String> roles;
 
+    /**
+     * 本次会话签发时间戳（毫秒）
+     */
+    private Long loginAt;
+
 }
