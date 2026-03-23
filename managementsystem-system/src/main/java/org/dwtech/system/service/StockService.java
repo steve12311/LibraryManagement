@@ -3,7 +3,9 @@ package org.dwtech.system.service;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import jakarta.validation.Valid;
 import org.dwtech.system.model.form.StockForm;
+import org.dwtech.system.model.query.PublicBookPageQuery;
 import org.dwtech.system.model.query.StockPageQuery;
+import org.dwtech.system.model.vo.PublicBookPageVO;
 import org.dwtech.system.model.vo.StockPageVO;
 
 import java.util.List;
@@ -15,6 +17,14 @@ import java.util.List;
  */
 
 public interface StockService {
+    /**
+     * 用途：获取公开书目分页信息。
+     *
+     * @param queryParams query params
+     * @return 分页结果
+     */
+    IPage<PublicBookPageVO> getPublicBookPage(@Valid PublicBookPageQuery queryParams);
+
     /**
      * 用途：获取 stock page 信息。
      * 
