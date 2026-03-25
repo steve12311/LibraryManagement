@@ -30,6 +30,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.*;
 import java.util.stream.Collectors;
+
 /**
  * MenuServiceImpl
  *
@@ -86,10 +87,10 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, MenuPO> implements 
      * @return 菜单下拉树
      */
     @Override
-    @Cacheable(cacheNames = "menu", key = "'options:' + #onlyParent")
+    @Cacheable(cacheNames = "menu", key = "'options:' + #p0")
     public List<Option<Long>> listMenuOptions(boolean onlyParent) {
         List<MenuPO> menuList = this.list(new LambdaQueryWrapper<MenuPO>()
-                .in(onlyParent, MenuPO::getType, MenuTypeEnum.CATALOG.getValue())
+                .in(onlyParent, MenuPO::getType, MenuTypeEnum.CATALOG.getValue(), MenuTypeEnum.MENU.getValue())
                 .orderByAsc(MenuPO::getSort)
         );
         Map<Long, List<MenuPO>> menuChildrenMap = groupMenusByParentId(menuList);
@@ -251,7 +252,7 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, MenuPO> implements 
     /**
      * 保存或更新菜单，并同步其按钮权限。
      *
-     * @param menu 菜单实体
+     * @param menu        菜单实体
      * @param permitForms 按钮权限表单列表
      * @return {@code true} 表示保存成功
      */
@@ -273,7 +274,7 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, MenuPO> implements 
     /**
      * 递归更新子菜单树路径。
      *
-     * @param id 当前菜单 ID
+     * @param id       当前菜单 ID
      * @param treePath 当前菜单树路径
      */
     private void updateChildrenTreePath(Long id, String treePath) {
@@ -310,8 +311,8 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, MenuPO> implements 
     /**
      * 递归构建路由树。
      *
-     * @param parentId 父节点 ID
-     * @param menuList 菜单列表
+     * @param parentId        父节点 ID
+     * @param menuChildrenMap 菜单列表
      * @return 路由树列表
      */
     private List<RouteVO> buildRoutes(Long parentId, Map<Long, List<MenuPO>> menuChildrenMap) {
@@ -383,8 +384,8 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, MenuPO> implements 
     /**
      * 递归构建菜单下拉树。
      *
-     * @param parentId 父节点 ID
-     * @param menuList 菜单列表
+     * @param parentId        父节点 ID
+     * @param menuChildrenMap 菜单列表
      * @return 菜单选项树
      */
     private List<Option<Long>> buildMenuOptions(Long parentId, Map<Long, List<MenuPO>> menuChildrenMap) {
@@ -408,8 +409,8 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, MenuPO> implements 
     /**
      * 递归构建菜单展示树。
      *
-     * @param parentId 父节点 ID
-     * @param menuList 菜单列表
+     * @param parentId        父节点 ID
+     * @param menuChildrenMap 菜单列表
      * @return 菜单树列表
      */
     private List<MenuVO> buildMenuTree(Long parentId, Map<Long, List<MenuPO>> menuChildrenMap) {

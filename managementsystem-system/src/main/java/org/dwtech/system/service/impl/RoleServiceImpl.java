@@ -229,7 +229,7 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, RolePO> implements 
      * @return 菜单 ID 列表
      */
     @Override
-    @Cacheable(cacheNames = "role", key = "'menuIds:' + #roleId")
+    @Cacheable(cacheNames = "role", key = "'menuIds:' + #p0")
     public List<Long> getRoleMenuIds(Long roleId) {
         return roleMenuService.listMenuIdsByRoleId(roleId);
     }
@@ -248,7 +248,7 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, RolePO> implements 
     public void assignMenusToRole(Long roleId, List<Long> menuIds) {
         RolePO role = this.getById(roleId);
         if (role == null) {
-            throw new RuntimeException("角色不存在");
+            throw new BusinessException("角色不存在");
         }
         // 删除角色菜单
         roleMenuService.remove(
