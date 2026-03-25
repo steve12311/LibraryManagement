@@ -80,4 +80,14 @@ public class SysUserDetails implements UserDetails {
                 .collect(Collectors.toSet())
                 : Collections.emptySet();
     }
+
+    /**
+     * 显式返回账号启用状态，避免依赖 {@link UserDetails} 默认实现导致禁用态仍可登录。
+     *
+     * @return true 表示账号启用；false 表示账号禁用
+     */
+    @Override
+    public boolean isEnabled() {
+        return Boolean.TRUE.equals(enabled);
+    }
 }

@@ -27,6 +27,7 @@ import org.dwtech.common.token.TokenManager;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -116,6 +117,11 @@ public class AuthServiceImpl implements AuthService {
                 log.warn("认证失败, action=login, username={}, clientIp={}, sessionType={}, resultCode={}",
                         normalizedUsername, clientIp, sessionType, ResultCode.USER_PASSWORD_ERROR.getCode());
                 throw new BusinessException(ResultCode.USER_PASSWORD_ERROR, "验证用户名密码失败");
+            }
+            if (e instanceof DisabledException) {
+                log.warn("认证失败, action=login, username={}, clientIp={}, sessionType={}, resultCode={}",
+                        normalizedUsername, clientIp, sessionType, ResultCode.USER_LOGIN_EXCEPTION.getCode());
+                throw new BusinessException(ResultCode.USER_LOGIN_EXCEPTION, "账号已禁用");
             }
             log.error("认证异常, action=login, username={}, clientIp={}, sessionType={}, exceptionType={}",
                     normalizedUsername, clientIp, sessionType, e.getClass().getSimpleName());

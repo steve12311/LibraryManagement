@@ -21,6 +21,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.Authentication;
@@ -123,6 +124,20 @@ class AuthServiceImplTest {
 
         assertThat(exception.getResultCode()).isEqualTo(ResultCode.USER_PASSWORD_ERROR);
         assertThat(exception.getMessage()).isEqualTo("验证用户名密码失败");
+    }
+
+    @Test
+    void shouldThrowBusinessExceptionWhenAccountDisabled() {
+        when(authenticationManager.authenticate(any(Authentication.class)))
+                .thenThrow(new DisabledException("disabled"));
+
+        BusinessException exception = assertThrows(
+                BusinessException.class,
+                () -> authService.login("alice", "secret")
+        );
+
+        assertThat(exception.getResultCode()).isEqualTo(ResultCode.USER_LOGIN_EXCEPTION);
+        assertThat(exception.getMessage()).isEqualTo("账号已禁用");
     }
 
     @Test
