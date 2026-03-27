@@ -3,6 +3,7 @@ package org.dwtech;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
+import org.springframework.scheduling.annotation.EnableScheduling;
 /**
  * Application
  *
@@ -12,6 +13,7 @@ import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 
 @SpringBootApplication
 @ConfigurationPropertiesScan
+@EnableScheduling
 public class Application {
     /**
      * 用途：执行 main 操作。

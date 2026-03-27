@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.dwtech.system.mapper.DashboardStatsMapper">
+
+    <select id="selectSnapshotBetween" resultType="org.dwtech.system.model.bo.DashboardMetricSnapshotBO">
+        SELECT
+            (SELECT COUNT(*) FROM lib_book) AS book_total,
+            (SELECT COALESCE(SUM(stock), 0) FROM lib_stock) AS stock_total,
+            (SELECT COALESCE(SUM(current_stock), 0) FROM lib_stock) AS available_stock_total,
+            (SELECT COUNT(*)
+             FROM lib_borrow
+             WHERE create_time &lt;= #{endTime}
+               AND (reality_return_time IS NULL OR reality_return_time &gt; #{endTime})
+               AND return_time &gt;= #{endTime}) AS borrowing_total,
+            (SELECT COUNT(*)
+             FROM lib_borrow
+             WHERE reality_return_time IS NOT NULL
+               AND reality_return_time &lt;= #{endTime}) AS returned_total,
+            (SELECT COUNT(*)
+             FROM lib_borrow
+             WHERE create_time &lt;= #{endTime}
+               AND (reality_return_time IS NULL OR reality_return_time &gt; #{endTime})
+               AND return_time &lt; #{endTime}) AS overdue_total,
+            (SELECT COUNT(*)
+             FROM sys_user
+             WHERE status = 1 AND is_deleted = 0) AS enabled_user_total,
+            (SELECT COUNT(*)
+             FROM sys_auth_log
+             WHERE event_type = 'LOGIN'
+               AND success = 1
+               AND create_time &gt;= #{startTime}
+               AND create_time &lt; #{endTime}) AS login_success_count,
+            (SELECT COUNT(*)
+             FROM sys_auth_log
+             WHERE event_type = 'LOGIN'
+               AND success = 0
+               AND create_time &gt;= #{startTime}
+               AND create_time &lt; #{endTime}) AS login_failure_count,
+            (SELECT COUNT(*)
+             FROM sys_oper_log
+             WHERE success = 1
+               AND create_time &gt;= #{startTime}
+               AND create_time &lt; #{endTime}) AS oper_success_count,
+            (SELECT COUNT(*)
+             FROM sys_oper_log
+             WHERE success = 0
+               AND create_time &gt;= #{startTime}
+               AND create_time &lt; #{endTime}) AS oper_failure_count
+    </select>
+
+    <select id="selectHotBorrowBooks" resultType="org.dwtech.system.model.vo.DashboardHotBookVO">
+        SELECT bw.isbn,
+               bw.book_name AS bookName,
+               b.cover,
+               COUNT(*) AS count
+        FROM lib_borrow AS bw
+                 LEFT JOIN lib_book AS b ON b.isbn = bw.isbn
+        WHERE bw.create_time &gt;= #{startTime}
+        GROUP BY bw.isbn, bw.book_name, b.cover
+        ORDER BY count DESC, bw.isbn ASC
+        LIMIT #{limit}
+    </select>
+
+    <select id="selectOperModuleRanking" resultType="org.dwtech.system.model.vo.DashboardNamedCountVO">
+        SELECT module AS name,
+               COUNT(*) AS count
+        FROM sys_oper_log
+        WHERE create_time &gt;= #{startTime}
+        GROUP BY module
+        ORDER BY count DESC, module ASC
+        LIMIT #{limit}
+    </select>
+
+    <select id="selectAuthFailureUsernameRanking" resultType="org.dwtech.system.model.vo.DashboardNamedCountVO">
+        SELECT CASE
+                   WHEN username IS NULL OR username = '' THEN '未知用户'
+                   ELSE username
+                   END AS name,
+               COUNT(*) AS count
+        FROM sys_auth_log
+        WHERE success = 0
+          AND create_time &gt;= #{startTime}
+        GROUP BY name
+        ORDER BY count DESC, name ASC
+        LIMIT #{limit}
+    </select>
+
+    <select id="selectAuthFailureIpRanking" resultType="org.dwtech.system.model.vo.DashboardNamedCountVO">
+        SELECT CASE
+                   WHEN client_ip IS NULL OR client_ip = '' THEN 'unknown'
+                   ELSE client_ip
+                   END AS name,
+               COUNT(*) AS count
+        FROM sys_auth_log
+        WHERE success = 0
+          AND create_time &gt;= #{startTime}
+        GROUP BY name
+        ORDER BY count DESC, name ASC
+        LIMIT #{limit}
+    </select>
+
+    <select id="selectRecentBorrowPage" resultType="org.dwtech.system.model.vo.DashboardRecentBorrowVO">
+        SELECT bw.id AS borrowId,
+               bw.isbn,
+               b.cover,
+               bw.book_name AS bookName,
+               u.username,
+               bw.return_time AS returnTime,
+               CASE
+                   WHEN bw.reality_return_time IS NOT NULL THEN 0
+                   WHEN bw.return_time &gt;= NOW() THEN 1
+                   ELSE 2
+                   END AS status,
+               bw.create_time AS createTime
+        FROM lib_borrow AS bw
+                 LEFT JOIN lib_book AS b ON b.isbn = bw.isbn
+                 LEFT JOIN sys_user AS u ON u.id = bw.user_id
+        ORDER BY bw.create_time DESC, bw.id DESC
+    </select>
+
+    <select id="selectRecentOperLogPage" resultType="org.dwtech.system.model.vo.DashboardRecentOperLogVO">
+        SELECT id AS logId,
+               module,
+               action,
+               operator_username AS operatorUsername,
+               success,
+               result_code AS resultCode,
+               create_time AS createTime
+        FROM sys_oper_log
+        ORDER BY create_time DESC, id DESC
+    </select>
+
+    <select id="selectRecentAuthFailurePage" resultType="org.dwtech.system.model.vo.DashboardRecentAuthLogVO">
+        SELECT id AS logId,
+               event_type AS eventType,
+               username,
+               client_ip AS clientIp,
+               result_code AS resultCode,
+               failure_summary AS failureSummary,
+               create_time AS createTime
+        FROM sys_auth_log
+        WHERE success = 0
+        ORDER BY create_time DESC, id DESC
+    </select>
+</mapper>

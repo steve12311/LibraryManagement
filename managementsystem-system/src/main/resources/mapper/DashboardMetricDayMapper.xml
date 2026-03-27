@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.dwtech.system.mapper.DashboardMetricDayMapper">
+
+    <insert id="upsertMetric" parameterType="org.dwtech.system.model.entity.DashboardMetricDayPO">
+        INSERT INTO dashboard_metric_day (
+            stat_date,
+            book_total,
+            stock_total,
+            available_stock_total,
+            borrowing_total,
+            returned_total,
+            overdue_total,
+            enabled_user_total,
+            login_success_count,
+            login_failure_count,
+            oper_success_count,
+            oper_failure_count,
+            create_time,
+            update_time
+        ) VALUES (
+            #{statDate},
+            #{bookTotal},
+            #{stockTotal},
+            #{availableStockTotal},
+            #{borrowingTotal},
+            #{returnedTotal},
+            #{overdueTotal},
+            #{enabledUserTotal},
+            #{loginSuccessCount},
+            #{loginFailureCount},
+            #{operSuccessCount},
+            #{operFailureCount},
+            NOW(),
+            NOW()
+        )
+        ON DUPLICATE KEY UPDATE
+            book_total = VALUES(book_total),
+            stock_total = VALUES(stock_total),
+            available_stock_total = VALUES(available_stock_total),
+            borrowing_total = VALUES(borrowing_total),
+            returned_total = VALUES(returned_total),
+            overdue_total = VALUES(overdue_total),
+            enabled_user_total = VALUES(enabled_user_total),
+            login_success_count = VALUES(login_success_count),
+            login_failure_count = VALUES(login_failure_count),
+            oper_success_count = VALUES(oper_success_count),
+            oper_failure_count = VALUES(oper_failure_count),
+            update_time = NOW()
+    </insert>
+
+    <select id="selectTrend" resultType="org.dwtech.system.model.vo.DashboardTrendPointVO">
+        SELECT DATE_FORMAT(stat_date, '%Y-%m-%d') AS timeBucket,
+               DATE_FORMAT(stat_date, '%m-%d') AS label,
+               book_total AS bookTotal,
+               stock_total AS stockTotal,
+               available_stock_total AS availableStockTotal,
+               borrowing_total AS borrowingTotal,
+               returned_total AS returnedTotal,
+               overdue_total AS overdueTotal,
+               enabled_user_total AS enabledUserTotal,
+               login_success_count AS loginSuccessCount,
+               login_failure_count AS loginFailureCount,
+               oper_success_count AS operSuccessCount,
+               oper_failure_count AS operFailureCount
+        FROM dashboard_metric_day
+        WHERE stat_date &gt;= #{startDate}
+        ORDER BY stat_date ASC
+    </select>
+</mapper>
