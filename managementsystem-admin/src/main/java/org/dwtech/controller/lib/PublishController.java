@@ -3,6 +3,7 @@ package org.dwtech.controller.lib;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.dwtech.common.annontation.OperLog;
 import org.dwtech.common.annontation.RepeatSubmit;
 import org.dwtech.common.core.entity.PageResult;
 import org.dwtech.common.core.entity.Result;
@@ -76,6 +77,7 @@ public class PublishController {
     @PostMapping
     @PreAuthorize("@ss.hasPerm('lib:publish:add')")
     @RepeatSubmit
+    @OperLog(module = "出版社管理", action = "新增出版社", bizId = "#p0.name")
     public Result<?> addPublish(@Valid @RequestBody PublishForm publishForm) {
         boolean result = publishService.savePublish(publishForm);
         return Result.judge(result);
@@ -90,6 +92,7 @@ public class PublishController {
     @PutMapping
     @PreAuthorize("@ss.hasPerm('lib:publish:edit')")
     @RepeatSubmit
+    @OperLog(module = "出版社管理", action = "修改出版社", bizId = "#p0.id")
     public Result<?> updatePublish(@Valid @RequestBody PublishForm publishForm) {
         boolean result = publishService.updatePublish(publishForm);
         return Result.judge(result);
@@ -104,6 +107,7 @@ public class PublishController {
     @DeleteMapping("/{ids}")
     @PreAuthorize("@ss.hasPerm('lib:publish:delete')")
     @RepeatSubmit
+    @OperLog(module = "出版社管理", action = "删除出版社", bizId = "#p0")
     public Result<?> deletePublish(@PathVariable("ids") List<Long> ids) {
         boolean result = publishService.deletePublish(ids);
         return Result.judge(result);

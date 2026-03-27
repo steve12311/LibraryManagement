@@ -2,6 +2,7 @@ package org.dwtech.controller.lib;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.dwtech.common.annontation.OperLog;
 import org.dwtech.common.annontation.RepeatSubmit;
 import org.dwtech.common.core.entity.Result;
 import org.dwtech.common.model.Option;
@@ -48,6 +49,7 @@ public class BookController {
     @PutMapping
     @RepeatSubmit
     @PreAuthorize("@ss.hasPerm('sys:stock:edit')")
+    @OperLog(module = "图书管理", action = "修改图书", bizId = "#p0.isbn")
     public Result<?> updateBook(@Valid @RequestBody BookForm bookForm) {
         boolean result = libraryCatalogWriteService.updateBook(bookForm);
         return Result.judge(result);

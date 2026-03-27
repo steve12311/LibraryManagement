@@ -2,6 +2,7 @@ package org.dwtech.controller.sys;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import io.swagger.v3.oas.annotations.Operation;
+import org.dwtech.common.annontation.OperLog;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.dwtech.common.annontation.RepeatSubmit;
@@ -60,6 +61,7 @@ public class UserController {
     @PostMapping
     @RepeatSubmit
     @PreAuthorize("@ss.hasPerm('sys:user:add')")
+    @OperLog(module = "用户管理", action = "新增用户", bizId = "#p0.username")
     public Result<?> saveUser(@RequestBody @Valid UserForm formData) {
         boolean result = userService.saveUser(formData);
         return Result.judge(result);
@@ -88,6 +90,7 @@ public class UserController {
     @PutMapping("/{userId}")
     @PreAuthorize("@ss.hasPerm('sys:user:edit')")
     @RepeatSubmit
+    @OperLog(module = "用户管理", action = "修改用户", bizId = "#p0")
     public Result<?> updateUser(@PathVariable("userId") Long userId, @RequestBody @Valid UserForm formData) {
         formData.setId(userId);
         boolean result = userService.updateUser(userId, formData);
@@ -103,6 +106,7 @@ public class UserController {
     @DeleteMapping("/{userIds}")
     @PreAuthorize("@ss.hasPerm('sys:user:delete')")
     @RepeatSubmit
+    @OperLog(module = "用户管理", action = "删除用户", bizId = "#p0")
     public Result<?> deleteUsers(@PathVariable("userIds") List<Long> userIds) {
         boolean result = userService.deleteUsers(userIds);
         return Result.judge(result);
@@ -118,6 +122,7 @@ public class UserController {
     @PutMapping("/{userId}/status")
     @PreAuthorize("@ss.hasPerm('sys:user:edit')")
     @RepeatSubmit
+    @OperLog(module = "用户管理", action = "修改用户状态", bizId = "#p0")
     public Result<?> updateUserStatus(@PathVariable("userId") Long userId, @RequestParam("status") Integer status) {
         boolean result = userService.updateUserStatus(userId, status);
         return Result.judge(result);
@@ -160,6 +165,7 @@ public class UserController {
     @PutMapping("/{userId}/password/reset")
     @PreAuthorize("@ss.hasPerm('sys:user:reset-password')")
     @RepeatSubmit
+    @OperLog(module = "用户管理", action = "重置用户密码", bizId = "#p0")
     public Result<?> resetPassword(@PathVariable("userId") Long userId, @RequestParam("password") String password) {
         boolean result = userService.resetPassword(userId, password);
         return Result.judge(result);

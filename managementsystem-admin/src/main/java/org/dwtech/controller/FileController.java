@@ -1,6 +1,7 @@
 package org.dwtech.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.dwtech.common.annontation.OperLog;
 import org.dwtech.common.annontation.RepeatSubmit;
 import org.dwtech.common.core.entity.FileInfo;
 import org.dwtech.common.core.entity.Result;
@@ -38,6 +39,7 @@ public class FileController {
     @PostMapping
     @RepeatSubmit
     @PreAuthorize("isAuthenticated()")
+    @OperLog(module = "文件管理", action = "上传文件", bizId = "#p0.originalFilename")
     public Result<FileInfo> uploadFile(@RequestParam("file") MultipartFile file) {
         FileInfo fileInfo = fileService.uploadFile(file);
         return Result.success(fileInfo);
@@ -86,6 +88,7 @@ public class FileController {
      */
     @DeleteMapping("/{fileId}")
     @PreAuthorize("isAuthenticated()")
+    @OperLog(module = "文件管理", action = "删除文件", bizId = "#p0")
     public Result<Boolean> deleteFile(@PathVariable("fileId") Long fileId) {
         boolean deleted = fileService.deleteFile(fileId);
         return Result.success(deleted);

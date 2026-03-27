@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.dwtech.common.annontation.OperLog;
 import org.dwtech.common.annontation.RepeatSubmit;
 import org.dwtech.common.core.entity.PageResult;
 import org.dwtech.common.core.entity.Result;
@@ -49,6 +50,7 @@ public class BorrowController {
     @PostMapping
     @RepeatSubmit
     @PreAuthorize("@ss.hasPerm('lib:borrow:add')")
+    @OperLog(module = "借阅管理", action = "新增借阅", bizId = "#p0.isbn")
     public Result<?> saveBorrow(@Valid @RequestBody BorrowForm formData) {
         boolean result = borrowService.saveBorrow(formData);
         return Result.judge(result);
@@ -64,6 +66,7 @@ public class BorrowController {
     @PutMapping("/{borrowId}")
     @RepeatSubmit
     @PreAuthorize("@ss.hasPerm('lib:borrow:edit')")
+    @OperLog(module = "借阅管理", action = "更新借阅", bizId = "#p0")
     public Result<?> updateBorrow(@PathVariable("borrowId") String borrowId, @Valid @RequestBody BorrowForm formData) {
         boolean result = borrowService.updateBorrow(borrowId, formData);
         return Result.judge(result);

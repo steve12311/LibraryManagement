@@ -2,6 +2,7 @@ package org.dwtech.controller.sys;
 
 import io.swagger.v3.oas.annotations.Parameter;
 import lombok.RequiredArgsConstructor;
+import org.dwtech.common.annontation.OperLog;
 import org.dwtech.common.annontation.RepeatSubmit;
 import org.dwtech.common.core.entity.Result;
 import org.dwtech.common.model.Option;
@@ -90,6 +91,7 @@ public class MenuController {
     @PostMapping
     @PreAuthorize("@ss.hasPerm('sys:menu:add')")
     @RepeatSubmit
+    @OperLog(module = "菜单管理", action = "新增菜单", bizId = "#p0.routePath")
     public Result<?> addMenu(@RequestBody MenuForm menuForm) {
         boolean result = menuService.saveMenu(menuForm);
         return Result.judge(result);
@@ -105,6 +107,7 @@ public class MenuController {
     @PutMapping(value = "/{id}")
     @PreAuthorize("@ss.hasPerm('sys:menu:edit')")
     @RepeatSubmit
+    @OperLog(module = "菜单管理", action = "修改菜单", bizId = "#p0")
     public Result<?> updateMenu(
             @PathVariable("id") Long menuId,
             @RequestBody MenuForm menuForm
@@ -123,6 +126,7 @@ public class MenuController {
     @DeleteMapping("/{ids}")
     @PreAuthorize("@ss.hasPerm('sys:menu:delete')")
     @RepeatSubmit
+    @OperLog(module = "菜单管理", action = "删除菜单", bizId = "#p0")
     public Result<?> deleteMenu(
             @PathVariable("ids") @Parameter(description = "菜单ID，多个以英文(,)分割") List<Long> ids
     ) {
