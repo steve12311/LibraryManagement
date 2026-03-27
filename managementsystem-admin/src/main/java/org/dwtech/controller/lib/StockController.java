@@ -3,6 +3,7 @@ package org.dwtech.controller.lib;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.dwtech.common.annontation.OperLog;
 import org.dwtech.common.annontation.RepeatSubmit;
 import org.dwtech.common.core.entity.PageResult;
 import org.dwtech.common.core.entity.Result;
@@ -62,6 +63,7 @@ public class StockController {
     @PostMapping
     @RepeatSubmit
     @PreAuthorize("@ss.hasPerm('sys:stock:entry')")
+    @OperLog(module = "库存管理", action = "图书入库", bizId = "#p0.isbn")
     public Result<?> addStock(@Valid @RequestBody StockForm stockForm) {
         boolean result = libraryCatalogWriteService.addStock(stockForm);
         return Result.judge(result);
@@ -76,6 +78,7 @@ public class StockController {
     @PutMapping
     @RepeatSubmit
     @PreAuthorize("@ss.hasPerm('sys:stock:out')")
+    @OperLog(module = "库存管理", action = "图书出库", bizId = "#p0.isbn")
     public Result<?> outStock(@Valid @RequestBody StockForm stockForm) {
         boolean result = stockService.outStock(stockForm);
         return Result.judge(result);

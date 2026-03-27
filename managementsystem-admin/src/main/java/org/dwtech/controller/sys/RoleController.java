@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.dwtech.common.annontation.OperLog;
 import org.dwtech.common.annontation.RepeatSubmit;
 import org.dwtech.common.core.entity.PageResult;
 import org.dwtech.common.core.entity.Result;
@@ -68,6 +69,7 @@ public class RoleController {
     @PostMapping
     @PreAuthorize("@ss.hasPerm('sys:role:add')")
     @RepeatSubmit
+    @OperLog(module = "角色管理", action = "新增角色", bizId = "#p0.code")
     public Result<?> addRole(@Valid @RequestBody RoleForm roleForm) {
         boolean result = roleService.saveRole(roleForm);
         return Result.judge(result);
@@ -100,6 +102,7 @@ public class RoleController {
     @PutMapping(value = "/{id}")
     @PreAuthorize("@ss.hasPerm('sys:role:edit')")
     @RepeatSubmit
+    @OperLog(module = "角色管理", action = "修改角色", bizId = "#p0")
     public Result<?> updateRole(
             @PathVariable("id") Long roleId,
             @Valid @RequestBody RoleForm roleForm
@@ -119,6 +122,7 @@ public class RoleController {
     @DeleteMapping("/{ids}")
     @PreAuthorize("@ss.hasPerm('sys:role:delete')")
     @RepeatSubmit
+    @OperLog(module = "角色管理", action = "删除角色", bizId = "#p0")
     public Result<Void> deleteRoles(
             @Parameter(description = "删除角色，多个以英文逗号(,)拼接") @PathVariable("ids") String ids
     ) {
@@ -137,6 +141,7 @@ public class RoleController {
     @PutMapping(value = "/{roleId}/status")
     @PreAuthorize("@ss.hasPerm('sys:role:edit')")
     @RepeatSubmit
+    @OperLog(module = "角色管理", action = "修改角色状态", bizId = "#p0")
     public Result<?> updateRoleStatus(
             @Parameter(description = "角色ID") @PathVariable("roleId") Long roleId,
             @Parameter(description = "状态(1:启用;0:禁用)") @RequestParam("status") Integer status
@@ -172,6 +177,7 @@ public class RoleController {
     @PutMapping("/{roleId}/menus")
     @PreAuthorize("@ss.hasPerm('sys:role:edit')")
     @RepeatSubmit
+    @OperLog(module = "角色管理", action = "分配角色菜单", bizId = "#p0")
     public Result<Void> assignMenusToRole(
             @PathVariable("roleId") Long roleId,
             @RequestBody List<Long> menuIds
@@ -191,6 +197,7 @@ public class RoleController {
     @PutMapping("/{roleId}/users")
     @PreAuthorize("@ss.hasPerm('sys:role:edit')")
     @RepeatSubmit
+    @OperLog(module = "角色管理", action = "分配角色用户", bizId = "#p0")
     public Result<Void> assignUsersToRole(
             @PathVariable("roleId") Long roleId,
             @RequestParam("userIds") List<Long> userIds

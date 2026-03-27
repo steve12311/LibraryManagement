@@ -5,9 +5,12 @@ import org.dwtech.common.config.properties.CaptchaProperties;
 import org.dwtech.common.config.properties.SecurityProperties;
 import org.dwtech.common.core.entity.AuthenticationToken;
 import org.dwtech.common.core.entity.SysUserDetails;
+import org.dwtech.common.enmus.AuthEventTypeEnum;
 import org.dwtech.common.enmus.ResultCode;
 import org.dwtech.common.exception.BusinessException;
 import org.dwtech.common.token.TokenManager;
+import org.dwtech.system.model.entity.AuthLogPO;
+import org.dwtech.system.service.AuthLogService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -57,6 +60,9 @@ class AuthServiceImplTest {
     @Mock
     private CaptchaProperties captchaProperties;
 
+    @Mock
+    private AuthLogService authLogService;
+
     private SecurityProperties securityProperties;
 
     private AuthServiceImpl authService;
@@ -75,7 +81,8 @@ class AuthServiceImplTest {
                 codeGenerator,
                 redisTemplate,
                 captchaProperties,
-                securityProperties
+                securityProperties,
+                authLogService
         );
         SecurityContextHolder.clearContext();
     }
@@ -107,6 +114,12 @@ class AuthServiceImplTest {
         assertThat(captor.getValue().getPrincipal()).isEqualTo("alice");
         assertThat(captor.getValue().getCredentials()).isEqualTo("secret");
         assertThat(SecurityContextHolder.getContext().getAuthentication()).isEqualTo(authentication);
+        ArgumentCaptor<AuthLogPO> authLogCaptor = ArgumentCaptor.forClass(AuthLogPO.class);
+        verify(authLogService).saveQuietly(authLogCaptor.capture());
+        assertThat(authLogCaptor.getValue().getEventType()).isEqualTo(AuthEventTypeEnum.LOGIN.getValue());
+        assertThat(authLogCaptor.getValue().getSuccess()).isEqualTo(1);
+        assertThat(authLogCaptor.getValue().getResultCode()).isEqualTo(ResultCode.SUCCESS.getCode());
+        assertThat(authLogCaptor.getValue().getUsername()).isEqualTo("alice");
     }
 
     @Test
@@ -124,6 +137,12 @@ class AuthServiceImplTest {
 
         assertThat(exception.getResultCode()).isEqualTo(ResultCode.USER_PASSWORD_ERROR);
         assertThat(exception.getMessage()).isEqualTo("验证用户名密码失败");
+        ArgumentCaptor<AuthLogPO> authLogCaptor = ArgumentCaptor.forClass(AuthLogPO.class);
+        verify(authLogService).saveQuietly(authLogCaptor.capture());
+        assertThat(authLogCaptor.getValue().getEventType()).isEqualTo(AuthEventTypeEnum.LOGIN.getValue());
+        assertThat(authLogCaptor.getValue().getSuccess()).isEqualTo(0);
+        assertThat(authLogCaptor.getValue().getResultCode()).isEqualTo(ResultCode.USER_PASSWORD_ERROR.getCode());
+        assertThat(authLogCaptor.getValue().getFailureSummary()).isEqualTo("用户名或密码错误");
     }
 
     @Test
@@ -138,6 +157,12 @@ class AuthServiceImplTest {
 
         assertThat(exception.getResultCode()).isEqualTo(ResultCode.USER_LOGIN_EXCEPTION);
         assertThat(exception.getMessage()).isEqualTo("账号已禁用");
+        ArgumentCaptor<AuthLogPO> authLogCaptor = ArgumentCaptor.forClass(AuthLogPO.class);
+        verify(authLogService).saveQuietly(authLogCaptor.capture());
+        assertThat(authLogCaptor.getValue().getEventType()).isEqualTo(AuthEventTypeEnum.LOGIN.getValue());
+        assertThat(authLogCaptor.getValue().getSuccess()).isEqualTo(0);
+        assertThat(authLogCaptor.getValue().getResultCode()).isEqualTo(ResultCode.USER_LOGIN_EXCEPTION.getCode());
+        assertThat(authLogCaptor.getValue().getFailureSummary()).isEqualTo("账号已禁用");
     }
 
     @Test
@@ -184,6 +209,10 @@ class AuthServiceImplTest {
         verify(tokenManager).invalidateToken("access-token");
         verify(tokenManager).invalidateToken("refresh-token");
         assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+        ArgumentCaptor<AuthLogPO> authLogCaptor = ArgumentCaptor.forClass(AuthLogPO.class);
+        verify(authLogService).saveQuietly(authLogCaptor.capture());
+        assertThat(authLogCaptor.getValue().getEventType()).isEqualTo(AuthEventTypeEnum.LOGOUT.getValue());
+        assertThat(authLogCaptor.getValue().getSuccess()).isEqualTo(1);
     }
 
     @Test
@@ -219,6 +248,11 @@ class AuthServiceImplTest {
 
         assertThat(actual).isEqualTo(token);
         verify(tokenManager).refreshToken("refresh");
+        ArgumentCaptor<AuthLogPO> authLogCaptor = ArgumentCaptor.forClass(AuthLogPO.class);
+        verify(authLogService).saveQuietly(authLogCaptor.capture());
+        assertThat(authLogCaptor.getValue().getEventType()).isEqualTo(AuthEventTypeEnum.REFRESH_TOKEN.getValue());
+        assertThat(authLogCaptor.getValue().getSuccess()).isEqualTo(1);
+        assertThat(authLogCaptor.getValue().getResultCode()).isEqualTo(ResultCode.SUCCESS.getCode());
     }
 
     @Test
@@ -234,6 +268,11 @@ class AuthServiceImplTest {
         assertThat(output).contains("action=refresh_token");
         assertThat(output).contains(ResultCode.REFRESH_TOKEN_INVALID.getCode());
         assertThat(output).doesNotContain("refresh-secret-token");
+        ArgumentCaptor<AuthLogPO> authLogCaptor = ArgumentCaptor.forClass(AuthLogPO.class);
+        verify(authLogService).saveQuietly(authLogCaptor.capture());
+        assertThat(authLogCaptor.getValue().getEventType()).isEqualTo(AuthEventTypeEnum.REFRESH_TOKEN.getValue());
+        assertThat(authLogCaptor.getValue().getSuccess()).isEqualTo(0);
+        assertThat(authLogCaptor.getValue().getResultCode()).isEqualTo(ResultCode.REFRESH_TOKEN_INVALID.getCode());
     }
 
     @Test

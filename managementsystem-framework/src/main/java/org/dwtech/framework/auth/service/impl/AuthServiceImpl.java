@@ -16,6 +16,7 @@ import org.dwtech.common.core.entity.IResultCode;
 import org.dwtech.common.core.entity.SysUserDetails;
 import org.dwtech.common.enmus.CaptchaTypeEnum;
 import org.dwtech.auth.model.vo.CaptchaVO;
+import org.dwtech.common.enmus.AuthEventTypeEnum;
 import org.dwtech.common.enmus.ResultCode;
 import org.dwtech.common.exception.BusinessException;
 import org.dwtech.common.utils.IPUtils;
@@ -24,6 +25,8 @@ import org.dwtech.common.utils.SecurityUtils;
 import org.dwtech.common.utils.ServletUtils;
 import org.dwtech.framework.auth.service.AuthService;
 import org.dwtech.common.token.TokenManager;
+import org.dwtech.system.model.entity.AuthLogPO;
+import org.dwtech.system.service.AuthLogService;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -48,6 +51,8 @@ import java.util.concurrent.TimeUnit;
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
+    private static final int MAX_FAILURE_SUMMARY_LENGTH = 200;
+
     private final TokenManager tokenManager;
     private final Font captchaFont;
     private final AuthenticationManager authenticationManager;
@@ -55,6 +60,7 @@ public class AuthServiceImpl implements AuthService {
     private final RedisTemplate<String, Object> redisTemplate;
     private final CaptchaProperties captchaProperties;
     private final SecurityProperties securityProperties;
+    private final AuthLogService authLogService;
 
     /**
      * 生成登录验证码并写入 Redis 缓存。
@@ -116,15 +122,21 @@ public class AuthServiceImpl implements AuthService {
             if (e instanceof BadCredentialsException) {
                 log.warn("认证失败, action=login, username={}, clientIp={}, sessionType={}, resultCode={}",
                         normalizedUsername, clientIp, sessionType, ResultCode.USER_PASSWORD_ERROR.getCode());
+                recordAuthEvent(AuthEventTypeEnum.LOGIN.getValue(), null, normalizedUsername, 0,
+                        ResultCode.USER_PASSWORD_ERROR.getCode(), "用户名或密码错误", clientIp, sessionType);
                 throw new BusinessException(ResultCode.USER_PASSWORD_ERROR, "验证用户名密码失败");
             }
             if (e instanceof DisabledException) {
                 log.warn("认证失败, action=login, username={}, clientIp={}, sessionType={}, resultCode={}",
                         normalizedUsername, clientIp, sessionType, ResultCode.USER_LOGIN_EXCEPTION.getCode());
+                recordAuthEvent(AuthEventTypeEnum.LOGIN.getValue(), null, normalizedUsername, 0,
+                        ResultCode.USER_LOGIN_EXCEPTION.getCode(), "账号已禁用", clientIp, sessionType);
                 throw new BusinessException(ResultCode.USER_LOGIN_EXCEPTION, "账号已禁用");
             }
             log.error("认证异常, action=login, username={}, clientIp={}, sessionType={}, exceptionType={}",
                     normalizedUsername, clientIp, sessionType, e.getClass().getSimpleName());
+            recordAuthEvent(AuthEventTypeEnum.LOGIN.getValue(), null, normalizedUsername, 0,
+                    ResultCode.SYSTEM_ERROR.getCode(), "认证异常:" + e.getClass().getSimpleName(), clientIp, sessionType);
             throw new BusinessException("登录失败，请稍后再试");
         }
         // 3. 认证成功后生成 JWT 令牌，并存入 Security 上下文，供登录日志 AOP 使用（已认证）
@@ -134,6 +146,14 @@ public class AuthServiceImpl implements AuthService {
         log.info("认证成功, action=login, userId={}, username={}, clientIp={}, sessionType={}, result=success",
                 resolveAuthenticatedUserId(authentication),
                 resolveAuthenticatedUsername(authentication, normalizedUsername),
+                clientIp,
+                sessionType);
+        recordAuthEvent(AuthEventTypeEnum.LOGIN.getValue(),
+                resolveAuthenticatedUserId(authentication),
+                resolveAuthenticatedUsername(authentication, normalizedUsername),
+                1,
+                ResultCode.SUCCESS.getCode(),
+                null,
                 clientIp,
                 sessionType);
         return authenticationTokenResponse;
@@ -169,6 +189,8 @@ public class AuthServiceImpl implements AuthService {
         SecurityContextHolder.clearContext();
         log.info("认证完成, action=logout, userId={}, username={}, clientIp={}, sessionType={}, result=success, hadAccessToken={}, hadRefreshToken={}",
                 userId, username, clientIp, sessionType, hasAccessToken, hasRefreshToken);
+        recordAuthEvent(AuthEventTypeEnum.LOGOUT.getValue(), userId, username, 1,
+                ResultCode.SUCCESS.getCode(), null, clientIp, sessionType);
     }
 
     /**
@@ -186,16 +208,54 @@ public class AuthServiceImpl implements AuthService {
             AuthenticationToken token = tokenManager.refreshToken(refreshToken);
             log.info("认证成功, action=refresh_token, clientIp={}, sessionType={}, result=success",
                     clientIp, sessionType);
+            recordAuthEvent(AuthEventTypeEnum.REFRESH_TOKEN.getValue(), null, null, 1,
+                    ResultCode.SUCCESS.getCode(), null, clientIp, sessionType);
             return token;
         } catch (BusinessException e) {
             log.warn("认证失败, action=refresh_token, clientIp={}, sessionType={}, resultCode={}",
                     clientIp, sessionType, resolveResultCode(e));
+            recordAuthEvent(AuthEventTypeEnum.REFRESH_TOKEN.getValue(), null, null, 0,
+                    resolveResultCode(e), e.getMessage(), clientIp, sessionType);
             throw e;
         } catch (Exception e) {
             log.error("认证异常, action=refresh_token, clientIp={}, sessionType={}, exceptionType={}",
                     clientIp, sessionType, e.getClass().getSimpleName());
+            recordAuthEvent(AuthEventTypeEnum.REFRESH_TOKEN.getValue(), null, null, 0,
+                    ResultCode.SYSTEM_ERROR.getCode(), "认证异常:" + e.getClass().getSimpleName(), clientIp, sessionType);
             throw e;
         }
+    }
+
+    /**
+     * 记录认证日志，失败不影响主流程。
+     *
+     * @param eventType 事件类型
+     * @param userId 用户ID
+     * @param username 用户名
+     * @param success 是否成功
+     * @param resultCode 结果码
+     * @param failureSummary 失败摘要
+     * @param clientIp 客户端IP
+     * @param sessionType 会话模式
+     */
+    private void recordAuthEvent(String eventType,
+                                 Long userId,
+                                 String username,
+                                 Integer success,
+                                 String resultCode,
+                                 String failureSummary,
+                                 String clientIp,
+                                 String sessionType) {
+        AuthLogPO authLog = new AuthLogPO();
+        authLog.setEventType(eventType);
+        authLog.setUserId(userId);
+        authLog.setUsername(username);
+        authLog.setSuccess(success);
+        authLog.setResultCode(resultCode);
+        authLog.setFailureSummary(truncateFailureSummary(failureSummary));
+        authLog.setClientIp(clientIp);
+        authLog.setSessionType(sessionType);
+        authLogService.saveQuietly(authLog);
     }
 
     /**
@@ -299,5 +359,12 @@ public class AuthServiceImpl implements AuthService {
     private String resolveResultCode(BusinessException exception) {
         IResultCode resultCode = exception.getResultCode();
         return resultCode == null ? "UNKNOWN" : resultCode.getCode();
+    }
+
+    private String truncateFailureSummary(String failureSummary) {
+        if (StrUtil.isBlank(failureSummary)) {
+            return null;
+        }
+        return StrUtil.maxLength(failureSummary, MAX_FAILURE_SUMMARY_LENGTH);
     }
 }
