@@ -11,12 +11,6 @@
 
     <artifactId>managementsystem-framework</artifactId>
 
-    <properties>
-        <maven.compiler.source>21</maven.compiler.source>
-        <maven.compiler.target>21</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    </properties>
-
     <dependencies>
 
         <!-- SpringBoot Web容器 -->
@@ -45,13 +39,6 @@
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
         </dependency>
-
-        <!-- SpringBoot 拦截器 -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-aop</artifactId>
-        </dependency>
-
         <!-- 验证码 -->
         <dependency>
             <groupId>pro.fessional</groupId>
