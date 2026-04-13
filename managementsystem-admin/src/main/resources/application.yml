@@ -24,6 +24,24 @@ spring:
       base-url: http://localhost:11434
       embedding:
           model: nomic-embed-text-v2-moe
+    vectorstore:
+      milvus:
+        client:
+          uri: ${MILVUS_URI:http://127.0.0.1:19530}
+          username: ${MILVUS_USERNAME:root}
+          password: ${MILVUS_PASSWORD:}
+        database-name: ${MILVUS_DATABASE_NAME:default}
+        collection-name: ${MILVUS_COLLECTION_NAME:book_keywords_v2}
+        embedding-dimension: 768
+        initialize-schema: true
+        auto-id: false
+        id-field-name: doc_id
+        content-field-name: content
+        metadata-field-name: metadata
+        embedding-field-name: embedding
+        index-type: IVF_FLAT
+        metric-type: COSINE
+        index-parameters: '{"nlist":1024}'
   cache:
     enabled: true
     type: redis
@@ -31,13 +49,6 @@ spring:
       time-to-live: 30m
       cache-null-values: false
       use-key-prefix: true
-
-milvus:
-  uri: ${MILVUS_URI:http://127.0.0.1:19530}
-  username: ${MILVUS_USERNAME:root}
-  password: ${MILVUS_PASSWORD:}
-  vector-dim: 768
-  collection-name: bookKeyWords
 
 # 验证码配置
 captcha:
@@ -144,3 +155,8 @@ file:
     allowed-mime-types: image/jpeg,image/png,image/gif
   download:
     inline-allowed-mime-types: image/jpeg,image/png,image/gif
+
+ai:
+  catalog-vector-rebuild:
+    enabled: false
+    batch-size: 100
