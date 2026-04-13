@@ -1,5 +1,8 @@
-package org.dwtech.framework.ai.vectorstore;
+package org.dwtech.framework.ai.vector.application;
 
+import org.dwtech.framework.ai.vector.queue.CatalogVectorSyncMessage;
+import org.dwtech.framework.ai.vector.queue.CatalogVectorSyncPublisher;
+import org.dwtech.framework.ai.vector.queue.CatalogVectorSyncTrigger;
 import org.dwtech.system.model.bo.StockAddResult;
 import org.dwtech.system.model.form.BookForm;
 import org.dwtech.system.model.form.StockForm;
@@ -27,7 +30,7 @@ class LibraryCatalogWriteServiceTest {
     private StockService stockService;
 
     @Mock
-    private CatalogVectorQueuePublisher catalogVectorQueuePublisher;
+    private CatalogVectorSyncPublisher catalogVectorSyncPublisher;
 
     private LibraryCatalogWriteService libraryCatalogWriteService;
 
@@ -36,7 +39,7 @@ class LibraryCatalogWriteServiceTest {
         libraryCatalogWriteService = new LibraryCatalogWriteService(
                 bookService,
                 stockService,
-                catalogVectorQueuePublisher
+                catalogVectorSyncPublisher
         );
     }
 
@@ -49,10 +52,10 @@ class LibraryCatalogWriteServiceTest {
         boolean result = libraryCatalogWriteService.updateBook(bookForm);
 
         assertThat(result).isTrue();
-        ArgumentCaptor<CatalogVectorQueueMessage> captor = ArgumentCaptor.forClass(CatalogVectorQueueMessage.class);
-        verify(catalogVectorQueuePublisher).publishAfterCommit(captor.capture());
+        ArgumentCaptor<CatalogVectorSyncMessage> captor = ArgumentCaptor.forClass(CatalogVectorSyncMessage.class);
+        verify(catalogVectorSyncPublisher).publishAfterCommit(captor.capture());
         assertThat(captor.getValue().isbn()).isEqualTo("9787300000001");
-        assertThat(captor.getValue().trigger()).isEqualTo(CatalogVectorQueueTrigger.BOOK_UPDATED);
+        assertThat(captor.getValue().trigger()).isEqualTo(CatalogVectorSyncTrigger.BOOK_UPDATED);
         assertThat(captor.getValue().retryCount()).isZero();
     }
 
@@ -65,10 +68,10 @@ class LibraryCatalogWriteServiceTest {
         boolean result = libraryCatalogWriteService.addStock(stockForm);
 
         assertThat(result).isTrue();
-        ArgumentCaptor<CatalogVectorQueueMessage> captor = ArgumentCaptor.forClass(CatalogVectorQueueMessage.class);
-        verify(catalogVectorQueuePublisher).publishAfterCommit(captor.capture());
+        ArgumentCaptor<CatalogVectorSyncMessage> captor = ArgumentCaptor.forClass(CatalogVectorSyncMessage.class);
+        verify(catalogVectorSyncPublisher).publishAfterCommit(captor.capture());
         assertThat(captor.getValue().isbn()).isEqualTo("9787300000001");
-        assertThat(captor.getValue().trigger()).isEqualTo(CatalogVectorQueueTrigger.FIRST_STOCK_INGESTED);
+        assertThat(captor.getValue().trigger()).isEqualTo(CatalogVectorSyncTrigger.FIRST_STOCK_INGESTED);
         assertThat(captor.getValue().retryCount()).isZero();
     }
 
@@ -81,6 +84,6 @@ class LibraryCatalogWriteServiceTest {
         boolean result = libraryCatalogWriteService.addStock(stockForm);
 
         assertThat(result).isTrue();
-        verify(catalogVectorQueuePublisher, never()).publishAfterCommit(org.mockito.ArgumentMatchers.any());
+        verify(catalogVectorSyncPublisher, never()).publishAfterCommit(org.mockito.ArgumentMatchers.any());
     }
 }

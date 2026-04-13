@@ -1,4 +1,4 @@
-package org.dwtech.framework.ai.vectorstore;
+package org.dwtech.framework.ai.vector.queue;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,7 +12,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import java.util.Map;
 
 /**
- * CatalogVectorQueuePublisher
+ * CatalogVectorSyncPublisher
  *
  * @author steve12311
  * @since 2026-04-13
@@ -20,9 +20,9 @@ import java.util.Map;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class CatalogVectorQueuePublisher {
+public class CatalogVectorSyncPublisher {
     private final RedisTemplate<String, Object> redisTemplate;
-    private final CatalogVectorQueueProperties queueProperties;
+    private final CatalogVectorSyncProperties queueProperties;
 
     /**
      * 用途：在事务提交后发布馆藏向量同步消息；若当前无事务则立即发布。
@@ -30,7 +30,7 @@ public class CatalogVectorQueuePublisher {
      * @param message 队列消息
      * 返回：无。
      */
-    public void publishAfterCommit(CatalogVectorQueueMessage message) {
+    public void publishAfterCommit(CatalogVectorSyncMessage message) {
         Runnable publishAction = () -> {
             try {
                 publishNow(message);
@@ -63,7 +63,7 @@ public class CatalogVectorQueuePublisher {
      * @param message 队列消息
      * 返回：无。
      */
-    public void publishNow(CatalogVectorQueueMessage message) {
+    public void publishNow(CatalogVectorSyncMessage message) {
         Map<String, String> fields = message.toStreamFields();
         MapRecord<String, String, String> record = StreamRecords.mapBacked(fields)
                 .withStreamKey(queueProperties.getStreamKey());

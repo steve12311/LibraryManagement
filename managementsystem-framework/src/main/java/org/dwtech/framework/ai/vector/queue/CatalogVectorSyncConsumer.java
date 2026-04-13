@@ -1,10 +1,11 @@
-package org.dwtech.framework.ai.vectorstore;
+package org.dwtech.framework.ai.vector.queue;
 
 import cn.hutool.core.util.StrUtil;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.dwtech.framework.ai.vector.store.CatalogVectorStoreService;
 import org.dwtech.system.model.form.BookForm;
 import org.dwtech.system.service.BookService;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -28,7 +29,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 /**
- * CatalogVectorQueueConsumer
+ * CatalogVectorSyncConsumer
  *
  * @author steve12311
  * @since 2026-04-13
@@ -37,12 +38,12 @@ import java.util.concurrent.TimeUnit;
 @Component
 @RequiredArgsConstructor
 @ConditionalOnProperty(prefix = "ai.catalog-vector-queue", name = "consumer-enabled", havingValue = "true", matchIfMissing = true)
-public class CatalogVectorQueueConsumer {
+public class CatalogVectorSyncConsumer {
     private final RedisTemplate<String, Object> redisTemplate;
-    private final CatalogVectorQueueProperties queueProperties;
+    private final CatalogVectorSyncProperties queueProperties;
     private final BookService bookService;
     private final CatalogVectorStoreService catalogVectorStoreService;
-    private final CatalogVectorQueuePublisher catalogVectorQueuePublisher;
+    private final CatalogVectorSyncPublisher catalogVectorSyncPublisher;
 
     private volatile boolean running;
     private ExecutorService executorService;
@@ -133,7 +134,7 @@ public class CatalogVectorQueueConsumer {
      * 返回：无。
      */
     void handleRecord(MapRecord<String, Object, Object> record) {
-        CatalogVectorQueueMessage message = parseMessage(record.getValue());
+        CatalogVectorSyncMessage message = parseMessage(record.getValue());
         if (message == null) {
             acknowledge(record.getId());
             return;
@@ -152,7 +153,7 @@ public class CatalogVectorQueueConsumer {
      * @param message 队列消息
      * 返回：无。
      */
-    void handleMessage(CatalogVectorQueueMessage message) {
+    void handleMessage(CatalogVectorSyncMessage message) {
         BookForm bookForm = bookService.getBookByIsbn(message.isbn());
         if (bookForm == null || StrUtil.isBlank(bookForm.getIntro())) {
             catalogVectorStoreService.deleteCatalogBook(message.isbn());
@@ -174,11 +175,11 @@ public class CatalogVectorQueueConsumer {
      * @param exception 异常
      * 返回：无。
      */
-    private void handleProcessingFailure(RecordId recordId, CatalogVectorQueueMessage message, RuntimeException exception) {
+    private void handleProcessingFailure(RecordId recordId, CatalogVectorSyncMessage message, RuntimeException exception) {
         if (message.retryCount() < queueProperties.getMaxRetries()) {
             try {
-                CatalogVectorQueueMessage retryMessage = message.nextRetry();
-                catalogVectorQueuePublisher.publishNow(retryMessage);
+                CatalogVectorSyncMessage retryMessage = message.nextRetry();
+                catalogVectorSyncPublisher.publishNow(retryMessage);
                 acknowledge(recordId);
                 log.warn(
                         "action=consume_catalog_vector_queue result=retry_scheduled isbn={} trigger={} retryCount={} exceptionType={}",
@@ -243,7 +244,7 @@ public class CatalogVectorQueueConsumer {
      * @param fields Stream 字段
      * @return 返回结果
      */
-    CatalogVectorQueueMessage parseMessage(Map<Object, Object> fields) {
+    CatalogVectorSyncMessage parseMessage(Map<Object, Object> fields) {
         String isbn = asString(fields.get("isbn"));
         String triggerValue = asString(fields.get("trigger"));
         String retryCountValue = asString(fields.get("retryCount"));
@@ -253,9 +254,9 @@ public class CatalogVectorQueueConsumer {
             return null;
         }
         try {
-            CatalogVectorQueueTrigger trigger = CatalogVectorQueueTrigger.valueOf(triggerValue);
+            CatalogVectorSyncTrigger trigger = CatalogVectorSyncTrigger.valueOf(triggerValue);
             int retryCount = Integer.parseInt(retryCountValue);
-            return new CatalogVectorQueueMessage(isbn, trigger, retryCount, occurredAt);
+            return new CatalogVectorSyncMessage(isbn, trigger, retryCount, occurredAt);
         } catch (IllegalArgumentException exception) {
             log.warn(
                     "action=parse_catalog_vector_queue result=skipped reason=invalid_field fields={} exceptionType={}",

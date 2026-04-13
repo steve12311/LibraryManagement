@@ -1,4 +1,4 @@
-package org.dwtech.framework.ai.vectorstore;
+package org.dwtech.framework.ai.vector.store;
 
 import cn.hutool.core.util.StrUtil;
 import lombok.RequiredArgsConstructor;

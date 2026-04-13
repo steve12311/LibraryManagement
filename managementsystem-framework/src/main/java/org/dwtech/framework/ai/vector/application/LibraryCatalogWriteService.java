@@ -1,7 +1,10 @@
-package org.dwtech.framework.ai.vectorstore;
+package org.dwtech.framework.ai.vector.application;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.dwtech.framework.ai.vector.queue.CatalogVectorSyncMessage;
+import org.dwtech.framework.ai.vector.queue.CatalogVectorSyncPublisher;
+import org.dwtech.framework.ai.vector.queue.CatalogVectorSyncTrigger;
 import org.dwtech.system.model.bo.StockAddResult;
 import org.dwtech.system.model.form.BookForm;
 import org.dwtech.system.model.form.StockForm;
@@ -22,7 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class LibraryCatalogWriteService {
     private final BookService bookService;
     private final StockService stockService;
-    private final CatalogVectorQueuePublisher catalogVectorQueuePublisher;
+    private final CatalogVectorSyncPublisher catalogVectorSyncPublisher;
 
     /**
      * 用途：更新图书并在事务提交后发布向量同步消息。
@@ -34,7 +37,7 @@ public class LibraryCatalogWriteService {
     public boolean updateBook(BookForm bookForm) {
         boolean result = bookService.saveOrUpdateBook(bookForm);
         if (result) {
-            publishVectorMessage(bookForm.getIsbn(), CatalogVectorQueueTrigger.BOOK_UPDATED);
+            publishVectorMessage(bookForm.getIsbn(), CatalogVectorSyncTrigger.BOOK_UPDATED);
         }
         return result;
     }
@@ -49,7 +52,7 @@ public class LibraryCatalogWriteService {
     public boolean addStock(StockForm stockForm) {
         StockAddResult result = stockService.addStock(stockForm);
         if (result.success() && result.firstStockIngested()) {
-            publishVectorMessage(stockForm.getIsbn(), CatalogVectorQueueTrigger.FIRST_STOCK_INGESTED);
+            publishVectorMessage(stockForm.getIsbn(), CatalogVectorSyncTrigger.FIRST_STOCK_INGESTED);
         }
         return result.success();
     }
@@ -61,8 +64,8 @@ public class LibraryCatalogWriteService {
      * @param trigger 触发来源
      * 返回：无。
      */
-    private void publishVectorMessage(String isbn, CatalogVectorQueueTrigger trigger) {
-        catalogVectorQueuePublisher.publishAfterCommit(CatalogVectorQueueMessage.initial(isbn, trigger));
+    private void publishVectorMessage(String isbn, CatalogVectorSyncTrigger trigger) {
+        catalogVectorSyncPublisher.publishAfterCommit(CatalogVectorSyncMessage.initial(isbn, trigger));
         log.info("action=publish_catalog_vector_queue result=scheduled isbn={} trigger={}", isbn, trigger);
     }
 }

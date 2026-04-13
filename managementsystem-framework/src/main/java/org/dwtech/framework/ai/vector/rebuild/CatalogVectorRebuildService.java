@@ -1,8 +1,9 @@
-package org.dwtech.framework.ai.vectorstore;
+package org.dwtech.framework.ai.vector.rebuild;
 
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import org.dwtech.framework.ai.vector.store.CatalogVectorStoreService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.dwtech.system.model.entity.BookPO;
