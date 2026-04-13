@@ -10,7 +10,7 @@
 - 文件上传哈希去重（SHA-256）与 `fileId` 黑盒访问
 - Redis 缓存（角色权限、菜单路由、下拉选项等）
 - 防重复提交（`@RepeatSubmit` + AOP）
-- Spring AI + Milvus + Ollama 向量检索（`/chat` SSE 流式）
+- Spring AI VectorStore + Milvus + Ollama 向量检索（`/chat` SSE 流式）
 
 ## 2. 技术栈
 
@@ -22,7 +22,7 @@
 - Redis 7+
 - Redisson
 - Spring AI（DeepSeek / Ollama）
-- Milvus
+- Milvus（通过 Spring AI VectorStore 集成）
 - MapStruct
 - Hutool
 
@@ -56,7 +56,7 @@ LibraryManagement
 - Maven 3.9+
 - MySQL
 - Redis
-- Milvus（启用 AI 向量检索时）
+- Milvus（启用 AI 向量检索与向量重建时）
 - Ollama（用于 Embedding）
 - DeepSeek API Key（用于大模型对话）
 
@@ -70,7 +70,8 @@ LibraryManagement
 - `spring.data.redis.*`
 - `spring.ai.deepseek.api-key`
 - `spring.ai.ollama.base-url`
-- `milvus.*`
+- `spring.ai.vectorstore.milvus.*`
+- `ai.catalog-vector-rebuild.*`
 - `security.session.*`
 - `oss.local.storage-path`
 - `file.cache.*`（文件元数据缓存）
