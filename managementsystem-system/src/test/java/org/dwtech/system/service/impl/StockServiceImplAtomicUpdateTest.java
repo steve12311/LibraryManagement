@@ -4,6 +4,7 @@ import org.dwtech.common.enmus.ResultCode;
 import org.dwtech.common.exception.BusinessException;
 import org.dwtech.system.converter.StockConverter;
 import org.dwtech.system.model.bo.StockBO;
+import org.dwtech.system.model.bo.StockAddResult;
 import org.dwtech.system.model.entity.BookPO;
 import org.dwtech.system.model.entity.StockPO;
 import org.dwtech.system.model.form.StockForm;
@@ -59,9 +60,10 @@ class StockServiceImplAtomicUpdateTest {
         when(stockMapper.upsertStock("9787300000001", 3)).thenReturn(1);
         when(bookService.saveBookIfAbsent(convertedBook)).thenReturn(true);
 
-        boolean result = stockService.addStock(stockForm);
+        StockAddResult result = stockService.addStock(stockForm);
 
-        assertThat(result).isTrue();
+        assertThat(result.success()).isTrue();
+        assertThat(result.firstStockIngested()).isTrue();
         verify(stockMapper).upsertStock("9787300000001", 3);
         verify(bookService).saveBookIfAbsent(convertedBook);
         verify(stockMapper, never()).selectById(anyString());

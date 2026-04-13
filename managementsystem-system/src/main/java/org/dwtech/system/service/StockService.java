@@ -2,6 +2,7 @@ package org.dwtech.system.service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import jakarta.validation.Valid;
+import org.dwtech.system.model.bo.StockAddResult;
 import org.dwtech.system.model.form.StockForm;
 import org.dwtech.system.model.query.PublicBookPageQuery;
 import org.dwtech.system.model.query.StockPageQuery;
@@ -45,9 +46,9 @@ public interface StockService {
      * 用途：新增 stock。
      * 
      * @param stockForm stock form
-     * @return 操作结果，true 表示成功，false 表示失败
+     * @return 返回结果
      */
-    boolean addStock(@Valid StockForm stockForm);
+    StockAddResult addStock(@Valid StockForm stockForm);
 
     /**
      * 用途：执行 out stock 操作。
