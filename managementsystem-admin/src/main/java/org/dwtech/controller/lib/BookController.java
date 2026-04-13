@@ -6,7 +6,7 @@ import org.dwtech.common.annontation.OperLog;
 import org.dwtech.common.annontation.RepeatSubmit;
 import org.dwtech.common.core.entity.Result;
 import org.dwtech.common.model.Option;
-import org.dwtech.framework.ai.vectorstore.LibraryCatalogWriteService;
+import org.dwtech.framework.ai.vector.application.LibraryCatalogWriteService;
 import org.dwtech.system.model.form.BookForm;
 import org.dwtech.system.service.BookService;
 import org.springframework.security.access.prepost.PreAuthorize;

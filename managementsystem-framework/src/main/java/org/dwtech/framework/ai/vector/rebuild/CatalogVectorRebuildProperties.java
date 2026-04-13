@@ -1,4 +1,4 @@
-package org.dwtech.framework.ai.vectorstore;
+package org.dwtech.framework.ai.vector.rebuild;
 
 import jakarta.validation.constraints.Min;
 import lombok.Data;

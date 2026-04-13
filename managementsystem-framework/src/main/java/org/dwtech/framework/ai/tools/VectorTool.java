@@ -2,7 +2,7 @@ package org.dwtech.framework.ai.tools;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.dwtech.framework.ai.vectorstore.CatalogVectorStoreService;
+import org.dwtech.framework.ai.vector.store.CatalogVectorStoreService;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.stereotype.Component;
 

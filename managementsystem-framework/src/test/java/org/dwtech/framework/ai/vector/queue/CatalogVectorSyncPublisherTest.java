@@ -1,4 +1,4 @@
-package org.dwtech.framework.ai.vectorstore;
+package org.dwtech.framework.ai.vector.queue;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,7 +19,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class CatalogVectorQueuePublisherTest {
+class CatalogVectorSyncPublisherTest {
 
     @Mock
     private RedisTemplate<String, Object> redisTemplate;
@@ -27,15 +27,15 @@ class CatalogVectorQueuePublisherTest {
     @Mock
     private StreamOperations<String, Object, Object> streamOperations;
 
-    private CatalogVectorQueueProperties queueProperties;
-    private CatalogVectorQueuePublisher catalogVectorQueuePublisher;
+    private CatalogVectorSyncProperties queueProperties;
+    private CatalogVectorSyncPublisher catalogVectorSyncPublisher;
 
     @BeforeEach
     void setUp() {
-        queueProperties = new CatalogVectorQueueProperties();
+        queueProperties = new CatalogVectorSyncProperties();
         queueProperties.setStreamKey("ai:catalog-vector:stream");
         when(redisTemplate.opsForStream()).thenReturn(streamOperations);
-        catalogVectorQueuePublisher = new CatalogVectorQueuePublisher(redisTemplate, queueProperties);
+        catalogVectorSyncPublisher = new CatalogVectorSyncPublisher(redisTemplate, queueProperties);
     }
 
     @AfterEach
@@ -50,8 +50,8 @@ class CatalogVectorQueuePublisherTest {
 
     @Test
     void shouldPublishImmediatelyWhenNoTransactionExists() {
-        catalogVectorQueuePublisher.publishAfterCommit(
-                CatalogVectorQueueMessage.initial("9787300000001", CatalogVectorQueueTrigger.BOOK_UPDATED)
+        catalogVectorSyncPublisher.publishAfterCommit(
+                CatalogVectorSyncMessage.initial("9787300000001", CatalogVectorSyncTrigger.BOOK_UPDATED)
         );
 
         verify(streamOperations).add(any(MapRecord.class));
@@ -62,8 +62,8 @@ class CatalogVectorQueuePublisherTest {
         TransactionSynchronizationManager.setActualTransactionActive(true);
         TransactionSynchronizationManager.initSynchronization();
 
-        catalogVectorQueuePublisher.publishAfterCommit(
-                CatalogVectorQueueMessage.initial("9787300000001", CatalogVectorQueueTrigger.BOOK_UPDATED)
+        catalogVectorSyncPublisher.publishAfterCommit(
+                CatalogVectorSyncMessage.initial("9787300000001", CatalogVectorSyncTrigger.BOOK_UPDATED)
         );
 
         verify(streamOperations, never()).add(any(MapRecord.class));

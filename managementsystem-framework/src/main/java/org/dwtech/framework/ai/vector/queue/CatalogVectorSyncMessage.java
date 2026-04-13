@@ -1,18 +1,18 @@
-package org.dwtech.framework.ai.vectorstore;
+package org.dwtech.framework.ai.vector.queue;
 
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * CatalogVectorQueueMessage
+ * CatalogVectorSyncMessage
  *
  * @author steve12311
  * @since 2026-04-13
  */
-public record CatalogVectorQueueMessage(
+public record CatalogVectorSyncMessage(
         String isbn,
-        CatalogVectorQueueTrigger trigger,
+        CatalogVectorSyncTrigger trigger,
         int retryCount,
         String occurredAt
 ) {
@@ -23,8 +23,8 @@ public record CatalogVectorQueueMessage(
      * @param trigger 触发来源
      * @return 返回结果
      */
-    public static CatalogVectorQueueMessage initial(String isbn, CatalogVectorQueueTrigger trigger) {
-        return new CatalogVectorQueueMessage(isbn, trigger, 0, Instant.now().toString());
+    public static CatalogVectorSyncMessage initial(String isbn, CatalogVectorSyncTrigger trigger) {
+        return new CatalogVectorSyncMessage(isbn, trigger, 0, Instant.now().toString());
     }
 
     /**
@@ -32,8 +32,8 @@ public record CatalogVectorQueueMessage(
      *
      * @return 返回结果
      */
-    public CatalogVectorQueueMessage nextRetry() {
-        return new CatalogVectorQueueMessage(isbn, trigger, retryCount + 1, occurredAt);
+    public CatalogVectorSyncMessage nextRetry() {
+        return new CatalogVectorSyncMessage(isbn, trigger, retryCount + 1, occurredAt);
     }
 
     /**

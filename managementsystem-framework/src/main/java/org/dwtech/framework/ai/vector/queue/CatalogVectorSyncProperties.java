@@ -1,4 +1,4 @@
-package org.dwtech.framework.ai.vectorstore;
+package org.dwtech.framework.ai.vector.queue;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -7,7 +7,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.validation.annotation.Validated;
 
 /**
- * CatalogVectorQueueProperties
+ * CatalogVectorSyncProperties
  *
  * @author steve12311
  * @since 2026-04-13
@@ -15,7 +15,7 @@ import org.springframework.validation.annotation.Validated;
 @Data
 @Validated
 @ConfigurationProperties(prefix = "ai.catalog-vector-queue")
-public class CatalogVectorQueueProperties {
+public class CatalogVectorSyncProperties {
     @NotBlank(message = "馆藏向量队列 streamKey 不能为空")
     private String streamKey = "ai:catalog-vector:stream";
     @NotBlank(message = "馆藏向量队列 consumerGroup 不能为空")

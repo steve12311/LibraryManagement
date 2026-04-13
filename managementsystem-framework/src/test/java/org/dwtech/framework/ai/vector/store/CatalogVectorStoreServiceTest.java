@@ -1,4 +1,4 @@
-package org.dwtech.framework.ai.vectorstore;
+package org.dwtech.framework.ai.vector.store;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

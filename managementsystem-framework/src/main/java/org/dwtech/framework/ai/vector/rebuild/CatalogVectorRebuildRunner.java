@@ -1,4 +1,4 @@
-package org.dwtech.framework.ai.vectorstore;
+package org.dwtech.framework.ai.vector.rebuild;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

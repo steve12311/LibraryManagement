@@ -7,7 +7,7 @@ import org.dwtech.common.annontation.OperLog;
 import org.dwtech.common.annontation.RepeatSubmit;
 import org.dwtech.common.core.entity.PageResult;
 import org.dwtech.common.core.entity.Result;
-import org.dwtech.framework.ai.vectorstore.LibraryCatalogWriteService;
+import org.dwtech.framework.ai.vector.application.LibraryCatalogWriteService;
 import org.dwtech.system.model.form.StockForm;
 import org.dwtech.system.model.query.StockPageQuery;
 import org.dwtech.system.model.vo.StockPageVO;

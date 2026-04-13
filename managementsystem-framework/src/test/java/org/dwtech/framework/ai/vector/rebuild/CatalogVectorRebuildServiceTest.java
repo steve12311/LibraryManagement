@@ -1,7 +1,8 @@
-package org.dwtech.framework.ai.vectorstore;
+package org.dwtech.framework.ai.vector.rebuild;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.dwtech.common.exception.BusinessException;
+import org.dwtech.framework.ai.vector.store.CatalogVectorStoreService;
 import org.dwtech.system.model.entity.BookPO;
 import org.dwtech.system.service.BookService;
 import org.junit.jupiter.api.Test;

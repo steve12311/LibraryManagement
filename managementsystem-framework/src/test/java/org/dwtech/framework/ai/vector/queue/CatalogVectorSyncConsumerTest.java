@@ -1,5 +1,6 @@
-package org.dwtech.framework.ai.vectorstore;
+package org.dwtech.framework.ai.vector.queue;
 
+import org.dwtech.framework.ai.vector.store.CatalogVectorStoreService;
 import org.dwtech.system.model.form.BookForm;
 import org.dwtech.system.service.BookService;
 import org.junit.jupiter.api.BeforeEach;
@@ -20,7 +21,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class CatalogVectorQueueConsumerTest {
+class CatalogVectorSyncConsumerTest {
 
     @Mock
     private RedisTemplate<String, Object> redisTemplate;
@@ -35,27 +36,27 @@ class CatalogVectorQueueConsumerTest {
     private CatalogVectorStoreService catalogVectorStoreService;
 
     @Mock
-    private CatalogVectorQueuePublisher catalogVectorQueuePublisher;
+    private CatalogVectorSyncPublisher catalogVectorSyncPublisher;
 
     @Mock
     private org.springframework.data.redis.connection.stream.MapRecord<String, Object, Object> record;
 
-    private CatalogVectorQueueConsumer catalogVectorQueueConsumer;
-    private CatalogVectorQueueProperties queueProperties;
+    private CatalogVectorSyncConsumer catalogVectorSyncConsumer;
+    private CatalogVectorSyncProperties queueProperties;
 
     @BeforeEach
     void setUp() {
-        queueProperties = new CatalogVectorQueueProperties();
+        queueProperties = new CatalogVectorSyncProperties();
         queueProperties.setStreamKey("ai:catalog-vector:stream");
         queueProperties.setConsumerGroup("catalog-vector-group");
         queueProperties.setMaxRetries(3);
         lenient().when(redisTemplate.opsForStream()).thenReturn(streamOperations);
-        catalogVectorQueueConsumer = new CatalogVectorQueueConsumer(
+        catalogVectorSyncConsumer = new CatalogVectorSyncConsumer(
                 redisTemplate,
                 queueProperties,
                 bookService,
                 catalogVectorStoreService,
-                catalogVectorQueuePublisher
+                catalogVectorSyncPublisher
         );
     }
 
@@ -68,8 +69,8 @@ class CatalogVectorQueueConsumerTest {
         bookForm.setIntro("图书简介");
         when(bookService.getBookByIsbn("9787300000001")).thenReturn(bookForm);
 
-        catalogVectorQueueConsumer.handleMessage(
-                CatalogVectorQueueMessage.initial("9787300000001", CatalogVectorQueueTrigger.BOOK_UPDATED)
+        catalogVectorSyncConsumer.handleMessage(
+                CatalogVectorSyncMessage.initial("9787300000001", CatalogVectorSyncTrigger.BOOK_UPDATED)
         );
 
         verify(catalogVectorStoreService).syncCatalogBook("9787300000001", "Spring Boot 实战", "张三", "图书简介");
@@ -79,8 +80,8 @@ class CatalogVectorQueueConsumerTest {
     void shouldDeleteVectorWhenBookMissingOrIntroBlank() {
         when(bookService.getBookByIsbn("9787300000001")).thenReturn(null);
 
-        catalogVectorQueueConsumer.handleMessage(
-                CatalogVectorQueueMessage.initial("9787300000001", CatalogVectorQueueTrigger.BOOK_UPDATED)
+        catalogVectorSyncConsumer.handleMessage(
+                CatalogVectorSyncMessage.initial("9787300000001", CatalogVectorSyncTrigger.BOOK_UPDATED)
         );
 
         verify(catalogVectorStoreService).deleteCatalogBook("9787300000001");
@@ -98,10 +99,10 @@ class CatalogVectorQueueConsumerTest {
                 "occurredAt", "2026-04-13T00:00:00Z"
         ));
 
-        catalogVectorQueueConsumer.handleRecord(record);
+        catalogVectorSyncConsumer.handleRecord(record);
 
-        verify(catalogVectorQueuePublisher).publishNow(
-                new CatalogVectorQueueMessage("9787300000001", CatalogVectorQueueTrigger.BOOK_UPDATED, 1, "2026-04-13T00:00:00Z")
+        verify(catalogVectorSyncPublisher).publishNow(
+                new CatalogVectorSyncMessage("9787300000001", CatalogVectorSyncTrigger.BOOK_UPDATED, 1, "2026-04-13T00:00:00Z")
         );
         verify(streamOperations).acknowledge("ai:catalog-vector:stream", "catalog-vector-group", recordId);
     }
@@ -112,7 +113,7 @@ class CatalogVectorQueueConsumerTest {
         when(record.getId()).thenReturn(recordId);
         when(record.getValue()).thenReturn(Map.of("isbn", "", "trigger", "BOOK_UPDATED", "retryCount", "0"));
 
-        catalogVectorQueueConsumer.handleRecord(record);
+        catalogVectorSyncConsumer.handleRecord(record);
 
         verify(streamOperations).acknowledge("ai:catalog-vector:stream", "catalog-vector-group", recordId);
         verify(catalogVectorStoreService, never()).syncCatalogBook(any(), any(), any(), any());
