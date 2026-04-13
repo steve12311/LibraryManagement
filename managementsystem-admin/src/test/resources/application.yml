@@ -1,0 +1,3 @@
+ai:
+  catalog-vector-queue:
+    consumer-enabled: false

@@ -9,6 +9,7 @@ import org.dwtech.common.enmus.ResultCode;
 import org.dwtech.common.exception.BusinessException;
 import org.dwtech.system.converter.StockConverter;
 import org.dwtech.system.model.bo.StockBO;
+import org.dwtech.system.model.bo.StockAddResult;
 import org.dwtech.system.model.entity.BookPO;
 import org.dwtech.system.model.entity.StockPO;
 import org.dwtech.system.model.form.StockForm;
@@ -87,20 +88,20 @@ public class StockServiceImpl extends ServiceImpl<StockMapper, StockPO> implemen
      * 用途：新增 stock。
      * 
      * @param stockForm stock form
-     * @return 操作结果，true 表示成功，false 表示失败
+     * @return 返回结果
      */
     @Override
     @Transactional
-    public boolean addStock(StockForm stockForm) {
+    public StockAddResult addStock(StockForm stockForm) {
         log.info("书籍入库开始：{}", stockForm);
         StockBO stockBo = stockConverter.toBo(stockForm);
         StockPO stock = stockConverter.toPo(stockBo);
         this.baseMapper.upsertStock(stock.getIsbn(), stock.getStock());
         log.info("书籍入库步骤一完成：{}", stock);
         BookPO book = stockConverter.toBookPo(stockBo);
-        bookService.saveBookIfAbsent(book);
+        boolean firstStockIngested = bookService.saveBookIfAbsent(book);
         log.info("书籍入库步骤二完成：{}", book);
-        return true;
+        return new StockAddResult(true, firstStockIngested);
     }
 
     /**

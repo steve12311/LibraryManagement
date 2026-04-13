@@ -55,6 +55,19 @@ public class CatalogVectorStoreService {
     }
 
     /**
+     * 用途：删除单本图书的向量文档。
+     *
+     * @param isbn isbn
+     * 返回：无。
+     */
+    public void deleteCatalogBook(String isbn) {
+        if (StrUtil.isBlank(isbn)) {
+            return;
+        }
+        vectorStore.delete(List.of(isbn));
+    }
+
+    /**
      * 用途：根据关键词搜索相关图书 ISBN。
      *
      * @param keywords 关键词列表

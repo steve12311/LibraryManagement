@@ -45,6 +45,13 @@ class CatalogVectorStoreServiceTest {
     }
 
     @Test
+    void shouldDeleteCatalogBookByIsbn() {
+        catalogVectorStoreService.deleteCatalogBook("9787300000001");
+
+        verify(vectorStore).delete(List.of("9787300000001"));
+    }
+
+    @Test
     void shouldResolveIsbnFromMetadataWhenSearchingCatalogBooks() {
         when(vectorStore.similaritySearch(any(SearchRequest.class))).thenReturn(
                 List.of(new Document("9787300000001", "Spring Boot 图书简介", Map.of("isbn", "9787300000001")))

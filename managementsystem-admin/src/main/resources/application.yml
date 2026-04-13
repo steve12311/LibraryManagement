@@ -158,6 +158,13 @@ file:
     inline-allowed-mime-types: image/jpeg,image/png,image/gif
 
 ai:
+  catalog-vector-queue:
+    stream-key: ai:catalog-vector:stream
+    consumer-group: catalog-vector-group
+    consumer-name-prefix: catalog-vector-consumer
+    consumer-enabled: true
+    max-retries: 3
+    poll-timeout-seconds: 1
   catalog-vector-rebuild:
     enabled: false
     batch-size: 100
