@@ -117,7 +117,7 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, CategoryPO>
     public List<CategoryOptionVO> listCategoryLazyOptions(Long parentId) {
         Long targetParentId = ObjectUtil.defaultIfNull(parentId, SystemConstants.ROOT_NODE_ID);
         List<CategoryPO> children = this.list(new LambdaQueryWrapper<CategoryPO>()
-                .select(CategoryPO::getId, CategoryPO::getName, CategoryPO::getSort)
+                .select(CategoryPO::getId, CategoryPO::getName, CategoryPO::getSort, CategoryPO::getType)
                 .eq(CategoryPO::getVisible, 1)
                 .eq(CategoryPO::getParentId, targetParentId)
                 .orderByAsc(CategoryPO::getSort)
@@ -141,7 +141,7 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, CategoryPO>
                 .collect(Collectors.toSet());
 
         return children.stream()
-                .map(item -> new CategoryOptionVO(item.getId(), item.getName(), !nonLeafIds.contains(item.getId())))
+                .map(item -> new CategoryOptionVO(item.getId(), item.getType() + " " + item.getName(), !nonLeafIds.contains(item.getId())))
                 .collect(Collectors.toList());
     }
 
@@ -159,7 +159,7 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, CategoryPO>
         }
 
         CategoryPO category = this.getOne(new LambdaQueryWrapper<CategoryPO>()
-                .select(CategoryPO::getId, CategoryPO::getName)
+                .select(CategoryPO::getId, CategoryPO::getName, CategoryPO::getType)
                 .eq(CategoryPO::getId, categoryId)
                 .eq(CategoryPO::getVisible, 1)
                 .last("LIMIT 1")
@@ -172,7 +172,7 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, CategoryPO>
                 .eq(CategoryPO::getVisible, 1)
                 .eq(CategoryPO::getParentId, categoryId)
         );
-        return new CategoryOptionVO(category.getId(), category.getName(), !hasChildren);
+        return new CategoryOptionVO(category.getId(), category.getType() + " " + category.getName(), !hasChildren);
     }
 
     /**
