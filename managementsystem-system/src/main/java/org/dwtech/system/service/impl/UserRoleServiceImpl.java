@@ -157,6 +157,22 @@ public class UserRoleServiceImpl extends ServiceImpl<UserRoleMapper, UserRolePO>
     }
 
     /**
+     * 用途：批量保存 user roles。
+     *
+     * @param userRoles 用户角色关联列表
+     * @param batchSize 批量大小
+     * 返回：无。
+     */
+    @Override
+    @Transactional
+    public void saveBatchUserRoles(List<UserRolePO> userRoles, int batchSize) {
+        if (CollectionUtil.isEmpty(userRoles)) {
+            return;
+        }
+        this.saveBatch(userRoles, batchSize);
+    }
+
+    /**
      * 用途：判断是否存在 assigned users。
      * 
      * @param roleId role ID

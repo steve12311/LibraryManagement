@@ -10,6 +10,8 @@ import org.dwtech.system.model.bo.UserBO;
 import org.dwtech.system.model.form.UserForm;
 import org.dwtech.system.model.entity.UserPO;
 import org.dwtech.system.model.query.UserPageQuery;
+
+import java.util.List;
 /**
  * UserMapper
  *
@@ -36,6 +38,15 @@ public interface UserMapper extends BaseMapper<UserPO> {
      */
     @DataPermission(deptAlias = "u", userAlias = "u")
     Page<UserBO> getUserPage(Page<UserBO> page, @Param("queryParams") UserPageQuery queryParams);
+
+    /**
+     * 用途：导出 user 列表。
+     *
+     * @param queryParams query params
+     * @return 导出列表
+     */
+    @DataPermission(deptAlias = "u", userAlias = "u")
+    List<UserBO> listExportUsers(@Param("queryParams") UserPageQuery queryParams);
 
     /**
      * 用途：获取 user form data 信息。

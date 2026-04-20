@@ -1,5 +1,6 @@
 package org.dwtech.system.service.impl;
 
+import cn.idev.excel.EasyExcel;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.ArrayUtil;
@@ -13,14 +14,19 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.dwtech.common.constant.SystemConstants;
 import org.dwtech.common.core.entity.UserAuthCredentials;
-import org.dwtech.system.model.bo.UserBO;
 import org.dwtech.common.model.Option;
+import org.dwtech.common.enmus.ResultCode;
 import org.dwtech.system.model.form.PasswordUpdateForm;
 import org.dwtech.system.model.form.UserProfileForm;
 import org.dwtech.system.model.vo.CurrentUserVO;
 import org.dwtech.system.model.form.UserForm;
+import org.dwtech.system.model.bo.UserBO;
+import org.dwtech.system.model.dto.UserExportDTO;
+import org.dwtech.system.model.dto.UserImportDTO;
 import org.dwtech.system.model.entity.UserPO;
+import org.dwtech.system.model.entity.UserRolePO;
 import org.dwtech.system.model.query.UserPageQuery;
+import org.dwtech.system.model.vo.UserImportResultVO;
 import org.dwtech.system.model.vo.UserPageVO;
 import org.dwtech.system.model.vo.UserProfileVO;
 import org.dwtech.common.exception.BusinessException;
@@ -36,9 +42,18 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 /**
  * UserServiceImpl
  *
@@ -50,6 +65,11 @@ import java.util.Set;
 @Slf4j
 @RequiredArgsConstructor
 public class UserServiceImpl extends ServiceImpl<UserMapper, UserPO> implements UserService {
+    private static final int IMPORT_BATCH_SIZE = 100;
+    private static final Pattern MOBILE_PATTERN = Pattern.compile(
+            "^1(3\\d|4[5-9]|5[0-35-9]|6[2567]|7[0-8]|8\\d|9[0-35-9])\\d{8}$"
+    );
+
     private final RoleService roleService;
     private final UserConverter userConverter;
     private final PasswordEncoder passwordEncoder;
@@ -92,6 +112,106 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserPO> implements 
         queryParams.setIsRoot(isRoot);
         Page<UserBO> userPage = this.baseMapper.getUserPage(page, queryParams);
         return userConverter.toPageVo(userPage);
+    }
+
+    /**
+     * 用途：导入 users。
+     *
+     * @param inputStream Excel 输入流
+     * @return 导入结果
+     */
+    @Override
+    @Transactional
+    public UserImportResultVO importUsers(InputStream inputStream) {
+        if (inputStream == null) {
+            throw new BusinessException(ResultCode.REQUEST_REQUIRED_PARAMETER_IS_EMPTY, "导入文件不能为空");
+        }
+
+        List<UserImportDTO> rows = readImportRows(inputStream);
+        List<UserImportDTO> importRows = rows.stream()
+                .filter(row -> !isEmptyImportRow(row))
+                .toList();
+
+        UserImportResultVO result = new UserImportResultVO();
+        result.setTotalCount(importRows.size());
+        if (CollectionUtil.isEmpty(importRows)) {
+            return result;
+        }
+
+        Map<String, Long> roleNameMap = buildRoleNameMap();
+        Set<String> existingUsernames = loadExistingUsernames(importRows);
+        Set<String> seenUsernames = new HashSet<>();
+        List<ImportUserRow> validRows = new ArrayList<>();
+
+        for (int index = 0; index < importRows.size(); index++) {
+            UserImportDTO row = importRows.get(index);
+            int rowNumber = index + 2;
+            ImportUserRow validRow = validateImportRow(
+                    row,
+                    rowNumber,
+                    roleNameMap,
+                    existingUsernames,
+                    seenUsernames,
+                    result.getMessages()
+            );
+            if (validRow != null) {
+                validRows.add(validRow);
+            }
+        }
+
+        result.setFailureCount(result.getMessages().size());
+        if (CollectionUtil.isEmpty(validRows)) {
+            return result;
+        }
+
+        List<UserPO> users = validRows.stream()
+                .map(ImportUserRow::user)
+                .toList();
+        boolean saved = this.saveBatch(users, IMPORT_BATCH_SIZE);
+        if (!saved) {
+            throw new BusinessException(ResultCode.SYSTEM_ERROR, "批量导入用户失败");
+        }
+
+        Map<String, Long> importedUserIdMap = this.list(new LambdaQueryWrapper<UserPO>()
+                        .in(UserPO::getUsername, users.stream().map(UserPO::getUsername).toList())
+                        .select(UserPO::getId, UserPO::getUsername))
+                .stream()
+                .collect(Collectors.toMap(UserPO::getUsername, UserPO::getId));
+
+        List<UserRolePO> userRoles = new ArrayList<>();
+        for (ImportUserRow validRow : validRows) {
+            Long userId = importedUserIdMap.get(validRow.user().getUsername());
+            if (userId == null) {
+                throw new BusinessException(ResultCode.SYSTEM_ERROR, "导入用户后无法回查用户ID");
+            }
+            validRow.roleIds().stream()
+                    .map(roleId -> new UserRolePO(userId, roleId))
+                    .forEach(userRoles::add);
+        }
+        userRoleService.saveBatchUserRoles(userRoles, IMPORT_BATCH_SIZE);
+
+        result.setSuccessCount(validRows.size());
+        result.setFailureCount(result.getTotalCount() - result.getSuccessCount());
+        return result;
+    }
+
+    /**
+     * 用途：导出 users 列表。
+     *
+     * @param queryParams query params
+     * @return 导出结果列表
+     */
+    @Override
+    public List<UserExportDTO> listExportUsers(UserPageQuery queryParams) {
+        queryParams.setIsRoot(SecurityUtils.isRoot());
+        List<UserBO> exportUsers = this.baseMapper.listExportUsers(queryParams);
+        if (CollectionUtil.isEmpty(exportUsers)) {
+            return Collections.emptyList();
+        }
+
+        return exportUsers.stream()
+                .map(this::toExportDto)
+                .toList();
     }
 
     /**
@@ -351,5 +471,187 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserPO> implements 
         UserPO entity = userConverter.toPo(formData);
         entity.setId(userId);
         return this.updateById(entity);
+    }
+
+    private List<UserImportDTO> readImportRows(InputStream inputStream) {
+        try {
+            return EasyExcel.read(inputStream)
+                    .head(UserImportDTO.class)
+                    .sheet()
+                    .doReadSync();
+        } catch (BusinessException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            log.warn("user_import_parse_failed error={}", ex.getClass().getSimpleName(), ex);
+            throw new BusinessException(ResultCode.INVALID_USER_INPUT, "Excel 文件解析失败");
+        }
+    }
+
+    private boolean isEmptyImportRow(UserImportDTO row) {
+        return StrUtil.isAllBlank(
+                row.getUsername(),
+                row.getNickname(),
+                row.getGenderLabel(),
+                row.getMobile(),
+                row.getEmail(),
+                row.getRoleNames()
+        );
+    }
+
+    private Map<String, Long> buildRoleNameMap() {
+        Map<String, Long> roleNameMap = new HashMap<>();
+        for (Option<Long> option : roleService.listRoleOptions()) {
+            if (option == null || option.getValue() == null || StrUtil.isBlank(option.getLabel())) {
+                continue;
+            }
+            roleNameMap.put(StrUtil.trim(option.getLabel()), option.getValue());
+        }
+        return roleNameMap;
+    }
+
+    private Set<String> loadExistingUsernames(List<UserImportDTO> importRows) {
+        Set<String> usernames = importRows.stream()
+                .map(UserImportDTO::getUsername)
+                .filter(StrUtil::isNotBlank)
+                .map(StrUtil::trim)
+                .collect(Collectors.toSet());
+        if (CollectionUtil.isEmpty(usernames)) {
+            return Collections.emptySet();
+        }
+
+        return this.list(new LambdaQueryWrapper<UserPO>()
+                        .in(UserPO::getUsername, usernames)
+                        .select(UserPO::getUsername))
+                .stream()
+                .map(UserPO::getUsername)
+                .collect(Collectors.toSet());
+    }
+
+    private ImportUserRow validateImportRow(
+            UserImportDTO row,
+            int rowNumber,
+            Map<String, Long> roleNameMap,
+            Set<String> existingUsernames,
+            Set<String> seenUsernames,
+            List<String> messages
+    ) {
+        List<String> errors = new ArrayList<>();
+
+        String username = StrUtil.trim(row.getUsername());
+        if (StrUtil.isBlank(username)) {
+            errors.add("用户名不能为空");
+        } else {
+            if (!seenUsernames.add(username)) {
+                errors.add("导入文件中用户名重复");
+            }
+            if (existingUsernames.contains(username)) {
+                errors.add("用户名已存在");
+            }
+        }
+
+        String nickname = StrUtil.trim(row.getNickname());
+        if (StrUtil.isBlank(nickname)) {
+            errors.add("昵称不能为空");
+        }
+
+        String mobile = StrUtil.trim(row.getMobile());
+        if (StrUtil.isNotBlank(mobile) && !MOBILE_PATTERN.matcher(mobile).matches()) {
+            errors.add("手机号码格式不正确");
+        }
+
+        Integer gender = parseGender(row.getGenderLabel(), errors);
+        List<Long> roleIds = parseRoleIds(row.getRoleNames(), roleNameMap, errors);
+
+        if (CollectionUtil.isNotEmpty(errors)) {
+            messages.add("第" + rowNumber + "行：" + String.join("；", errors));
+            return null;
+        }
+
+        UserPO user = new UserPO();
+        user.setUsername(username);
+        user.setNickname(nickname);
+        user.setMobile(mobile);
+        user.setEmail(StrUtil.trim(row.getEmail()));
+        user.setGender(gender);
+        user.setPassword(passwordEncoder.encode(SystemConstants.DEFAULT_PASSWORD));
+        user.setCreateBy(SecurityUtils.getUserId());
+        return new ImportUserRow(user, roleIds);
+    }
+
+    private Integer parseGender(String genderLabel, List<String> errors) {
+        String gender = StrUtil.trim(genderLabel);
+        if (StrUtil.isBlank(gender)) {
+            return null;
+        }
+        return switch (gender) {
+            case "男" -> 1;
+            case "女" -> 2;
+            case "保密" -> 0;
+            default -> {
+                errors.add("性别仅支持 男、女、保密");
+                yield null;
+            }
+        };
+    }
+
+    private List<Long> parseRoleIds(String roleNames, Map<String, Long> roleNameMap, List<String> errors) {
+        if (StrUtil.isBlank(roleNames)) {
+            errors.add("角色不能为空");
+            return Collections.emptyList();
+        }
+
+        LinkedHashSet<Long> roleIds = new LinkedHashSet<>();
+        for (String roleName : StrUtil.split(roleNames.replace('，', ','), ',')) {
+            String normalizedRoleName = StrUtil.trim(roleName);
+            if (StrUtil.isBlank(normalizedRoleName)) {
+                continue;
+            }
+            Long roleId = roleNameMap.get(normalizedRoleName);
+            if (roleId == null) {
+                errors.add("角色【" + normalizedRoleName + "】不存在或不可分配");
+                continue;
+            }
+            roleIds.add(roleId);
+        }
+
+        if (CollectionUtil.isEmpty(roleIds)) {
+            errors.add("角色不能为空");
+        }
+        return new ArrayList<>(roleIds);
+    }
+
+    private UserExportDTO toExportDto(UserBO user) {
+        UserExportDTO dto = new UserExportDTO();
+        dto.setUsername(user.getUsername());
+        dto.setNickname(user.getNickname());
+        dto.setRoleNames(user.getRoleNames());
+        dto.setGenderLabel(formatGender(user.getGender()));
+        dto.setMobile(user.getMobile());
+        dto.setEmail(user.getEmail());
+        dto.setStatusLabel(formatStatus(user.getStatus()));
+        dto.setCreateTime(user.getCreateTime());
+        return dto;
+    }
+
+    private String formatGender(Integer gender) {
+        if (gender == null) {
+            return "";
+        }
+        return switch (gender) {
+            case 1 -> "男";
+            case 2 -> "女";
+            case 0 -> "保密";
+            default -> "";
+        };
+    }
+
+    private String formatStatus(Integer status) {
+        if (status == null) {
+            return "";
+        }
+        return Objects.equals(status, 1) ? "启用" : "禁用";
+    }
+
+    private record ImportUserRow(UserPO user, List<Long> roleIds) {
     }
 }

@@ -1,6 +1,7 @@
 package org.dwtech.controller.sys;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import cn.idev.excel.EasyExcel;
 import io.swagger.v3.oas.annotations.Operation;
 import org.dwtech.common.annontation.OperLog;
 import jakarta.validation.Valid;
@@ -8,7 +9,11 @@ import lombok.RequiredArgsConstructor;
 import org.dwtech.common.annontation.RepeatSubmit;
 import org.dwtech.common.core.entity.PageResult;
 import org.dwtech.common.core.entity.Result;
+import org.dwtech.common.enmus.ResultCode;
+import org.dwtech.common.exception.BusinessException;
 import org.dwtech.common.model.Option;
+import org.dwtech.system.model.dto.UserExportDTO;
+import org.dwtech.system.model.dto.UserImportDTO;
 import org.dwtech.system.model.form.PasswordUpdateForm;
 import org.dwtech.system.model.form.UserForm;
 import org.dwtech.system.model.form.UserProfileForm;
@@ -16,6 +21,7 @@ import org.dwtech.system.model.query.MyBorrowPageQuery;
 import org.dwtech.system.model.query.UserPageQuery;
 import org.dwtech.system.model.vo.MyBorrowPageVO;
 import org.dwtech.system.model.vo.CurrentUserVO;
+import org.dwtech.system.model.vo.UserImportResultVO;
 import org.dwtech.system.model.vo.UserPageVO;
 import org.dwtech.system.model.vo.UserProfileVO;
 import org.dwtech.common.utils.SecurityUtils;
@@ -23,7 +29,13 @@ import org.dwtech.system.service.BorrowService;
 import org.dwtech.system.service.UserService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 /**
  * UserController
@@ -65,6 +77,69 @@ public class UserController {
     public Result<?> saveUser(@RequestBody @Valid UserForm formData) {
         boolean result = userService.saveUser(formData);
         return Result.judge(result);
+    }
+
+    /**
+     * 用途：下载用户导入模板。
+     *
+     * @param response response
+     * 返回：无。
+     */
+    @GetMapping("/template")
+    @PreAuthorize("@ss.hasPerm('sys:user:add')")
+    public void downloadUserTemplate(HttpServletResponse response) throws IOException {
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setHeader(
+                "Content-Disposition",
+                "attachment; filename=" + URLEncoder.encode("用户导入模板.xlsx", StandardCharsets.UTF_8)
+        );
+        EasyExcel.write(response.getOutputStream(), UserImportDTO.class)
+                .sheet("用户导入模板")
+                .doWrite(List.of());
+    }
+
+    /**
+     * 用途：导入 users。
+     *
+     * @param file Excel 文件
+     * @return 返回结果
+     */
+    @PostMapping("/import")
+    @RepeatSubmit
+    @PreAuthorize("@ss.hasPerm('sys:user:add')")
+    @OperLog(module = "用户管理", action = "导入用户")
+    public Result<UserImportResultVO> importUsers(@RequestParam("file") MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new BusinessException(ResultCode.REQUEST_REQUIRED_PARAMETER_IS_EMPTY, "导入文件不能为空");
+        }
+
+        try (InputStream inputStream = file.getInputStream()) {
+            UserImportResultVO result = userService.importUsers(inputStream);
+            return Result.success(result);
+        } catch (IOException e) {
+            throw new BusinessException(ResultCode.UPLOAD_FILE_EXCEPTION, "读取导入文件失败");
+        }
+    }
+
+    /**
+     * 用途：导出 users。
+     *
+     * @param queryParams query params
+     * @param response response
+     * 返回：无。
+     */
+    @GetMapping("/export")
+    @PreAuthorize("@ss.hasPerm('sys:user:list')")
+    public void exportUsers(@Valid UserPageQuery queryParams, HttpServletResponse response) throws IOException {
+        List<UserExportDTO> exportUsers = userService.listExportUsers(queryParams);
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setHeader(
+                "Content-Disposition",
+                "attachment; filename=" + URLEncoder.encode("用户列表.xlsx", StandardCharsets.UTF_8)
+        );
+        EasyExcel.write(response.getOutputStream(), UserExportDTO.class)
+                .sheet("用户列表")
+                .doWrite(exportUsers);
     }
 
     /**
