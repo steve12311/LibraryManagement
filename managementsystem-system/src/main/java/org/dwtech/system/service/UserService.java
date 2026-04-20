@@ -4,16 +4,19 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.IService;
 import org.dwtech.common.core.entity.UserAuthCredentials;
 import org.dwtech.common.model.Option;
+import org.dwtech.system.model.dto.UserExportDTO;
 import org.dwtech.system.model.form.PasswordUpdateForm;
 import org.dwtech.system.model.form.UserProfileForm;
 import org.dwtech.system.model.vo.CurrentUserVO;
 import org.dwtech.system.model.form.UserForm;
 import org.dwtech.system.model.entity.UserPO;
 import org.dwtech.system.model.query.UserPageQuery;
+import org.dwtech.system.model.vo.UserImportResultVO;
 import org.dwtech.system.model.vo.UserPageVO;
 import org.dwtech.system.model.vo.UserProfileVO;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.InputStream;
 import java.util.List;
 /**
  * UserService
@@ -38,6 +41,22 @@ public interface UserService extends IService<UserPO> {
      * @return 分页结果
      */
     IPage<UserPageVO> getUserPage(UserPageQuery queryParams);
+
+    /**
+     * 用途：导入 users。
+     *
+     * @param inputStream Excel 输入流
+     * @return 导入结果
+     */
+    UserImportResultVO importUsers(InputStream inputStream);
+
+    /**
+     * 用途：导出 users 列表。
+     *
+     * @param queryParams query params
+     * @return 导出结果列表
+     */
+    List<UserExportDTO> listExportUsers(UserPageQuery queryParams);
 
     /**
      * 用途：保存 user。
