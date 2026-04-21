@@ -209,9 +209,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserPO> implements 
             return Collections.emptyList();
         }
 
-        return exportUsers.stream()
-                .map(this::toExportDto)
-                .toList();
+        return userConverter.toExportDtos(exportUsers);
     }
 
     /**
@@ -618,38 +616,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserPO> implements 
             errors.add("角色不能为空");
         }
         return new ArrayList<>(roleIds);
-    }
-
-    private UserExportDTO toExportDto(UserBO user) {
-        UserExportDTO dto = new UserExportDTO();
-        dto.setUsername(user.getUsername());
-        dto.setNickname(user.getNickname());
-        dto.setRoleNames(user.getRoleNames());
-        dto.setGenderLabel(formatGender(user.getGender()));
-        dto.setMobile(user.getMobile());
-        dto.setEmail(user.getEmail());
-        dto.setStatusLabel(formatStatus(user.getStatus()));
-        dto.setCreateTime(user.getCreateTime());
-        return dto;
-    }
-
-    private String formatGender(Integer gender) {
-        if (gender == null) {
-            return "";
-        }
-        return switch (gender) {
-            case 1 -> "男";
-            case 2 -> "女";
-            case 0 -> "保密";
-            default -> "";
-        };
-    }
-
-    private String formatStatus(Integer status) {
-        if (status == null) {
-            return "";
-        }
-        return Objects.equals(status, 1) ? "启用" : "禁用";
     }
 
     private record ImportUserRow(UserPO user, List<Long> roleIds) {

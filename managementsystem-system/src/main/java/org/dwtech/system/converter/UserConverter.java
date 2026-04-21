@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.dwtech.system.model.bo.UserBO;
 import org.dwtech.common.model.Avatar;
 import org.dwtech.common.model.Option;
+import org.dwtech.system.model.dto.UserExportDTO;
 import org.dwtech.system.model.form.UserForm;
 import org.dwtech.system.model.form.UserProfileForm;
 import org.dwtech.system.model.entity.UserPO;
@@ -42,6 +43,26 @@ public interface UserConverter {
      * @return 分页结果
      */
     Page<UserPageVO> toPageVo(Page<UserBO> po);
+
+    /**
+     * 用途：转换为导出 dto。
+     *
+     * @param bo bo
+     * @return 返回结果
+     */
+    @Mappings({
+            @Mapping(target = "genderLabel", source = "gender", qualifiedByName = "formatGenderLabel"),
+            @Mapping(target = "statusLabel", source = "status", qualifiedByName = "formatStatusLabel")
+    })
+    UserExportDTO toExportDto(UserBO bo);
+
+    /**
+     * 用途：批量转换为导出 dto。
+     *
+     * @param list list
+     * @return 返回结果
+     */
+    List<UserExportDTO> toExportDtos(List<UserBO> list);
 
     /**
      * 用途：转换为 form。
@@ -100,6 +121,39 @@ public interface UserConverter {
     @Named("toAvatar")
     default Avatar toAvatar(String avatar) {
         return new Avatar(avatar == null ? "" : avatar);
+    }
+
+    /**
+     * 用途：格式化性别标签。
+     *
+     * @param gender 性别值
+     * @return 返回结果
+     */
+    @Named("formatGenderLabel")
+    default String formatGenderLabel(Integer gender) {
+        if (gender == null) {
+            return "";
+        }
+        return switch (gender) {
+            case 1 -> "男";
+            case 2 -> "女";
+            case 0 -> "保密";
+            default -> "";
+        };
+    }
+
+    /**
+     * 用途：格式化状态标签。
+     *
+     * @param status 状态值
+     * @return 返回结果
+     */
+    @Named("formatStatusLabel")
+    default String formatStatusLabel(Integer status) {
+        if (status == null) {
+            return "";
+        }
+        return status == 1 ? "启用" : "禁用";
     }
 
     /**
