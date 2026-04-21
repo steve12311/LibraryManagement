@@ -181,17 +181,20 @@ class UserServiceImplImportExportTest {
         user.setEmail("reader01@test.com");
         user.setStatus(1);
         user.setCreateTime(LocalDateTime.of(2026, 4, 20, 10, 30));
+        UserExportDTO exportDto = new UserExportDTO();
+        exportDto.setUsername("reader01");
+        exportDto.setGenderLabel("男");
+        exportDto.setStatusLabel("启用");
+        exportDto.setRoleNames("读者");
         when(userMapper.listExportUsers(query)).thenReturn(List.of(user));
+        when(userConverter.toExportDtos(List.of(user))).thenReturn(List.of(exportDto));
 
         List<UserExportDTO> exportUsers = userService.listExportUsers(query);
 
         assertThat(query.getIsRoot()).isTrue();
-        assertThat(exportUsers).singleElement().satisfies(exportUser -> {
-            assertThat(exportUser.getUsername()).isEqualTo("reader01");
-            assertThat(exportUser.getGenderLabel()).isEqualTo("男");
-            assertThat(exportUser.getStatusLabel()).isEqualTo("启用");
-            assertThat(exportUser.getRoleNames()).isEqualTo("读者");
-        });
+        assertThat(exportUsers).containsExactly(exportDto);
+        verify(userMapper).listExportUsers(query);
+        verify(userConverter).toExportDtos(List.of(user));
     }
 
     private InputStream buildImportExcel(List<UserImportDTO> rows) {
