@@ -22,10 +22,9 @@ public class CatalogVectorRebuildRunner implements ApplicationRunner {
     private final CatalogVectorRebuildProperties rebuildProperties;
 
     /**
-     * 用途：启动时按配置执行一次馆藏向量重建。
+     * 启动时按配置执行一次馆藏向量重建。
      *
      * @param args 应用启动参数
-     * 返回：无。
      */
     @Override
     public void run(ApplicationArguments args) {

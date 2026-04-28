@@ -9,7 +9,7 @@ import org.mapstruct.*;
 
 import java.util.List;
 /**
- * PublishConverter
+ * 出版社对象转换器（MapStruct），负责 Entity ↔ DTO ↔ VO 之间的映射
  *
  * @author steve12311
  * @since 2026-02-22
@@ -18,11 +18,7 @@ import java.util.List;
 @Mapper(componentModel = "spring")
 public interface PublishConverter {
     /**
-     * 用途：执行 set address from components 操作。
-     * 
-     * @param vo vo
-     * @param po po
-     * 返回：无。
+     * 将出版社地址组件（省/市/区/详细地址）拼接为完整地址字符串
      */
     @AfterMapping
     default void setAddressFromComponents(@MappingTarget PublishPageVO vo, PublishPO po) {
@@ -58,12 +54,7 @@ public interface PublishConverter {
     }
 
     /**
-     * 用途：判断 municipality 状态。
-     * 
-     * 判断是否为直辖市
-     * 
-     * @param province province
-     * @return 操作结果，true 表示成功，false 表示失败
+     * 判断省份是否为直辖市
      */
     default boolean isMunicipality(String province) {
         if (province == null) return false;
@@ -86,34 +77,22 @@ public interface PublishConverter {
             @Mapping(source = "telephone", target = "phonenumber")
     })
     /**
-     * 用途：转换为 page vo。
-     * 
-     * @param po po
-     * @return 返回结果
+     * PublishPO → PublishPageVO
      */
     PublishPageVO toPageVo(PublishPO po);
 
     /**
-     * 用途：转换为 page vo。
-     * 
-     * @param po po
-     * @return 分页结果
+     * Page<PublishPO> → Page<PublishPageVO>
      */
     Page<PublishPageVO> toPageVo(Page<PublishPO> po);
 
     /**
-     * 用途：转换为 form。
-     * 
-     * @param publish publish
-     * @return 返回结果
+     * PublishPO → PublishForm
      */
     PublishForm toForm(PublishPO publish);
 
     /**
-     * 用途：转换为 po。
-     * 
-     * @param publish publish
-     * @return 返回结果
+     * PublishForm → PublishPO
      */
     PublishPO toPo(PublishForm publish);
 
@@ -122,18 +101,12 @@ public interface PublishConverter {
             @Mapping(source = "id", target = "value")
     })
     /**
-     * 用途：转换为 option。
-     * 
-     * @param publish publish
-     * @return 返回结果
+     * PublishPO → Option
      */
     Option<Long> toOption(PublishPO publish);
 
     /**
-     * 用途：转换为 options。
-     * 
-     * @param list list
-     * @return 结果列表
+     * List<PublishPO> → List<Option>
      */
     List<Option<Long>> toOptions(List<PublishPO> list);
 }

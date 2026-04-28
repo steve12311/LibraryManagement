@@ -12,13 +12,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 /**
- * mybatis-plus 配置类
- *
- * @author steve12311
-* @since 2025-11-18
- */
-/**
- * MybatisConfig
+ * Mybatis-Plus 配置类：注册分页插件、数据权限插件和全局自动填充。
  *
  * @author steve12311
  * @since 2025-11-18
@@ -28,12 +22,9 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 public class MybatisConfig {
 
     /**
-     * 用途：执行 mybatis plus interceptor 操作。
-     * 
-     * 分页插件和数据权限插件
-     * 
-     * 入参：无。
-     * @return 返回结果
+     * 分页插件和数据权限插件。
+     *
+     * @return MybatisPlus 拦截器 Bean
      */
     @Bean
     public MybatisPlusInterceptor mybatisPlusInterceptor() {
@@ -47,12 +38,9 @@ public class MybatisConfig {
     }
 
     /**
-     * 用途：执行 global config 操作。
-     * 
-     * 自动填充数据库创建人、创建时间、更新人、更新时间
-     * 
-     * 入参：无。
-     * @return 返回结果
+     * 自动填充数据库创建人、创建时间、更新人、更新时间。
+     *
+     * @return 全局配置 Bean
      */
     @Bean
     public GlobalConfig globalConfig() {

@@ -7,7 +7,7 @@ import org.dwtech.system.model.entity.RolePO;
 
 import java.util.Set;
 /**
- * RoleMapper
+ * 角色数据访问层，提供角色信息的查询接口
  *
  * @author steve12311
  * @since 2025-11-18
@@ -16,10 +16,9 @@ import java.util.Set;
 @Mapper
 public interface RoleMapper extends BaseMapper<RolePO> {
     /**
-     * 用途：获取 maximum data scope 信息。
-     * 
-     * @param roles roles
-     * @return 数值结果
+     * 查询指定角色集合中的最大数据权限范围
+     *
+     * @return 最大数据权限范围
      */
     Integer getMaximumDataScope(@Param("roles") Set<String> roles);
 }

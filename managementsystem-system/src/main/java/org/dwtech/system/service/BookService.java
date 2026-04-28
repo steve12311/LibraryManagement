@@ -7,7 +7,7 @@ import org.dwtech.system.model.entity.BookPO;
 
 import java.util.List;
 /**
- * BookService
+ * 图书元数据服务，负责图书基本信息的增删查改、ISBN 检索及图书下拉选项。
  *
  * @author steve12311
  * @since 2026-02-22
@@ -15,34 +15,33 @@ import java.util.List;
 
 public interface BookService extends IService<BookPO> {
     /**
-     * 用途：保存 or update book。
-     * 
-     * @param bookForm book form
-     * @return 操作结果，true 表示成功，false 表示失败
+     * 保存或更新图书信息。根据 BookForm 是否存在 ID 自动判断新增或更新。
+     *
+     * @param bookForm 图书表单，包含 ISBN、书名、作者、出版社、封面等信息
+     * @return true 表示操作成功，false 表示操作失败
      */
     boolean saveOrUpdateBook(BookForm bookForm);
 
     /**
-     * 用途：仅当图书不存在时保存图书元数据。
+     * 仅当图书不存在时保存图书元数据（幂等写入）。通常用于扫码入库等场景。
      *
      * @param book 图书实体
-     * @return 操作结果，true 表示插入成功，false 表示已存在
+     * @return true 表示插入成功，false 表示已存在
      */
     boolean saveBookIfAbsent(BookPO book);
 
     /**
-     * 用途：获取 book by isbn 信息。
-     * 
-     * @param isbn isbn
-     * @return 返回结果
+     * 根据 ISBN 查询图书详情。
+     *
+     * @param isbn ISBN 编号
+     * @return 图书表单，未找到时返回 null
      */
     BookForm getBookByIsbn(String isbn);
 
     /**
-     * 用途：查询 book options 列表。
-     * 
-     * 入参：无。
-     * @return 结果列表
+     * 查询所有图书的下拉选项列表，供前端下拉选择器使用。
+     *
+     * @return 图书选项列表，每项包含图书 ID 和名称
      */
     List<Option<Long>> listBookOptions();
 }

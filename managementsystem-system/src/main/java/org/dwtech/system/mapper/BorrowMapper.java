@@ -10,7 +10,7 @@ import org.dwtech.system.model.entity.BorrowPO;
 import org.dwtech.system.model.query.BorrowPageQuery;
 import org.dwtech.system.model.query.MyBorrowPageQuery;
 /**
- * BorrowMapper
+ * 借阅订单数据访问层，提供借阅记录的分页查询接口
  *
  * @author steve12311
  * @since 2026-02-24
@@ -19,20 +19,16 @@ import org.dwtech.system.model.query.MyBorrowPageQuery;
 @Mapper
 public interface BorrowMapper extends BaseMapper<BorrowPO> {
     /**
-     * 用途：获取 borrow page 信息。
-     * 
-     * @param page page
-     * @param queryParams query params
+     * 分页查询借阅记录列表，支持多种筛选条件
+     *
      * @return 分页结果
      */
     Page<BorrowBO> getBorrowPage(Page<BorrowBO> page, @Param("queryParams") BorrowPageQuery queryParams);
 
     /**
-     * 用途：获取当前登录用户借阅订单分页信息。
+     * 分页查询当前登录用户的借阅订单
      *
-     * @param page page
      * @param userId 当前登录用户 ID
-     * @param queryParams query params
      * @return 分页结果
      */
     Page<MyBorrowBO> getCurrentUserBorrowPage(Page<MyBorrowBO> page,

@@ -28,10 +28,10 @@ public class BookController {
     private final LibraryCatalogWriteService libraryCatalogWriteService;
 
     /**
-     * 用途：获取 book form data 信息。
-     * 
-     * @param isbn isbn
-     * @return 返回结果
+     * 根据 ISBN 获取图书表单数据。
+     * 返回图书详细信息，供入库编辑或修改时回显。
+     *
+     * @param isbn 图书国际标准书号
      */
     @GetMapping({"/{isbn}/form"})
     @PreAuthorize("@ss.hasPerm('sys:stock:edit')")
@@ -41,10 +41,8 @@ public class BookController {
     }
 
     /**
-     * 用途：更新 book。
-     * 
-     * @param bookForm book form
-     * @return 返回结果
+     * 更新图书信息。
+     * 接收完整图书表单数据，同步更新图书主表和关联信息，并刷新 AI 搜索索引。
      */
     @PutMapping
     @RepeatSubmit
@@ -56,10 +54,8 @@ public class BookController {
     }
 
     /**
-     * 用途：查询 book options 列表。
-     * 
-     * 入参：无。
-     * @return 返回结果
+     * 查询图书选项列表。
+     * 返回图书的键值对集合，用于前端下拉选择器（如关联图书时选择）。
      */
     @GetMapping("/options")
     @PreAuthorize("@ss.hasPerm('sys:stock:list')")

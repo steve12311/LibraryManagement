@@ -29,10 +29,8 @@ public class BorrowController {
     private final BorrowService borrowService;
 
     /**
-     * 用途：获取 borrow page 信息。
-     * 
-     * @param borrowPageQuery borrow page query
-     * @return 返回结果
+     * 分页查询借阅记录。
+     * 支持按借阅人、图书 ISBN、借阅状态、借阅日期范围等多维筛选。
      */
     @GetMapping("/page")
     @PreAuthorize("@ss.hasPerm('lib:borrow:list')")
@@ -42,10 +40,8 @@ public class BorrowController {
     }
 
     /**
-     * 用途：保存 borrow。
-     * 
-     * @param formData form data
-     * @return 返回结果
+     * 新增借阅记录。
+     * 预检图书库存是否充足，使用悲观锁扣减库存，创建借阅订单并记录操作日志。
      */
     @PostMapping
     @RepeatSubmit
@@ -57,11 +53,11 @@ public class BorrowController {
     }
 
     /**
-     * 用途：更新 borrow。
-     * 
-     * @param borrowId borrow ID
-     * @param formData form data
-     * @return 返回结果
+     * 更新借阅记录。
+     * 支持修改借阅状态（借出/归还/续借等），涉及库存数量调整和借阅历史追溯。
+     *
+     * @param borrowId 借阅记录 ID
+     * @param formData 借阅表单数据
      */
     @PutMapping("/{borrowId}")
     @RepeatSubmit

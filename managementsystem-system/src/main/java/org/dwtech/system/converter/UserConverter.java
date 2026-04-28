@@ -19,7 +19,7 @@ import org.mapstruct.Named;
 
 import java.util.List;
 /**
- * UserConverter
+ * 用户对象转换器（MapStruct），负责 Entity ↔ DTO ↔ VO 之间的映射
  *
  * @author steve12311
  * @since 2025-11-18
@@ -29,26 +29,20 @@ import java.util.List;
 public interface UserConverter {
 
     /**
-     * 用途：转换为 page vo。
-     * 
-     * @param bo bo
-     * @return 返回结果
+     * UserBO → UserPageVO
      */
     UserPageVO toPageVo(UserBO bo);
 
     /**
-     * 用途：转换为 page vo。
-     * 
-     * @param po po
-     * @return 分页结果
+     * Page<UserBO> → Page<UserPageVO>
      */
     Page<UserPageVO> toPageVo(Page<UserBO> po);
 
     /**
-     * 用途：转换为导出 dto。
+     * UserBO → UserExportDTO
      *
-     * @param bo bo
-     * @return 返回结果
+     * @param gender 性别值
+     * @param status 状态值
      */
     @Mappings({
             @Mapping(target = "genderLabel", source = "gender", qualifiedByName = "formatGenderLabel"),
@@ -57,34 +51,22 @@ public interface UserConverter {
     UserExportDTO toExportDto(UserBO bo);
 
     /**
-     * 用途：批量转换为导出 dto。
-     *
-     * @param list list
-     * @return 返回结果
+     * List<UserBO> → List<UserExportDTO>
      */
     List<UserExportDTO> toExportDtos(List<UserBO> list);
 
     /**
-     * 用途：转换为 form。
-     * 
-     * @param po po
-     * @return 返回结果
+     * UserPO → UserForm
      */
     UserForm toForm(UserPO po);
 
     /**
-     * 用途：转换为 po。
-     * 
-     * @param form form
-     * @return 返回结果
+     * UserForm → UserPO
      */
     UserPO toPo(UserForm form);
 
     /**
-     * 用途：转换为 po。
-     * 
-     * @param form form
-     * @return 返回结果
+     * UserProfileForm → UserPO
      */
     UserPO toPo(UserProfileForm form);
 
@@ -92,10 +74,7 @@ public interface UserConverter {
             @Mapping(target = "userId", source = "id")
     })
     /**
-     * 用途：转换为 current user。
-     * 
-     * @param po po
-     * @return 返回结果
+     * UserPO → CurrentUserVO
      */
     CurrentUserVO toCurrentUser(UserPO po);
 
@@ -105,18 +84,12 @@ public interface UserConverter {
             @Mapping(target = "avatar", source = "avatar", qualifiedByName = "toAvatar")
     })
     /**
-     * 用途：转换为 option。
-     * 
-     * @param po po
-     * @return 返回结果
+     * UserPO → Option
      */
     Option<String> toOption(UserPO po);
 
     /**
-     * 用途：转换为 avatar。
-     * 
-     * @param avatar avatar
-     * @return 返回结果
+     * String → Avatar
      */
     @Named("toAvatar")
     default Avatar toAvatar(String avatar) {
@@ -124,10 +97,7 @@ public interface UserConverter {
     }
 
     /**
-     * 用途：格式化性别标签。
-     *
-     * @param gender 性别值
-     * @return 返回结果
+     * 将性别数值格式化为中文标签（1=男，2=女，0=保密）
      */
     @Named("formatGenderLabel")
     default String formatGenderLabel(Integer gender) {
@@ -143,10 +113,7 @@ public interface UserConverter {
     }
 
     /**
-     * 用途：格式化状态标签。
-     *
-     * @param status 状态值
-     * @return 返回结果
+     * 将状态数值格式化为中文标签（1=启用，其他=禁用）
      */
     @Named("formatStatusLabel")
     default String formatStatusLabel(Integer status) {
@@ -157,18 +124,12 @@ public interface UserConverter {
     }
 
     /**
-     * 用途：转换为 options。
-     * 
-     * @param list list
-     * @return 结果列表
+     * List<UserPO> → List<Option>
      */
     List<Option<String>> toOptions(List<UserPO> list);
 
     /**
-     * 用途：转换为 profile vo。
-     * 
-     * @param entity entity
-     * @return 返回结果
+     * UserBO → UserProfileVO
      */
     UserProfileVO toProfileVo(UserBO entity);
 }

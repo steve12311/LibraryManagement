@@ -8,24 +8,18 @@ package org.dwtech.common.utils.uuid;
  */
 public class IdUtils {
     /**
-     * 用途：执行 random uuid 操作。
-     * 
-     * 获取随机UUID
+     * 生成随机 UUID（带横线）。
      *
-     * @return 随机UUID
-     * 入参：无。
+     * @return 随机 UUID 字符串
      */
     public static String randomUUID() {
         return UUID.randomUUID().toString();
     }
 
     /**
-     * 用途：执行 simple uuid 操作。
-     * 
-     * 简化的UUID，去掉了横线
+     * 生成简化的随机 UUID（去掉横线）。
      *
-     * @return 简化的UUID，去掉了横线
-     * 入参：无。
+     * @return 无横线的 UUID 字符串
      */
     public static String simpleUUID() {
         return UUID.randomUUID().toString(true);

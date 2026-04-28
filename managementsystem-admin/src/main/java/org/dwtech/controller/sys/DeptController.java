@@ -26,10 +26,8 @@ public class DeptController {
     private final DeptService deptService;
 
     /**
-     * 用途：获取 dept list 信息。
-     * 
-     * @param queryParams query params
-     * @return 返回结果
+     * 查询部门列表。
+     * 支持按部门名称、状态等条件筛选，返回树形部门结构。
      */
     @GetMapping
     @PreAuthorize("@ss.hasPerm('sys:dept:list')")
@@ -41,10 +39,8 @@ public class DeptController {
     }
 
     /**
-     * 用途：获取 dept options 信息。
-     * 
-     * 入参：无。
-     * @return 返回结果
+     * 查询部门选项列表。
+     * 返回部门的 ID 和名称键值对，用于前端下拉选择器。
      */
     @GetMapping("/options")
     @PreAuthorize("@ss.hasPerm('sys:dept:list')")

@@ -17,10 +17,9 @@ public class FieldValidator implements ConstraintValidator<ValidField, String> {
     private String[] allowedValues;
 
     /**
-     * 用途：初始化 ialize。
-     * 
-     * @param constraintAnnotation constraint annotation
-     * 返回：无。
+     * 初始化校验器，从注解中获取允许的合法值列表。
+     *
+     * @param constraintAnnotation 验证字段注解
      */
     @Override
     public void initialize(ValidField constraintAnnotation) {
@@ -29,11 +28,11 @@ public class FieldValidator implements ConstraintValidator<ValidField, String> {
     }
 
     /**
-     * 用途：判断 valid 状态。
-     * 
-     * @param value value
-     * @param context context
-     * @return 操作结果，true 表示成功，false 表示失败
+     * 校验字段值是否在允许的合法值列表中。
+     *
+     * @param value   待校验字段值
+     * @param context 校验上下文
+     * @return 值合法返回 true，否则返回 false
      */
     @Override
     public boolean isValid(String value, ConstraintValidatorContext context) {

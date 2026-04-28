@@ -22,10 +22,9 @@ public class CaptchaConfig {
     private final CaptchaProperties captchaProperties;
 
     /**
-     * 用途：执行 code generator 操作。
-     * 
-     * 入参：无。
-     * @return 返回结果
+     * 根据配置创建验证码生成器（数学算式或随机字符串类型）。
+     *
+     * @return 验证码生成器 Bean
      */
     @Bean
     public CodeGenerator codeGenerator() {
@@ -41,12 +40,9 @@ public class CaptchaConfig {
     }
 
     /**
-     * 用途：执行 captcha font 操作。
-     * 
-     * 验证码字体
-     * 
-     * 入参：无。
-     * @return 返回结果
+     * 验证码字体。
+     *
+     * @return 验证码字体 Bean
      */
     @Bean
     public Font captchaFont() {

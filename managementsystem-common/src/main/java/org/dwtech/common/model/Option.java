@@ -25,11 +25,10 @@ public class Option<T> {
     private List<Option<T>> children;
 
     /**
-     * 用途：创建 Option 实例。
-     * 
-     * @param value value
-     * @param label label
-     * 返回：无。
+     * 构造下拉选项。
+     *
+     * @param value 选项值
+     * @param label 选项标签
      */
     public Option(T value, String label) {
         this.value = value;
@@ -37,12 +36,11 @@ public class Option<T> {
     }
 
     /**
-     * 用途：创建 Option 实例。
-     * 
-     * @param value value
-     * @param label label
-     * @param children children
-     * 返回：无。
+     * 构造带子级的下拉选项。
+     *
+     * @param value    选项值
+     * @param label    选项标签
+     * @param children 子选项列表
      */
     public Option(T value, String label, List<Option<T>> children) {
         this.value = value;
@@ -51,12 +49,11 @@ public class Option<T> {
     }
 
     /**
-     * 用途：创建 Option 实例。
-     * 
-     * @param value value
-     * @param label label
-     * @param tag tag
-     * 返回：无。
+     * 构造带标签的下拉选项。
+     *
+     * @param value 选项值
+     * @param label 选项标签
+     * @param tag   选项标签类型
      */
     public Option(T value, String label, String tag) {
         this.value = value;
@@ -65,12 +62,11 @@ public class Option<T> {
     }
 
     /**
-     * 用途：创建 Option 实例。
-     * 
-     * @param value value
-     * @param label label
-     * @param avatar avatar
-     * 返回：无。
+     * 构造带头像的下拉选项。
+     *
+     * @param value  选项值
+     * @param label  选项标签
+     * @param avatar 头像信息
      */
     public Option(T value, String label, Avatar avatar) {
         this.value = value;

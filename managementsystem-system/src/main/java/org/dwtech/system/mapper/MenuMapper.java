@@ -8,7 +8,7 @@ import org.dwtech.system.model.entity.MenuPO;
 import java.util.List;
 import java.util.Set;
 /**
- * MenuMapper
+ * 菜单数据访问层，提供菜单信息的查询接口
  *
  * @author steve12311
  * @since 2025-11-18
@@ -17,10 +17,9 @@ import java.util.Set;
 @Mapper
 public interface MenuMapper extends BaseMapper<MenuPO> {
     /**
-     * 用途：获取 menus by role codes 信息。
-     * 
-     * @param roleCodes role codes
-     * @return 结果列表
+     * 根据角色编码集合查询关联的菜单列表
+     *
+     * @return 菜单列表
      */
     List<MenuPO> getMenusByRoleCodes(@Param("roleCodes") Set<String> roleCodes);
 }

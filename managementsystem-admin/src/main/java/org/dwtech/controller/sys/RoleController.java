@@ -32,10 +32,8 @@ public class RoleController {
     private final RoleService roleService;
 
     /**
-     * 用途：获取 role page 信息。
-     * 
-     * @param queryParams query params
-     * @return 返回结果
+     * 分页查询角色列表。
+     * 支持按角色名称、状态、创建时间等条件筛选。
      */
     @GetMapping("/page")
     @PreAuthorize("@ss.hasPerm('sys:role:list')")
@@ -47,10 +45,8 @@ public class RoleController {
     }
 
     /**
-     * 用途：查询 role options 列表。
-     * 
-     * 入参：无。
-     * @return 返回结果
+     * 查询角色选项列表。
+     * 返回角色的 ID 和名称键值对，用于前端下拉选择器。
      */
     @GetMapping("/options")
     @PreAuthorize("@ss.hasPerm('sys:role:list')")
@@ -60,10 +56,8 @@ public class RoleController {
     }
 
     /**
-     * 用途：新增 role。
-     * 
-     * @param roleForm role form
-     * @return 返回结果
+     * 新增角色。
+     * 接收角色表单数据，校验角色编码唯一性后写入数据库并记录操作日志。
      */
     @Operation(summary = "新增角色")
     @PostMapping
@@ -76,10 +70,9 @@ public class RoleController {
     }
 
     /**
-     * 用途：获取 role form 信息。
-     * 
-     * @param roleId role ID
-     * @return 返回结果
+     * 根据 ID 获取角色表单数据，用于编辑时回显。
+     *
+     * @param roleId 角色 ID
      */
     @Operation(summary = "获取角色表单数据")
     @GetMapping("/{roleId}/form")
@@ -92,11 +85,8 @@ public class RoleController {
     }
 
     /**
-     * 用途：更新 role。
-     * 
-     * @param roleId role ID
-     * @param roleForm role form
-     * @return 返回结果
+     * 修改角色信息。
+     * 根据路径 ID 和表单数据更新角色基本属性，校验角色编码唯一性并记录操作日志。
      */
     @Operation(summary = "修改角色")
     @PutMapping(value = "/{id}")
@@ -113,10 +103,10 @@ public class RoleController {
     }
 
     /**
-     * 用途：删除 roles。
-     * 
-     * @param ids 主键 ID 列表
-     * @return 返回结果
+     * 批量删除角色。
+     * 根据逗号分隔的角色 ID 字符串删除角色，若角色已分配用户则阻止删除。
+     *
+     * @param ids 角色 ID，多个以英文逗号拼接
      */
     @Operation(summary = "删除角色")
     @DeleteMapping("/{ids}")
@@ -131,11 +121,10 @@ public class RoleController {
     }
 
     /**
-     * 用途：更新 role status。
-     * 
-     * @param roleId role ID
-     * @param status status
-     * @return 返回结果
+     * 修改角色启用/禁用状态。
+     *
+     * @param roleId 角色 ID
+     * @param status 目标状态：1 启用，0 禁用
      */
     @Operation(summary = "修改角色状态")
     @PutMapping(value = "/{roleId}/status")
@@ -151,10 +140,10 @@ public class RoleController {
     }
 
     /**
-     * 用途：获取 role menu ids 信息。
-     * 
-     * @param roleId role ID
-     * @return 返回结果
+     * 获取指定角色已分配的菜单 ID 集合。
+     * 用于前端角色菜单分配弹窗中回显已选菜单。
+     *
+     * @param roleId 角色 ID
      */
     @Operation(summary = "获取角色的菜单ID集合")
     @GetMapping("/{roleId}/menuIds")
@@ -167,11 +156,11 @@ public class RoleController {
     }
 
     /**
-     * 用途：分配 menus to role。
-     * 
-     * @param roleId role ID
-     * @param menuIds menu ID 列表
-     * @return 返回结果
+     * 为角色分配菜单权限。
+     * 全量更新角色的菜单关联关系，先清除原有分配再插入新的菜单 ID 列表。
+     *
+     * @param roleId  角色 ID
+     * @param menuIds 分配的菜单 ID 列表
      */
     @Operation(summary = "角色分配菜单权限")
     @PutMapping("/{roleId}/menus")
@@ -187,11 +176,11 @@ public class RoleController {
     }
 
     /**
-     * 用途：分配 users to role。
-     * 
-     * @param roleId role ID
-     * @param userIds user ID 列表
-     * @return 返回结果
+     * 为角色分配用户。
+     * 全量更新角色的用户关联关系，先清除原有分配再插入新的用户 ID 列表。
+     *
+     * @param roleId  角色 ID
+     * @param userIds 分配的用户 ID 列表
      */
     @Operation(summary = "角色分配用户")
     @PutMapping("/{roleId}/users")

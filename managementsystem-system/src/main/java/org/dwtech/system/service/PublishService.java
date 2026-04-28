@@ -9,7 +9,7 @@ import org.dwtech.system.model.vo.PublishPageVO;
 
 import java.util.List;
 /**
- * PublishService
+ * 出版社管理服务，提供出版社的分页查询、表单查询、新增、更新、删除及下拉选项功能。
  *
  * @author steve12311
  * @since 2026-02-22
@@ -17,50 +17,49 @@ import java.util.List;
 
 public interface PublishService {
     /**
-     * 用途：获取 publish page 信息。
-     * 
-     * @param queryParams query params
-     * @return 分页结果
+     * 分页查询出版社列表。
+     *
+     * @param queryParams 分页查询参数（页码、每页条数、筛选条件）
+     * @return 出版社分页结果
      */
     IPage<PublishPageVO> getPublishPage(PublishPageQuery queryParams);
 
     /**
-     * 用途：获取 publish form 信息。
-     * 
-     * @param id 主键 ID
-     * @return 返回结果
+     * 根据 ID 查询出版社表单数据（用于编辑回显）。
+     *
+     * @param id 出版社主键 ID
+     * @return 出版社表单
      */
     PublishForm getPublishForm(Long id);
 
     /**
-     * 用途：保存 publish。
-     * 
-     * @param publishForm publish form
-     * @return 操作结果，true 表示成功，false 表示失败
+     * 新增出版社。新增后清除出版社列表缓存。
+     *
+     * @param publishForm 出版社表单
+     * @return true 表示新增成功，false 表示失败
      */
     boolean savePublish(@Valid PublishForm publishForm);
 
     /**
-     * 用途：删除 publish。
-     * 
-     * @param ids 主键 ID 列表
-     * @return 操作结果，true 表示成功，false 表示失败
+     * 批量删除出版社。删除后清除出版社列表缓存。
+     *
+     * @param ids 待删除的出版社主键 ID 列表
+     * @return true 表示全部删除成功，false 表示失败
      */
     boolean deletePublish(List<Long> ids);
 
     /**
-     * 用途：查询 publish options 列表。
-     * 
-     * 入参：无。
-     * @return 结果列表
+     * 查询所有出版社的下拉选项列表，供前端下拉选择器使用。
+     *
+     * @return 出版社选项列表
      */
     List<Option<Long>> listPublishOptions();
 
     /**
-     * 用途：更新 publish。
-     * 
-     * @param publishForm publish form
-     * @return 操作结果，true 表示成功，false 表示失败
+     * 更新出版社信息。更新后清除出版社列表缓存。
+     *
+     * @param publishForm 出版社表单（需包含 ID）
+     * @return true 表示更新成功，false 表示失败
      */
     boolean updatePublish(@Valid PublishForm publishForm);
 }

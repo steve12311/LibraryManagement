@@ -13,7 +13,7 @@ import org.dwtech.system.model.query.UserPageQuery;
 
 import java.util.List;
 /**
- * UserMapper
+ * 用户数据访问层，提供用户信息的查询和数据权限接口
  *
  * @author steve12311
  * @since 2025-11-18
@@ -22,45 +22,39 @@ import java.util.List;
 @Mapper
 public interface UserMapper extends BaseMapper<UserPO> {
     /**
-     * 用途：获取 auth credentials by username 信息。
-     * 
-     * @param username username
-     * @return 返回结果
+     * 根据用户名查询用户认证凭据
+     *
+     * @return 用户认证凭据
      */
     UserAuthCredentials getAuthCredentialsByUsername(String username);
 
     /**
-     * 用途：获取 user page 信息。
-     * 
-     * @param page page
-     * @param queryParams query params
+     * 分页查询用户列表，支持数据权限过滤
+     *
      * @return 分页结果
      */
     @DataPermission(deptAlias = "u", userAlias = "u")
     Page<UserBO> getUserPage(Page<UserBO> page, @Param("queryParams") UserPageQuery queryParams);
 
     /**
-     * 用途：导出 user 列表。
+     * 导出用户列表，支持数据权限过滤
      *
-     * @param queryParams query params
      * @return 导出列表
      */
     @DataPermission(deptAlias = "u", userAlias = "u")
     List<UserBO> listExportUsers(@Param("queryParams") UserPageQuery queryParams);
 
     /**
-     * 用途：获取 user form data 信息。
-     * 
-     * @param userId user ID
-     * @return 返回结果
+     * 根据用户 ID 查询用户表单数据
+     *
+     * @return 用户表单数据
      */
     UserForm getUserFormData(Long userId);
 
     /**
-     * 用途：获取 user profile 信息。
-     * 
-     * @param userId user ID
-     * @return 返回结果
+     * 根据用户 ID 查询用户详细信息
+     *
+     * @return 用户详细信息
      */
     UserBO getUserProfile(Long userId);
 }

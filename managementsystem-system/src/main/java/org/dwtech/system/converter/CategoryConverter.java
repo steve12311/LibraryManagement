@@ -9,7 +9,7 @@ import org.mapstruct.Mappings;
 
 import java.util.List;
 /**
- * CategoryConverter
+ * 分类对象转换器（MapStruct），负责 Entity ↔ DTO ↔ VO 之间的映射
  *
  * @author steve12311
  * @since 2026-02-22
@@ -23,10 +23,7 @@ public interface CategoryConverter {
             @Mapping(source = "type", target = "code")
     })
     /**
-     * 用途：转换为 vo。
-     * 
-     * @param po po
-     * @return 返回结果
+     * CategoryPO → CategoryVO
      */
     CategoryVO toVo(CategoryPO po);
 
@@ -35,18 +32,12 @@ public interface CategoryConverter {
             @Mapping(source = "name", target = "label")
     })
     /**
-     * 用途：转换为 option。
-     * 
-     * @param po po
-     * @return 返回结果
+     * CategoryPO → Option
      */
     Option<String> toOption(CategoryPO po);
 
     /**
-     * 用途：转换为 options。
-     * 
-     * @param list list
-     * @return 结果列表
+     * List<CategoryPO> → List<Option>
      */
     List<Option<String>> toOptions(List<CategoryPO> list);
 }

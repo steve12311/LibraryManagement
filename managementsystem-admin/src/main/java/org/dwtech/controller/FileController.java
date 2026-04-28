@@ -31,10 +31,10 @@ public class FileController {
     private final FileService fileService;
 
     /**
-     * 用途：执行 upload file 操作。
-     * 
-     * @param file file
-     * @return 返回结果
+     * 上传文件，支持图片、文档等附件类型。
+     * 文件由服务端存储并返回 FileInfo 对象，包含访问路径和元数据。
+     *
+     * @param file 上传的 Multipart 文件
      */
     @PostMapping
     @RepeatSubmit
@@ -46,10 +46,10 @@ public class FileController {
     }
 
     /**
-     * 用途：根据 fileId 获取文件内容。
+     * 根据文件 ID 获取文件内容，支持浏览器内联预览或附件下载。
+     * 根据 MIME 类型和可预览标识自动决定 Content-Disposition 为 inline 或 attachment。
      *
-     * @param fileId 文件ID
-     * @return 文件二进制流
+     * @param fileId 文件记录 ID
      */
     @GetMapping("/{fileId}")
     public ResponseEntity<UrlResource> getFile(@PathVariable("fileId") Long fileId) throws Exception {
@@ -81,10 +81,9 @@ public class FileController {
     }
 
     /**
-     * 用途：删除文件。
+     * 删除指定文件记录。只能删除当前用户拥有的文件。
      *
-     * @param fileId 文件ID
-     * @return 返回结果
+     * @param fileId 文件记录 ID
      */
     @DeleteMapping("/{fileId}")
     @PreAuthorize("isAuthenticated()")

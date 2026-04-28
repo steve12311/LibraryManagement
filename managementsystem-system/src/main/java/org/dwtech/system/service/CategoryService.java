@@ -9,7 +9,7 @@ import org.dwtech.system.model.vo.CategoryVO;
 
 import java.util.List;
 /**
- * CategoryService
+ * 图书分类管理服务，提供分类树查询、懒加载选项、下拉选项及分类回显功能。
  *
  * @author steve12311
  * @since 2026-02-22
@@ -17,34 +17,33 @@ import java.util.List;
 
 public interface CategoryService extends IService<CategoryPO> {
     /**
-     * 用途：查询 categories 列表。
-     * 
-     * @param queryParams query params
-     * @return 结果列表
+     * 查询分类树列表。可按分类名称和状态筛选，返回按排序字段排列的树形结构。
+     *
+     * @param queryParams 查询参数（分类名称、状态）
+     * @return 分类树列表，含层级 children
      */
     List<CategoryVO> listCategories(CategoryQuery queryParams);
 
     /**
-     * 用途：查询 category options 列表。
-     * 
-     * 入参：无。
-     * @return 结果列表
+     * 查询所有可见分类的下拉选项树，供前端级联选择器使用。结果按分类排序字段排列。
+     *
+     * @return 分类下拉选项树
      */
     List<Option<Long>> listCategoryOptions();
 
     /**
-     * 用途：按父节点懒加载分类 options 列表。
+     * 按父节点懒加载分类选项列表（一次性只加载当前层的子节点）。
      *
      * @param parentId 父节点 ID，空值视为根节点
-     * @return 结果列表
+     * @return 当前层级子节点列表，每项含是否为叶子节点的标记
      */
     List<CategoryOptionVO> listCategoryLazyOptions(Long parentId);
 
     /**
-     * 用途：按 ID 查询单个分类 option（用于回显）。
+     * 按 ID 查询单个分类节点信息（用于前端回显）。
      *
      * @param categoryId 分类 ID
-     * @return 单个节点信息
+     * @return 单个分类选项，含是否为叶子节点标记
      */
     CategoryOptionVO getCategoryOptionById(Long categoryId);
 }

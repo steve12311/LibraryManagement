@@ -29,10 +29,8 @@ public class StockController {
     private final LibraryCatalogWriteService libraryCatalogWriteService;
 
     /**
-     * 用途：获取 stock page 信息。
-     * 
-     * @param queryParams query params
-     * @return 返回结果
+     * 分页查询图书库存列表。
+     * 支持按 ISBN、书名、分类、出版社等条件筛选，展示库存数量和可借数量。
      */
     @GetMapping("/page")
     @PreAuthorize("@ss.hasPerm('sys:stock:list')")
@@ -42,10 +40,10 @@ public class StockController {
     }
 
     /**
-     * 用途：获取 stock 信息。
-     * 
-     * @param isbn isbn
-     * @return 返回结果
+     * 根据 ISBN 获取图书库存详情。
+     * 返回图书信息及库存数量、可借数量等数据，供入库/出库操作时使用。
+     *
+     * @param isbn 图书国际标准书号
      */
     @GetMapping("/{isbn}")
     @PreAuthorize("@ss.hasPerm('sys:stock:view')")
@@ -55,10 +53,8 @@ public class StockController {
     }
 
     /**
-     * 用途：新增 stock。
-     * 
-     * @param stockForm stock form
-     * @return 返回结果
+     * 图书入库。
+     * 增加指定 ISBN 图书的库存数量，同时写入 AI 搜索索引以便智能检索。ISBN 不存在时自动创建新图书记录。
      */
     @PostMapping
     @RepeatSubmit
@@ -70,10 +66,8 @@ public class StockController {
     }
 
     /**
-     * 用途：执行 out stock 操作。
-     * 
-     * @param stockForm stock form
-     * @return 返回结果
+     * 图书出库。
+     * 减少指定 ISBN 图书的库存数量，出库前校验可出库数量是否充足，使用乐观锁防止超卖。
      */
     @PutMapping
     @RepeatSubmit

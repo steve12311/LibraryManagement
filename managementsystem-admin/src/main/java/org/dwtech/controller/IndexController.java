@@ -33,10 +33,7 @@ public class IndexController extends BaseController {
     private final StockService stockService;
 
     /**
-     * 用途：执行 index 操作。
-     * 
-     * 入参：无。
-     * @return 返回结果
+     * 首页接口，返回系统欢迎信息，用于健康检查和访问确认。
      */
     @GetMapping
     public Result<String> index() {
@@ -44,10 +41,8 @@ public class IndexController extends BaseController {
     }
 
     /**
-     * 用途：分页获取公开书目展示数据。
-     *
-     * @param queryParams query params
-     * @return 返回结果
+     * 分页获取公开书目展示数据。
+     * 首页展示用，仅返回已上架且可借阅的图书，包含封面、书名、作者等摘要信息。
      */
     @GetMapping("/api/v1/index/books/page")
     public PageResult<PublicBookPageVO> getPublicBookPage(@Valid PublicBookPageQuery queryParams) {
@@ -56,10 +51,10 @@ public class IndexController extends BaseController {
     }
 
     /**
-     * 用途：执行 stream chat 操作。
-     * 
-     * @param message message
-     * @return 返回结果
+     * AI 智能搜索对话接口。
+     * 接收用户自然语言消息，以 SSE 流式返回搜索结果，用于首页 AI 搜索助手交互。
+     *
+     * @param message 用户输入的自然语言搜索消息
      */
     @GetMapping(value = "/chat", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<ChatResponse> streamChat(@RequestParam(value = "message", defaultValue = "你好", required = false) String message) {

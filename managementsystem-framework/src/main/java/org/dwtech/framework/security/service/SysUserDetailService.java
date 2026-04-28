@@ -15,6 +15,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.context.request.RequestContextHolder;
 /**
  * SysUserDetailService
+ * Spring Security 用户详情加载服务。实现 UserDetailsService 接口，
+ * 根据用户名从用户服务加载认证凭据，并在认证失败时记录安全日志。
  *
  * @author steve12311
  * @since 2025-11-18
@@ -27,10 +29,12 @@ public class SysUserDetailService implements UserDetailsService {
     private final UserService userService;
 
     /**
-     * 用途：加载 user by username。
-     * 
-     * @param username username
-     * @return 返回结果
+     * 根据用户名加载用户详情。流程：从用户服务获取认证凭据 →
+     * 若未找到则抛出 UsernameNotFoundException → 构造 SysUserDetails 返回。
+     * 认证失败时记录客户端 IP 和安全日志。
+     *
+     * @param username 用户名
+     * @return Spring Security 用户详情
      */
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {

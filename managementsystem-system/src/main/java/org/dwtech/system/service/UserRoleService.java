@@ -4,7 +4,7 @@ import org.dwtech.system.model.entity.UserRolePO;
 
 import java.util.List;
 /**
- * UserRoleService
+ * 用户-角色关联服务，负责用户角色分配、批量保存及关联关系删除。
  *
  * @author steve12311
  * @since 2025-11-18
@@ -12,51 +12,41 @@ import java.util.List;
 
 public interface UserRoleService {
     /**
-     * 用途：保存 user roles。
-     * 
-     * 保存用户角色
+     * 保存用户角色分配。自动计算新增和删除的角色变更集，并在权限变化时主动清除用户登录态。
      *
-     * @param userId 用户ID
-     * @param roleIds 角色ID列表
-     * 返回：无。
+     * @param userId 用户 ID
+     * @param roleIds 待分配的角色 ID 列表（全量替换）
      */
     void saveUserRoles(Long userId, List<Long> roleIds);
 
     /**
-     * 用途：分配 users to role。
-     * 
-     * 为角色分配用户
+     * 为角色分配用户。先清空该角色已有的用户关联，再重新写入，并清除受影响用户的登录态。
      *
-     * @param roleId 角色ID
-     * @param userIds 用户ID列表
-     * 返回：无。
+     * @param roleId 角色 ID
+     * @param userIds 待分配的用户 ID 列表（全量替换）
      */
     void assignUsersToRole(Long roleId, List<Long> userIds);
 
     /**
-     * 用途：删除 users 对应的 role 关联。
+     * 根据用户 ID 列表删除对应的用户-角色关联记录。
      *
-     * @param userIds 用户ID列表
-     * 返回：无。
+     * @param userIds 用户 ID 列表
      */
     void removeUserRolesByUserIds(List<Long> userIds);
 
     /**
-     * 用途：批量保存 user roles。
+     * 批量保存用户-角色关联记录。
      *
      * @param userRoles 用户角色关联列表
-     * @param batchSize 批量大小
-     * 返回：无。
+     * @param batchSize 每批提交的数量
      */
     void saveBatchUserRoles(List<UserRolePO> userRoles, int batchSize);
 
     /**
-     * 用途：判断是否存在 assigned users。
-     * 
-     * 判断角色是否存在绑定的用户
+     * 判断指定角色是否已分配了用户。
      *
-     * @param roleId 角色ID
-     * @return true：已分配 false：未分配
+     * @param roleId 角色 ID
+     * @return true 表示已有用户绑定，false 表示未绑定
      */
     boolean hasAssignedUsers(Long roleId);
 }

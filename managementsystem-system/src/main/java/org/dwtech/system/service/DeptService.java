@@ -6,7 +6,7 @@ import org.dwtech.system.model.vo.DeptVO;
 
 import java.util.List;
 /**
- * DeptService
+ * 部门管理服务，提供部门树形列表查询与下拉选项功能。
  *
  * @author steve12311
  * @since 2025-11-18
@@ -14,18 +14,17 @@ import java.util.List;
 
 public interface DeptService {
     /**
-     * 用途：获取 dept list 信息。
-     * 
-     * @param queryParams query params
-     * @return 结果列表
+     * 查询部门树形列表。可按关键词和状态筛选，返回按排序字段排列的树形结构。
+     *
+     * @param queryParams 查询参数（关键词、状态）
+     * @return 部门树形列表，含层级 children
      */
     List<DeptVO> getDeptList(DeptQuery queryParams);
 
     /**
-     * 用途：查询 dept options 列表。
-     * 
-     * 入参：无。
-     * @return 结果列表
+     * 查询所有启用部门的下拉选项树，供前端部门选择器使用。
+     *
+     * @return 部门下拉选项树
      */
     List<Option<Long>> listDeptOptions();
 }

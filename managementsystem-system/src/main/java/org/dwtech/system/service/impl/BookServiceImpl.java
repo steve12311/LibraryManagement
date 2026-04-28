@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 /**
  * BookServiceImpl
+ * 图书元数据服务实现，通过 BookConverter 完成 PO/Form 互转。
  *
  * @author steve12311
  * @since 2026-02-22
@@ -24,10 +25,10 @@ public class BookServiceImpl extends ServiceImpl<BookMapper, BookPO> implements 
     private final BookConverter bookConverter;
 
     /**
-     * 用途：保存 or update book。
-     * 
-     * @param bookForm book form
-     * @return 操作结果，true 表示成功，false 表示失败
+     * 保存或更新图书。将 BookForm 通过 Converter 转为 PO，委托 MyBatis-Plus 的 saveOrUpdate。
+     *
+     * @param bookForm 图书表单
+     * @return true 表示操作成功，false 表示失败
      */
     @Override
     public boolean saveOrUpdateBook(BookForm bookForm) {
@@ -36,10 +37,10 @@ public class BookServiceImpl extends ServiceImpl<BookMapper, BookPO> implements 
     }
 
     /**
-     * 用途：仅当图书不存在时保存图书元数据。
+     * 仅当 ISBN 对应的图书不存在时插入（幂等），使用 Mapper 的 insertIfAbsent 方法。
      *
      * @param book 图书实体
-     * @return 操作结果，true 表示插入成功，false 表示已存在
+     * @return true 表示插入成功，false 表示已存在
      */
     @Override
     public boolean saveBookIfAbsent(BookPO book) {
@@ -47,10 +48,10 @@ public class BookServiceImpl extends ServiceImpl<BookMapper, BookPO> implements 
     }
 
     /**
-     * 用途：获取 book by isbn 信息。
-     * 
-     * @param isbn isbn
-     * @return 返回结果
+     * 根据 ISBN 查询图书，并通过 Converter 转为 Form 返回。
+     *
+     * @param isbn ISBN 编号
+     * @return 图书表单，未找到时返回 null
      */
     @Override
     public BookForm getBookByIsbn(String isbn) {
@@ -59,10 +60,9 @@ public class BookServiceImpl extends ServiceImpl<BookMapper, BookPO> implements 
     }
 
     /**
-     * 用途：查询 book options 列表。
-     * 
-     * 入参：无。
-     * @return 结果列表
+     * 查询全部图书的下拉选项列表，通过 Converter 将 PO 列表转为 Option 列表。
+     *
+     * @return 图书选项列表
      */
     @Override
     public List<Option<Long>> listBookOptions() {

@@ -31,25 +31,21 @@ public class ServletUtils {
     private static final SecureRandom secureRandom = new SecureRandom();
 
     /**
-     * 用途：获取 parameter 信息。
-     * 
-     * 获取String参数
-     * 
-     * @param name name
-     * @return 结果字符串
+     * 获取 String 类型请求参数。
+     *
+     * @param name 参数名
+     * @return 参数值字符串
      */
     public static String getParameter(String name) {
         return getRequest().getParameter(name);
     }
 
     /**
-     * 用途：获取 parameter 信息。
-     * 
-     * 获取String参数
-     * 
-     * @param name name
-     * @param defaultValue default value
-     * @return 结果字符串
+     * 获取 String 类型请求参数，为空时返回默认值。
+     *
+     * @param name         参数名
+     * @param defaultValue 默认值
+     * @return 参数值或默认值
      */
     public static String getParameter(String name, String defaultValue) {
         if (name == null) {
@@ -60,25 +56,21 @@ public class ServletUtils {
     }
 
     /**
-     * 用途：获取 parameter to int 信息。
-     * 
-     * 获取Integer参数
-     * 
-     * @param name name
-     * @return 数值结果
+     * 获取 Integer 类型请求参数。
+     *
+     * @param name 参数名
+     * @return 整型参数值
      */
     public static Integer getParameterToInt(String name) {
         return Integer.parseInt(getRequest().getParameter(name));
     }
 
     /**
-     * 用途：获取 parameter to int 信息。
-     * 
-     * 获取Integer参数
-     * 
-     * @param name name
-     * @param defaultValue default value
-     * @return 数值结果
+     * 获取 Integer 类型请求参数，为空时返回默认值。
+     *
+     * @param name         参数名
+     * @param defaultValue 默认值
+     * @return 整型参数值或默认值
      */
     public static Integer getParameterToInt(String name, Integer defaultValue) {
         if (name == null) {
@@ -89,25 +81,21 @@ public class ServletUtils {
     }
 
     /**
-     * 用途：获取 parameter to bool 信息。
-     * 
-     * 获取Boolean参数
-     * 
-     * @param name name
-     * @return 操作结果，true 表示成功，false 表示失败
+     * 获取 Boolean 类型请求参数。
+     *
+     * @param name 参数名
+     * @return 布尔型参数值
      */
     public static Boolean getParameterToBool(String name) {
         return Boolean.getBoolean(getRequest().getParameter(name));
     }
 
     /**
-     * 用途：获取 parameter to bool 信息。
-     * 
-     * 获取Boolean参数
-     * 
-     * @param name name
-     * @param defaultValue default value
-     * @return 操作结果，true 表示成功，false 表示失败
+     * 获取 Boolean 类型请求参数，为空时返回默认值。
+     *
+     * @param name         参数名
+     * @param defaultValue 默认值
+     * @return 布尔型参数值或默认值
      */
     public static Boolean getParameterToBool(String name, Boolean defaultValue) {
         if (name == null) {
@@ -118,46 +106,36 @@ public class ServletUtils {
     }
 
     /**
-     * 用途：获取 request 信息。
-     * 
-     * 获取request
-     * 
-     * 入参：无。
-     * @return 返回结果
+     * 获取当前请求的 HttpServletRequest 对象。
+     *
+     * @return HttpServletRequest
      */
     public static HttpServletRequest getRequest() {
         return getRequestAttributes().getRequest();
     }
 
     /**
-     * 用途：获取 response 信息。
-     * 
-     * 获取response
-     * 
-     * 入参：无。
-     * @return 返回结果
+     * 获取当前请求的 HttpServletResponse 对象。
+     *
+     * @return HttpServletResponse
      */
     public static HttpServletResponse getResponse() {
         return getRequestAttributes().getResponse();
     }
 
     /**
-     * 用途：获取 session 信息。
-     * 
-     * 获取session
-     * 
-     * 入参：无。
-     * @return 返回结果
+     * 获取当前请求的 HttpSession 对象。
+     *
+     * @return HttpSession
      */
     public static HttpSession getSession() {
         return getRequest().getSession();
     }
 
     /**
-     * 用途：获取 request attributes 信息。
-     * 
-     * 入参：无。
-     * @return 返回结果
+     * 获取当前请求的 ServletRequestAttributes。
+     *
+     * @return ServletRequestAttributes
      */
     public static ServletRequestAttributes getRequestAttributes() {
         RequestAttributes attributes = RequestContextHolder.getRequestAttributes();
@@ -165,12 +143,10 @@ public class ServletUtils {
     }
 
     /**
-     * 用途：执行 render string 操作。
-     * 
-     * 将字符串渲染到客户端
+     * 将 JSON 字符串写入 HTTP 响应并返回给客户端。
      *
-     * @param response 渲染对象
-     * @param string   待渲染的字符串
+     * @param response HTTP 响应对象
+     * @param string   待渲染的 JSON 字符串
      * @return null
      */
     public static String renderString(HttpServletResponse response, String string) {
@@ -185,12 +161,10 @@ public class ServletUtils {
     }
 
     /**
-     * 用途：校验 agent is mobile。
-     * 
-     * 判断User-Agent 是不是来自于手机
-     * 
-     * @param ua ua
-     * @return 操作结果，true 表示成功，false 表示失败
+     * 判断 User-Agent 是否来自移动端设备。
+     *
+     * @param ua User-Agent 字符串
+     * @return 移动端返回 true，否则返回 false
      */
     public static boolean checkAgentIsMobile(String ua) {
         boolean flag = false;
@@ -209,12 +183,9 @@ public class ServletUtils {
     }
 
     /**
-     * 用途：获取 device fingerprint 信息。
-     * 
-     * 获取请求设备指纹
-     * 
-     * 入参：无。
-     * @return 结果字符串
+     * 根据请求头信息计算设备指纹（哈希值）。
+     *
+     * @return 设备指纹十六进制字符串
      */
     public static String getDeviceFingerprint() {
         HttpServletRequest request = getRequest();
@@ -228,11 +199,9 @@ public class ServletUtils {
     }
 
     /**
-     * 用途：执行 url encode 操作。
-     * 
-     * 内容编码
+     * 对字符串进行 URL 编码（UTF-8）。
      *
-     * @param str 内容
+     * @param str 待编码内容
      * @return 编码后的内容
      */
     public static String urlEncode(String str) {
@@ -240,11 +209,9 @@ public class ServletUtils {
     }
 
     /**
-     * 用途：执行 url decode 操作。
-     * 
-     * 内容解码
+     * 对字符串进行 URL 解码（UTF-8）。
      *
-     * @param str 内容
+     * @param str 待解码内容
      * @return 解码后的内容
      */
     public static String urlDecode(String str) {
@@ -252,12 +219,9 @@ public class ServletUtils {
     }
 
     /**
-     * 用途：生成 token。
-     * 
-     * 生成CSRF Token
+     * 生成安全的 CSRF Token（Base64 编码）。
      *
-     * @return 解码后的内容
-     * 入参：无。
+     * @return CSRF Token
      */
     public static String generateToken() {
         byte[] bytes = new byte[32];

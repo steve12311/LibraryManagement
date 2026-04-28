@@ -26,6 +26,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 /**
  * CategoryServiceImpl
+ * 分类管理服务实现。提供分类树构建、懒加载选项和下拉选项功能，
+ * 部分查询方法结合 Spring Cache 进行结果缓存。
  *
  * @author steve12311
  * @since 2026-02-22
@@ -37,10 +39,11 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, CategoryPO>
     private final CategoryConverter categoryConverter;
 
     /**
-     * 用途：查询 categories 列表。
-     * 
-     * @param queryParams query params
-     * @return 结果列表
+     * 查询分类树列表。按查询条件筛选后，先获取所有分类数据，然后递归构建树形结构。
+     * 无查询条件时结果会被 Spring Cache 缓存。
+     *
+     * @param queryParams 查询参数（分类名称、状态）
+     * @return 分类树列表
      */
     @Override
     @Cacheable(
@@ -85,10 +88,10 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, CategoryPO>
     }
 
     /**
-     * 用途：查询 category options 列表。
-     * 
-     * 入参：无。
-     * @return 结果列表
+     * 查询所有可见分类的下拉选项树。先将分类按父节点分组，然后从根节点递归构建树形选项。
+     * 结果被 Spring Cache 缓存。
+     *
+     * @return 分类下拉选项树
      */
     @Override
     @Cacheable(cacheNames = "category", key = "'options'")
@@ -107,10 +110,11 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, CategoryPO>
     }
 
     /**
-     * 用途：按父节点懒加载 category options 列表。
+     * 按父节点懒加载分类选项。只查询指定父节点下的直接子节点，并判断每个子节点是否为叶子节点。
+     * 结果被 Spring Cache 缓存。
      *
      * @param parentId 父节点 ID，空值视为根节点
-     * @return 结果列表
+     * @return 当前层级子节点列表
      */
     @Override
     @Cacheable(cacheNames = "category", key = "'lazy:' + (#p0 == null ? 0 : #p0)", sync = true)
@@ -146,10 +150,11 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, CategoryPO>
     }
 
     /**
-     * 用途：按 ID 查询单个 category option（用于前端回显）。
+     * 按 ID 查询单个分类节点（用于前端回显）。先查询分类信息，再判断是否有子节点。
+     * 结果被 Spring Cache 缓存。
      *
      * @param categoryId 分类 ID
-     * @return 单个节点信息
+     * @return 分类选项，含是否是叶子节点的标记
      */
     @Override
     @Cacheable(cacheNames = "category", key = "'node:' + #p0", condition = "#p0 != null", sync = true)
@@ -176,11 +181,11 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, CategoryPO>
     }
 
     /**
-     * 用途：构建 category tree。
-     * 
-     * @param parentId parent ID
-     * @param categoryChildrenMap categoryChildrenMap
-     * @return 结果列表
+     * 递归构建分类树。从给定父节点出发，逐层构建 CategoryVO 并设置 children 子列表。
+     *
+     * @param parentId 父节点 ID
+     * @param categoryChildrenMap 按父节点分组的分类映射
+     * @return 子分类列表
      */
     private List<CategoryVO> buildCategoryTree(Long parentId, Map<Long, List<CategoryPO>> categoryChildrenMap) {
         List<CategoryPO> children = categoryChildrenMap.get(parentId);
@@ -198,11 +203,11 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, CategoryPO>
     }
 
     /**
-     * 用途：构建 category options。
-     * 
-     * @param parentId parent ID
-     * @param categoryChildrenMap categoryChildrenMap
-     * @return 结果列表
+     * 递归构建分类下拉选项树。使用 ArrayList 避免 Stream#toList 返回不可变列表影响 Redis 缓存。
+     *
+     * @param parentId 父节点 ID
+     * @param categoryChildrenMap 按父节点分组的分类映射
+     * @return 子选项列表
      */
     private List<Option<Long>> buildCategoryOptions(Long parentId, Map<Long, List<CategoryPO>> categoryChildrenMap) {
         List<CategoryPO> children = categoryChildrenMap.get(parentId);
@@ -224,10 +229,10 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, CategoryPO>
     }
 
     /**
-     * 用途：按父节点分组分类数据，避免递归阶段重复全量扫描。
+     * 将分类列表按父节点 ID 分组，避免递归阶段重复全量扫描。
      *
      * @param categories 分类列表
-     * @return 父节点到子分类的映射
+     * @return 父节点 ID 到子分类列表的映射
      */
     private Map<Long, List<CategoryPO>> groupCategoriesByParentId(List<CategoryPO> categories) {
         return CollectionUtil.emptyIfNull(categories)

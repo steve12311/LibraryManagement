@@ -26,11 +26,10 @@ public enum MenuTypeEnum implements IBaseEnum<Integer> {
     private final String label;
 
     /**
-     * 用途：创建 MenuTypeEnum 实例。
-     * 
-     * @param value value
-     * @param label label
-     * 返回：无。
+     * 构造菜单类型枚举项。
+     *
+     * @param value 菜单类型值
+     * @param label 菜单类型描述
      */
     MenuTypeEnum(Integer value, String label) {
         this.value = value;

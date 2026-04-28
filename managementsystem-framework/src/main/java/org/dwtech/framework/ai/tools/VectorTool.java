@@ -22,10 +22,10 @@ public class VectorTool {
     private final CatalogVectorStoreService catalogVectorStoreService;
 
     /**
-     * 用途：搜索 vectors。
-     * 
-     * @param keywords keywords
-     * @return 结果集合
+     * 根据关键词在向量库中搜索图书，返回匹配的 ISBN 编码集合，供 AI 模型使用。
+     *
+     * @param keywords 搜索关键词列表
+     * @return 匹配的 ISBN 编码集合
      */
     @Tool(description = "通过关键词搜索书库，返回相关书籍对应的ISBN码")
     public Set<String> searchVectors(List<String> keywords) {

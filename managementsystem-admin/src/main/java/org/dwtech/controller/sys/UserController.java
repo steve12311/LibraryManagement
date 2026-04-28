@@ -52,10 +52,8 @@ public class UserController {
     private final BorrowService borrowService;
 
     /**
-     * 用途：获取 user page 信息。
-     * 
-     * @param queryParams query params
-     * @return 返回结果
+     * 分页查询用户列表。
+     * 支持按用户名、手机号、状态、部门等条件筛选。
      */
     @GetMapping("/page")
     @PreAuthorize("@ss.hasPerm('sys:user:list')")
@@ -65,10 +63,8 @@ public class UserController {
     }
 
     /**
-     * 用途：保存 user。
-     * 
-     * @param formData form data
-     * @return 返回结果
+     * 新增用户。
+     * 接收用户表单数据，校验用户名唯一性，密码加密后写入数据库并记录操作日志。
      */
     @PostMapping
     @RepeatSubmit
@@ -80,10 +76,8 @@ public class UserController {
     }
 
     /**
-     * 用途：下载用户导入模板。
-     *
-     * @param response response
-     * 返回：无。
+     * 下载用户导入模板 Excel 文件。
+     * 模板包含用户导入所需的字段列（用户名、手机号、邮箱等），供用户填写后批量导入。
      */
     @GetMapping("/template")
     @PreAuthorize("@ss.hasPerm('sys:user:add')")
@@ -99,10 +93,10 @@ public class UserController {
     }
 
     /**
-     * 用途：导入 users。
+     * 批量导入用户。
+     * 通过上传 Excel 文件批量创建用户，逐行校验数据合法性，返回导入结果（成功数/失败数/失败详情）。
      *
-     * @param file Excel 文件
-     * @return 返回结果
+     * @param file 用户导入 Excel 文件
      */
     @PostMapping("/import")
     @RepeatSubmit
@@ -122,11 +116,8 @@ public class UserController {
     }
 
     /**
-     * 用途：导出 users。
-     *
-     * @param queryParams query params
-     * @param response response
-     * 返回：无。
+     * 导出用户列表为 Excel 文件。
+     * 根据查询条件筛选用户数据，使用 EasyExcel 生成用户列表 xlsx 并写入响应流供下载。
      */
     @GetMapping("/export")
     @PreAuthorize("@ss.hasPerm('sys:user:list')")
@@ -143,10 +134,9 @@ public class UserController {
     }
 
     /**
-     * 用途：获取 user form 信息。
-     * 
-     * @param userId user ID
-     * @return 返回结果
+     * 根据 ID 获取用户表单数据，用于编辑时回显。
+     *
+     * @param userId 用户 ID
      */
     @GetMapping("/{userId}/form")
     @PreAuthorize("@ss.hasPerm('sys:user:edit')")
@@ -156,11 +146,11 @@ public class UserController {
     }
 
     /**
-     * 用途：更新 user。
-     * 
-     * @param userId user ID
-     * @param formData form data
-     * @return 返回结果
+     * 修改用户信息。
+     * 根据路径 ID 和表单数据更新用户基本属性，校验用户名唯一性并记录操作日志。
+     *
+     * @param userId   用户 ID
+     * @param formData 用户表单数据
      */
     @PutMapping("/{userId}")
     @PreAuthorize("@ss.hasPerm('sys:user:edit')")
@@ -173,10 +163,10 @@ public class UserController {
     }
 
     /**
-     * 用途：删除 users。
-     * 
-     * @param userIds user ID 列表
-     * @return 返回结果
+     * 批量删除用户。
+     * 根据用户 ID 列表删除用户记录，不能删除自身。
+     *
+     * @param userIds 用户 ID 列表
      */
     @DeleteMapping("/{userIds}")
     @PreAuthorize("@ss.hasPerm('sys:user:delete')")
@@ -188,11 +178,10 @@ public class UserController {
     }
 
     /**
-     * 用途：更新 user status。
-     * 
-     * @param userId user ID
-     * @param status status
-     * @return 返回结果
+     * 修改用户启用/禁用状态。
+     *
+     * @param userId 用户 ID
+     * @param status 目标状态：1 启用，0 禁用
      */
     @PutMapping("/{userId}/status")
     @PreAuthorize("@ss.hasPerm('sys:user:edit')")
@@ -204,10 +193,8 @@ public class UserController {
     }
 
     /**
-     * 用途：获取 current user 信息。
-     * 
-     * 入参：无。
-     * @return 返回结果
+     * 获取当前登录用户信息。
+     * 包含用户基本信息、角色和权限集合，用于前端用户状态管理和权限判断。
      */
     @GetMapping("/me")
     @PreAuthorize("isAuthenticated()")
@@ -217,10 +204,8 @@ public class UserController {
     }
 
     /**
-     * 用途：获取当前登录用户借阅订单分页信息。
-     *
-     * @param queryParams query params
-     * @return 返回结果
+     * 分页查询当前登录用户的借阅订单。
+     * 仅返回该用户自己的借阅记录，支持按借阅状态、日期等条件筛选。
      */
     @GetMapping("/me/borrows/page")
     @PreAuthorize("isAuthenticated()")
@@ -231,11 +216,11 @@ public class UserController {
     }
 
     /**
-     * 用途：重置 password。
-     * 
-     * @param userId user ID
-     * @param password password
-     * @return 返回结果
+     * 管理员重置指定用户的密码。
+     * 将用户密码更新为指定的新值（明文），由服务端进行加密处理后存储。
+     *
+     * @param userId   用户 ID
+     * @param password 新密码明文
      */
     @PutMapping("/{userId}/password/reset")
     @PreAuthorize("@ss.hasPerm('sys:user:reset-password')")
@@ -247,10 +232,8 @@ public class UserController {
     }
 
     /**
-     * 用途：更新 password。
-     * 
-     * @param formData form data
-     * @return 返回结果
+     * 当前登录用户修改自己的密码。
+     * 校验旧密码是否正确，新旧密码不能相同，更新后强制退出重新登录。
      */
     @PutMapping("/password")
     @PreAuthorize("isAuthenticated()")
@@ -262,10 +245,8 @@ public class UserController {
     }
 
     /**
-     * 用途：查询 user options 列表。
-     * 
-     * 入参：无。
-     * @return 返回结果
+     * 查询用户选项列表。
+     * 返回用户的 ID 和名称键值对，用于前端下拉选择器。
      */
     @GetMapping("/options")
     @PreAuthorize("@ss.hasPerm('sys:user:list')")
@@ -275,10 +256,8 @@ public class UserController {
     }
 
     /**
-     * 用途：获取 user profile 信息。
-     * 
-     * 入参：无。
-     * @return 返回结果
+     * 获取当前登录用户的个人资料。
+     * 返回用户的详细信息，用于个人中心页面展示。
      */
     @Operation(summary = "获取个人中心用户信息")
     @GetMapping("/profile")
@@ -290,10 +269,8 @@ public class UserController {
     }
 
     /**
-     * 用途：更新 user profile。
-     * 
-     * @param formData form data
-     * @return 返回结果
+     * 当前登录用户修改个人资料。
+     * 支持更新昵称、手机号、邮箱、头像等个人信息。
      */
     @Operation(summary = "个人中心修改用户信息")
     @PutMapping("/profile")

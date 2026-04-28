@@ -56,6 +56,9 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 /**
  * UserServiceImpl
+ * 用户管理服务实现。提供用户认证查询、CRUD、Excel 批量导入导出、
+ * 密码修改重置、个人信息维护等功能。写操作涉及 UserRoleService、
+ * TokenManager 和 PermissionService 的协作。
  *
  * @author steve12311
  * @since 2025-11-18
@@ -78,10 +81,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserPO> implements 
     private final TokenManager tokenManager;
 
     /**
-     * 用途：获取 auth credentials by username 信息。
-     * 
-     * @param username username
-     * @return 返回结果
+     * 根据用户名查询认证凭据。流程：从数据库查询用户凭证 → 若存在则获取其角色集合 →
+     * 计算最大数据权限范围并设置到凭据中。
+     *
+     * @param username 用户名
+     * @return 认证凭据，用户不存在时返回 null
      */
     @Override
     public UserAuthCredentials getAuthCredentialsByUsername(String username) {
@@ -96,10 +100,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserPO> implements 
     }
 
     /**
-     * 用途：获取 user page 信息。
-     * 
-     * @param queryParams query params
-     * @return 分页结果
+     * 分页查询用户列表。根据当前登录用户是否为超管决定是否展示全部数据，
+     * 通过 Converter 将 BO 分页转为 VO 分页。
+     *
+     * @param queryParams 分页查询参数
+     * @return 用户分页结果
      */
     @Override
     public IPage<UserPageVO> getUserPage(UserPageQuery queryParams) {
@@ -115,10 +120,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserPO> implements 
     }
 
     /**
-     * 用途：导入 users。
+     * 从 Excel 流批量导入用户。流程：解析 Excel 行数据 → 逐行校验用户名、昵称、手机号、性别、角色 →
+     * 收集有效行及错误信息 → 批量写入用户 → 建立用户-角色关联 → 返回导入结果。
+     * 涉及跨表事务（用户表 + 用户角色关联表）。
      *
      * @param inputStream Excel 输入流
-     * @return 导入结果
+     * @return 导入结果（含成功数、失败数及错误消息明细）
      */
     @Override
     @Transactional
@@ -196,10 +203,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserPO> implements 
     }
 
     /**
-     * 用途：导出 users 列表。
+     * 导出用户列表（用于 Excel 导出）。根据查询条件获取用户 BO 列表，通过 Converter 转为 DTO 列表。
      *
-     * @param queryParams query params
-     * @return 导出结果列表
+     * @param queryParams 查询参数
+     * @return 用户导出 DTO 列表
      */
     @Override
     public List<UserExportDTO> listExportUsers(UserPageQuery queryParams) {
@@ -213,10 +220,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserPO> implements 
     }
 
     /**
-     * 用途：保存 user。
-     * 
-     * @param formData form data
-     * @return 操作结果，true 表示成功，false 表示失败
+     * 新增用户。流程：校验用户名唯一性 → Converter 转换 Form 为 PO →
+     * 设置基本路径的加密密码和创建者 → 保存用户 → 建立用户-角色关联。
+     *
+     * @param formData 用户表单
+     * @return true 表示新增成功，false 表示失败
      */
     @Override
     @Transactional
@@ -245,11 +253,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserPO> implements 
     }
 
     /**
-     * 用途：更新 user。
-     * 
-     * @param userId user ID
-     * @param userForm user form
-     * @return 操作结果，true 表示成功，false 表示失败
+     * 更新用户信息。流程：校验用户名唯一性（排除自身）→ Converter 转换 Form 为 PO →
+     * 以路径 userId 为准更新对象 → 更新用户 → 更新角色关联 → 状态变更时清除用户登录态。
+     *
+     * @param userId 用户 ID
+     * @param userForm 用户表单
+     * @return true 表示更新成功，false 表示失败
      */
     @Override
     @Transactional
@@ -287,10 +296,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserPO> implements 
     }
 
     /**
-     * 用途：获取 user form data 信息。
-     * 
-     * @param userId user ID
-     * @return 返回结果
+     * 根据 ID 查询用户表单数据，委托 Mapper 返回带有角色 ID 的表单。
+     *
+     * @param userId 用户 ID
+     * @return 用户表单
      */
     @Override
     public UserForm getUserFormData(Long userId) {
@@ -298,10 +307,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserPO> implements 
     }
 
     /**
-     * 用途：删除 users。
-     * 
-     * @param userIds user ID 列表
-     * @return 操作结果，true 表示成功，false 表示失败
+     * 批量删除用户。流程：校验用户 ID 列表非空 → 删除用户记录 → 删除对应的用户-角色关联。
+     *
+     * @param userIds 待删除的用户 ID 列表
+     * @return true 表示全部删除成功
      */
     @Override
     @Transactional
@@ -314,10 +323,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserPO> implements 
     }
 
     /**
-     * 用途：获取 current user info 信息。
-     * 
-     * 入参：无。
-     * @return 返回结果
+     * 获取当前登录用户的信息。流程：从安全上下文获取用户名 → 查询用户基础信息 →
+     * 转为 VO 并设置角色集合 → 从缓存获取权限集合设置到 VO。
+     *
+     * @return 当前用户信息
      */
     @Override
     public CurrentUserVO getCurrentUserInfo() {
@@ -349,11 +358,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserPO> implements 
     }
 
     /**
-     * 用途：重置 password。
-     * 
-     * @param userId user ID
-     * @param password password
-     * @return 操作结果，true 表示成功，false 表示失败
+     * 重置指定用户的密码。若未指定新密码则使用系统默认密码，重置后清除该用户的登录态。
+     *
+     * @param userId 用户 ID
+     * @param password 新密码（空值使用系统默认密码）
+     * @return true 表示重置成功，false 表示失败
      */
     @Override
     public boolean resetPassword(Long userId, String password) {
@@ -372,11 +381,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserPO> implements 
     }
 
     /**
-     * 用途：更新 user status。
-     * 
-     * @param userId user ID
-     * @param status status
-     * @return 操作结果，true 表示成功，false 表示失败
+     * 更新用户状态（启用/禁用）。状态变更后清除该用户的登录态。
+     *
+     * @param userId 用户 ID
+     * @param status 目标状态值
+     * @return true 表示更新成功，false 表示失败
      */
     @Override
     public boolean updateUserStatus(Long userId, Integer status) {
@@ -391,11 +400,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserPO> implements 
     }
 
     /**
-     * 用途：修改 password。
-     * 
-     * @param userId user ID
-     * @param formData form data
-     * @return 操作结果，true 表示成功，false 表示失败
+     * 修改密码。流程：校验用户存在 → 校验原密码正确 → 校验新旧密码不同 →
+     * 校验确认密码一致 → 更新密码 → 清除登录态强制重新登录。
+     *
+     * @param userId 用户 ID
+     * @param formData 密码修改表单（含原密码、新密码、确认密码）
+     * @return true 表示修改成功，false 表示失败
      */
     @Override
     public boolean changePassword(Long userId, PasswordUpdateForm formData) {
@@ -431,10 +441,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserPO> implements 
     }
 
     /**
-     * 用途：查询 user options 列表。
-     * 
-     * 入参：无。
-     * @return 结果列表
+     * 查询启用用户的下拉选项列表，供前端用户选择器使用。
+     *
+     * @return 用户选项列表
      */
     @Override
     public List<Option<String>> listUserOptions() {
@@ -446,10 +455,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserPO> implements 
     }
 
     /**
-     * 用途：获取 user profile 信息。
-     * 
-     * @param userId user ID
-     * @return 返回结果
+     * 获取用户个人信息。委托 Mapper 查询用户 BO，通过 Converter 转为 VO。
+     *
+     * @param userId 用户 ID
+     * @return 用户个人信息
      */
     @Override
     public UserProfileVO getUserProfile(Long userId) {
@@ -458,10 +467,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserPO> implements 
     }
 
     /**
-     * 用途：更新 user profile。
-     * 
-     * @param formData form data
-     * @return 操作结果，true 表示成功，false 表示失败
+     * 更新当前登录用户的个人信息。流程：获取当前用户 ID → Converter 转 PO → 按 ID 更新。
+     *
+     * @param formData 个人信息表单
+     * @return true 表示更新成功，false 表示失败
      */
     @Override
     public boolean updateUserProfile(UserProfileForm formData) {

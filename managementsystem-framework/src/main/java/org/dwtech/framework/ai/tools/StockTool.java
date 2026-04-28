@@ -18,10 +18,10 @@ import java.util.List;
 public class StockTool {
     private final StockService stockService;
     /**
-     * 用途：查询 book stock by isbns。
-     * 
-     * @param isbns isbns
-     * @return 返回结果
+     * 根据 ISBN 列表查询图书库存信息，供 AI 模型使用。
+     *
+     * @param isbns ISBN 编码列表
+     * @return 图书库存分页信息
      */
     @Tool(description = "通过ISBN码查询书籍库存")
     Result<List<StockPageVO>> findBookStockByISBNS(List<String> isbns) {

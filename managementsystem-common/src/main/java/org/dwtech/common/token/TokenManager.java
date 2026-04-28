@@ -15,9 +15,7 @@ import org.springframework.security.core.Authentication;
 public interface TokenManager {
 
     /**
-     * 用途：生成 token。
-     * 
-     * 生成认证 Token
+     * 根据用户认证信息生成认证 Token。
      *
      * @param authentication 用户认证信息
      * @return 认证 Token 响应
@@ -25,52 +23,41 @@ public interface TokenManager {
     AuthenticationToken generateToken(Authentication authentication);
 
     /**
-     * 用途：解析 token。
-     * 
-     * 解析 Token 获取认证信息
+     * 解析 Token 字符串获取用户认证信息。
      *
-     * @param token  Token
+     * @param token Token 字符串
      * @return 用户认证信息
      */
     Authentication parseToken(String token);
 
     /**
-     * 用途：校验 token。
-     * 
-     * 校验 Token 是否有效
+     * 校验 Token 是否有效。
      *
      * @param token JWT Token
-     * @return 是否有效
+     * @return true 表示有效，false 表示无效
      */
     boolean validateToken(String token);
 
     /**
-     * 用途：校验 refresh token。
-     * 
-     * 校验 刷新 Token 是否有效
+     * 校验刷新 Token 是否有效。
      *
-     * @param refreshToken JWT Token
-     * @return 是否有效
+     * @param refreshToken 刷新 Token
+     * @return true 表示有效，false 表示无效
      */
     boolean validateRefreshToken(String refreshToken);
 
     /**
-     * 用途：刷新 token。
-     * 
-     *  刷新 Token
+     * 刷新 Token，返回新的认证 Token 响应。
      *
      * @param token 刷新令牌
-     * @return 认证 Token 响应
+     * @return 新的认证 Token 响应
      */
     AuthenticationToken refreshToken(String token);
 
     /**
-     * 用途：执行 invalidate token 操作。
-     * 
-     * 令 Token 失效
+     * 令指定 Token 失效（登出时调用）。
      *
-     * @param token Token
-     * 返回：无。
+     * @param token 待失效的 Token
      */
     default void invalidateToken(String token) {
         // 默认实现可以是空的，或者抛出不支持的操作异常

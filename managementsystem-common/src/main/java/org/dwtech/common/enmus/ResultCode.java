@@ -310,10 +310,9 @@ public enum ResultCode implements IResultCode, Serializable {
 
 
     /**
-     * 用途：获取 code 信息。
-     * 
-     * 入参：无。
-     * @return 结果字符串
+     * 获取响应状态码。
+     *
+     * @return 响应状态码
      */
     @Override
     public String getCode() {
@@ -321,10 +320,9 @@ public enum ResultCode implements IResultCode, Serializable {
     }
 
     /**
-     * 用途：获取 msg 信息。
-     * 
-     * 入参：无。
-     * @return 结果字符串
+     * 获取响应消息描述。
+     *
+     * @return 响应消息描述
      */
     @Override
     public String getMsg() {
@@ -336,10 +334,9 @@ public enum ResultCode implements IResultCode, Serializable {
     private String msg;
 
     /**
-     * 用途：转换为 string。
-     * 
-     * 入参：无。
-     * @return 结果字符串
+     * 返回 JSON 格式的响应码和消息。
+     *
+     * @return JSON 格式字符串
      */
     @Override
     public String toString() {
@@ -351,10 +348,10 @@ public enum ResultCode implements IResultCode, Serializable {
 
 
     /**
-     * 用途：获取 value 信息。
-     * 
-     * @param code code
-     * @return 返回结果
+     * 根据响应码字符串查找对应的枚举常量。
+     *
+     * @param code 响应码字符串
+     * @return 匹配的枚举常量，未匹配时返回 SYSTEM_ERROR
      */
     public static ResultCode getValue(String code) {
         for (ResultCode value : values()) {

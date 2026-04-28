@@ -11,7 +11,7 @@ import org.mapstruct.Mappings;
 
 import java.util.List;
 /**
- * RoleConverter
+ * 角色对象转换器（MapStruct），负责 Entity ↔ DTO ↔ VO 之间的映射
  *
  * @author steve12311
  * @since 2025-11-18
@@ -21,10 +21,7 @@ import java.util.List;
 public interface RoleConverter {
 
     /**
-     * 用途：转换为 page vo。
-     * 
-     * @param rolePage role page
-     * @return 分页结果
+     * Page<RolePO> → Page<RolePageVO>
      */
     Page<RolePageVO> toPageVo(Page<RolePO> rolePage);
 
@@ -33,34 +30,22 @@ public interface RoleConverter {
             @Mapping(target = "label", source = "name")
     })
     /**
-     * 用途：转换为 option。
-     * 
-     * @param role role
-     * @return 返回结果
+     * RolePO → Option
      */
     Option<Long> toOption(RolePO role);
 
     /**
-     * 用途：转换为 options。
-     * 
-     * @param roleList role list
-     * @return 结果列表
+     * List<RolePO> → List<Option>
      */
     List<Option<Long>> toOptions(List<RolePO> roleList);
 
     /**
-     * 用途：转换为 po。
-     * 
-     * @param roleForm role form
-     * @return 返回结果
+     * RoleForm → RolePO
      */
     RolePO toPo(RoleForm roleForm);
 
     /**
-     * 用途：转换为 form。
-     * 
-     * @param entity entity
-     * @return 返回结果
+     * RolePO → RoleForm
      */
     RoleForm toForm(RolePO entity);
 }

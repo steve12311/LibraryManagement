@@ -10,7 +10,7 @@ import org.dwtech.system.model.vo.RolePageVO;
 import java.util.List;
 import java.util.Set;
 /**
- * RoleService
+ * 角色管理服务，提供角色分页查询、下拉选项、增删改、状态管理、菜单/用户分配功能。
  *
  * @author steve12311
  * @since 2025-11-18
@@ -18,85 +18,81 @@ import java.util.Set;
 
 public interface RoleService {
     /**
-     * 用途：获取 maximum data scope 信息。
-     * 
-     * @param roles roles
-     * @return 数值结果
+     * 根据角色编码集合获取最大的数据权限范围。
+     *
+     * @param roles 角色编码集合
+     * @return 最大的数据权限数值
      */
     Integer getMaximumDataScope(Set<String> roles);
 
     /**
-     * 用途：获取 role page 信息。
-     * 
-     * @param queryParams query params
-     * @return 分页结果
+     * 分页查询角色列表。
+     *
+     * @param queryParams 分页查询参数（页码、每页条数、筛选条件）
+     * @return 角色分页结果
      */
     Page<RolePageVO> getRolePage(RolePageQuery queryParams);
 
     /**
-     * 用途：查询 role options 列表。
-     * 
-     * 入参：无。
-     * @return 结果列表
+     * 查询所有角色的下拉选项列表，供前端角色选择器使用。
+     *
+     * @return 角色选项列表
      */
     List<Option<Long>> listRoleOptions();
 
     /**
-     * 用途：保存 role。
-     * 
-     * @param roleForm role form
-     * @return 操作结果，true 表示成功，false 表示失败
+     * 新增角色。
+     *
+     * @param roleForm 角色表单（角色名称、编码、权限范围等）
+     * @return true 表示新增成功，false 表示失败
      */
     boolean saveRole(@Valid RoleForm roleForm);
 
     /**
-     * 用途：获取 role form 信息。
-     * 
-     * @param roleId role ID
-     * @return 返回结果
+     * 根据 ID 查询角色表单数据（用于编辑回显）。
+     *
+     * @param roleId 角色 ID
+     * @return 角色表单
      */
     RoleForm getRoleForm(Long roleId);
 
     /**
-     * 用途：删除 roles。
-     * 
-     * @param ids 主键 ID 列表
-     * 返回：无。
+     * 批量删除角色（逗号分隔的 ID 字符串）。
+     *
+     * @param ids 逗号分隔的角色主键 ID
      */
     void deleteRoles(String ids);
 
     /**
-     * 用途：更新 role status。
-     * 
-     * @param roleId role ID
-     * @param status status
-     * @return 操作结果，true 表示成功，false 表示失败
+     * 更新角色状态（启用/禁用）。
+     *
+     * @param roleId 角色 ID
+     * @param status 目标状态值
+     * @return true 表示更新成功，false 表示失败
      */
     boolean updateRoleStatus(Long roleId, Integer status);
 
     /**
-     * 用途：获取 role menu ids 信息。
-     * 
-     * @param roleId role ID
-     * @return 结果列表
+     * 查询指定角色已分配的菜单 ID 列表。
+     *
+     * @param roleId 角色 ID
+     * @return 菜单 ID 列表
      */
     List<Long> getRoleMenuIds(Long roleId);
 
     /**
-     * 用途：分配 menus to role。
-     * 
-     * @param roleId role ID
-     * @param menuIds menu ID 列表
-     * 返回：无。
+     * 为角色分配菜单权限。
+     *
+     * @param roleId 角色 ID
+     * @param menuIds 待分配的菜单 ID 列表
      */
     void assignMenusToRole(Long roleId, List<Long> menuIds);
 
     /**
-     * 用途：分配 users to role。
-     * 
-     * @param roleId role ID
-     * @param userIds user ID 列表
-     * 返回：无。
+     * 为角色分配用户。
+     *
+     * @param roleId 角色 ID
+     * @param userIds 待分配的用户 ID 列表
      */
     void assignUsersToRole(Long roleId, List<Long> userIds);
 }

@@ -27,20 +27,18 @@ public class ToolsLoader {
     private volatile List<Object> cachedTools;
 
     /**
-     * 用途：创建 ToolsLoader 实例。
-     * 
-     * @param applicationContext application context
-     * 返回：无。
+     * 构造 ToolsLoader，注入 ApplicationContext 用于后续扫描和创建 Tool Bean。
+     *
+     * @param applicationContext Spring 应用上下文
      */
     public ToolsLoader(ApplicationContext applicationContext) {
         this.applicationContext = applicationContext;
     }
 
     /**
-     * 用途：获取 all tools 信息。
-     * 
-     * 入参：无。
-     * @return 结果列表
+     * 获取所有 AI Tool 实例（带缓存，线程安全）。
+     *
+     * @return 不可修改的 AI Tool 实例列表
      */
     public List<Object> getAllTools() {
         List<Object> tools = cachedTools;
@@ -56,10 +54,9 @@ public class ToolsLoader {
     }
 
     /**
-     * 用途：执行 scan tools 操作。
-     * 
-     * 入参：无。
-     * @return 结果列表
+     * 扫描 tools 包下所有包含 @Tool 注解方法的类，并创建其实例。
+     *
+     * @return 扫描到的 Tool 实例列表
      */
     private List<Object> scanTools() {
         ClassPathScanningCandidateComponentProvider scanner =
@@ -91,20 +88,18 @@ public class ToolsLoader {
     }
 
     /**
-     * 用途：执行 match all filter 操作。
-     * 
-     * 入参：无。
-     * @return 返回结果
+     * 返回匹配所有类的 TypeFilter。
+     *
+     * @return 始终返回 true 的 TypeFilter
      */
     private TypeFilter matchAllFilter() {
         return (metadataReader, metadataReaderFactory) -> true;
     }
 
     /**
-     * 用途：执行 resolve tools package 操作。
-     * 
-     * 入参：无。
-     * @return 结果字符串
+     * 解析 Tool 类所在的扫描包路径。
+     *
+     * @return 扫描的基础包名
      */
     private String resolveToolsPackage() {
         String basePackage = ToolsLoader.class.getPackageName();
@@ -115,10 +110,10 @@ public class ToolsLoader {
     }
 
     /**
-     * 用途：判断是否存在 tool methods。
-     * 
-     * @param toolClass tool class
-     * @return 操作结果，true 表示成功，false 表示失败
+     * 检查指定类中是否声明了带有 @Tool 注解的方法。
+     *
+     * @param toolClass 待检查的 Class
+     * @return 包含 @Tool 注解方法返回 true
      */
     private boolean hasToolMethods(Class<?> toolClass) {
         for (var method : toolClass.getDeclaredMethods()) {
@@ -130,10 +125,10 @@ public class ToolsLoader {
     }
 
     /**
-     * 用途：加载 class。
-     * 
-     * @param className class name
-     * @return 返回结果
+     * 根据全限定类名加载 Class 对象。
+     *
+     * @param className 类的全限定名
+     * @return Class 对象，加载失败返回 null
      */
     private Class<?> loadClass(String className) {
         try {

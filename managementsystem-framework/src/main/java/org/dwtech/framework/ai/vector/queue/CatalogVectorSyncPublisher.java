@@ -25,10 +25,9 @@ public class CatalogVectorSyncPublisher {
     private final CatalogVectorSyncProperties queueProperties;
 
     /**
-     * 用途：在事务提交后发布馆藏向量同步消息；若当前无事务则立即发布。
+     * 在事务提交后发布馆藏向量同步消息；若当前无事务则立即发布。
      *
      * @param message 队列消息
-     * 返回：无。
      */
     public void publishAfterCommit(CatalogVectorSyncMessage message) {
         Runnable publishAction = () -> {
@@ -58,10 +57,9 @@ public class CatalogVectorSyncPublisher {
     }
 
     /**
-     * 用途：立即发布馆藏向量同步消息。
+     * 立即向 Redis Stream 发布馆藏向量同步消息。
      *
      * @param message 队列消息
-     * 返回：无。
      */
     public void publishNow(CatalogVectorSyncMessage message) {
         Map<String, String> fields = message.toStreamFields();

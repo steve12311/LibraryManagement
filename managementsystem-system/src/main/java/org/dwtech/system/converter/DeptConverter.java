@@ -4,7 +4,7 @@ import org.dwtech.system.model.entity.DeptPO;
 import org.dwtech.system.model.vo.DeptVO;
 import org.mapstruct.Mapper;
 /**
- * DeptConverter
+ * 部门对象转换器（MapStruct），负责 Entity ↔ DTO ↔ VO 之间的映射
  *
  * @author steve12311
  * @since 2025-11-18
@@ -13,10 +13,7 @@ import org.mapstruct.Mapper;
 @Mapper(componentModel = "spring")
 public interface DeptConverter {
     /**
-     * 用途：转换为 vo。
-     * 
-     * @param dept dept
-     * @return 返回结果
+     * DeptPO → DeptVO
      */
     DeptVO toVo(DeptPO dept);
 }

@@ -35,13 +35,12 @@ public class CatalogVectorStoreService {
     private final VectorStore vectorStore;
 
     /**
-     * 用途：同步单本图书的向量文档。
+     * 删除原有向量文档并重新添加，实现单本图书的向量文档同步。
      *
-     * @param isbn isbn
+     * @param isbn     图书 ISBN
      * @param bookName 图书名称
-     * @param author 作者
-     * @param intro 图书简介
-     * 返回：无。
+     * @param author   作者
+     * @param intro    图书简介
      */
     public void syncCatalogBook(String isbn, String bookName, String author, String intro) {
         if (StrUtil.isBlank(isbn)) {
@@ -55,10 +54,9 @@ public class CatalogVectorStoreService {
     }
 
     /**
-     * 用途：删除单本图书的向量文档。
+     * 根据 ISBN 从向量库中删除对应图书的向量文档。
      *
-     * @param isbn isbn
-     * 返回：无。
+     * @param isbn 图书 ISBN
      */
     public void deleteCatalogBook(String isbn) {
         if (StrUtil.isBlank(isbn)) {
@@ -68,10 +66,10 @@ public class CatalogVectorStoreService {
     }
 
     /**
-     * 用途：根据关键词搜索相关图书 ISBN。
+     * 根据关键词在向量库中搜索相似图书，返回匹配的 ISBN 集合（已去重）。
      *
      * @param keywords 关键词列表
-     * @return 结果集合
+     * @return 匹配图书的 ISBN 集合
      */
     public Set<String> searchCatalogBookIsbns(List<String> keywords) {
         Set<String> isbns = new LinkedHashSet<>();
@@ -85,7 +83,7 @@ public class CatalogVectorStoreService {
             List<Document> documents = vectorStore.similaritySearch(
                     SearchRequest.builder()
                             .query(keyword)
-                            .topK(1)
+                            .topK(5)
                             .build()
             );
             collectIsbns(isbns, documents);
@@ -94,13 +92,13 @@ public class CatalogVectorStoreService {
     }
 
     /**
-     * 用途：构建图书向量文档。
+     * 构建包含图书元数据和简介的向量文档对象。
      *
-     * @param isbn isbn
+     * @param isbn     图书 ISBN
      * @param bookName 图书名称
-     * @param author 作者
-     * @param intro 图书简介
-     * @return 返回结果
+     * @param author   作者
+     * @param intro    图书简介
+     * @return 向量文档对象
      */
     private Document buildCatalogDocument(String isbn, String bookName, String author, String intro) {
         Map<String, Object> metadata = new HashMap<>();
@@ -116,11 +114,10 @@ public class CatalogVectorStoreService {
     }
 
     /**
-     * 用途：从搜索结果中收集 ISBN。
+     * 遍历向量搜索结果，提取并收集所有有效的 ISBN。
      *
-     * @param isbns isbn 集合
+     * @param isbns     用于收集 ISBN 的集合
      * @param documents 文档列表
-     * 返回：无。
      */
     private void collectIsbns(Set<String> isbns, List<Document> documents) {
         if (documents == null || documents.isEmpty()) {
@@ -137,10 +134,10 @@ public class CatalogVectorStoreService {
     }
 
     /**
-     * 用途：从文档中解析 ISBN。
+     * 从向量文档的元数据中提取 ISBN，兜底使用文档 ID。
      *
-     * @param document 文档
-     * @return 返回结果
+     * @param document 向量文档
+     * @return ISBN 字符串，无法解析时返回 null
      */
     private String resolveIsbn(Document document) {
         Object metadataIsbn = document.getMetadata().get(ISBN_METADATA_KEY);

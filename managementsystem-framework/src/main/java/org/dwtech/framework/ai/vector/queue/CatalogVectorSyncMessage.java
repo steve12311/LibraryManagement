@@ -17,29 +17,29 @@ public record CatalogVectorSyncMessage(
         String occurredAt
 ) {
     /**
-     * 用途：构造首次投递的队列消息。
+     * 创建首次投递的向量同步消息（重试次数为 0）。
      *
-     * @param isbn isbn
+     * @param isbn    图书 ISBN
      * @param trigger 触发来源
-     * @return 返回结果
+     * @return 初始消息实例
      */
     public static CatalogVectorSyncMessage initial(String isbn, CatalogVectorSyncTrigger trigger) {
         return new CatalogVectorSyncMessage(isbn, trigger, 0, Instant.now().toString());
     }
 
     /**
-     * 用途：构造下一次重试消息。
+     * 创建重试次数加 1 的下一次重试消息。
      *
-     * @return 返回结果
+     * @return 重试消息实例
      */
     public CatalogVectorSyncMessage nextRetry() {
         return new CatalogVectorSyncMessage(isbn, trigger, retryCount + 1, occurredAt);
     }
 
     /**
-     * 用途：转换为 Redis Stream 字段。
+     * 将消息转换为 Redis Stream 的字段 Map。
      *
-     * @return 返回结果
+     * @return 包含消息字段的 Map
      */
     public Map<String, String> toStreamFields() {
         Map<String, String> fields = new LinkedHashMap<>();

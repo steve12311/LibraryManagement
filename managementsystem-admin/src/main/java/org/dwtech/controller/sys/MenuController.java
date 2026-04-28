@@ -29,10 +29,8 @@ public class MenuController {
     private final MenuService menuService;
 
     /**
-     * 用途：获取 menus 信息。
-     * 
-     * @param queryParams query params
-     * @return 返回结果
+     * 查询菜单列表。
+     * 支持按菜单名称、状态、可见性等条件筛选，返回树形菜单结构。
      */
     @GetMapping
     @PreAuthorize("@ss.hasPerm('sys:menu:list')")
@@ -42,10 +40,10 @@ public class MenuController {
     }
 
     /**
-     * 用途：获取 menu options 信息。
-     * 
-     * @param onlyParent only parent
-     * @return 返回结果
+     * 查询菜单选项列表。
+     * 可选是否仅返回父级菜单，用于前端菜单树或下拉选择器。
+     *
+     * @param onlyParent 是否仅返回父级菜单
      */
     @GetMapping("/options")
     @PreAuthorize("@ss.hasPerm('sys:menu:list')")
@@ -57,10 +55,8 @@ public class MenuController {
     }
 
     /**
-     * 用途：获取 current user routes 信息。
-     * 
-     * 入参：无。
-     * @return 返回结果
+     * 获取当前登录用户的可访问路由列表。
+     * 根据用户角色和权限动态生成前端侧边栏和路由配置。
      */
     @GetMapping("/routes")
     @PreAuthorize("isAuthenticated()")
@@ -70,10 +66,9 @@ public class MenuController {
     }
 
     /**
-     * 用途：获取 menu form 信息。
-     * 
-     * @param id 主键 ID
-     * @return 返回结果
+     * 根据 ID 获取菜单表单数据，用于编辑时回显。
+     *
+     * @param id 菜单 ID
      */
     @GetMapping("/{id}/form")
     @PreAuthorize("@ss.hasPerm('sys:menu:edit')")
@@ -83,10 +78,8 @@ public class MenuController {
     }
 
     /**
-     * 用途：新增 menu。
-     * 
-     * @param menuForm menu form
-     * @return 返回结果
+     * 新增菜单。
+     * 接收菜单表单数据，校验路由路径唯一性后写入数据库，支持设置父级菜单和权限标识。
      */
     @PostMapping
     @PreAuthorize("@ss.hasPerm('sys:menu:add')")
@@ -98,11 +91,11 @@ public class MenuController {
     }
 
     /**
-     * 用途：更新 menu。
-     * 
-     * @param menuId menu ID
-     * @param menuForm menu form
-     * @return 返回结果
+     * 更新菜单信息。
+     * 根据路径 ID 和表单数据修改菜单属性，包含父菜单变更、权限标识更新等场景。
+     *
+     * @param menuId  菜单 ID
+     * @param menuForm 菜单表单数据
      */
     @PutMapping(value = "/{id}")
     @PreAuthorize("@ss.hasPerm('sys:menu:edit')")
@@ -118,10 +111,10 @@ public class MenuController {
     }
 
     /**
-     * 用途：删除 menu。
-     * 
-     * @param ids 主键 ID 列表
-     * @return 返回结果
+     * 批量删除菜单。
+     * 根据主键 ID 列表删除菜单记录，若菜单有子菜单则阻止删除。
+     *
+     * @param ids 菜单 ID 列表，多个以英文逗号分隔
      */
     @DeleteMapping("/{ids}")
     @PreAuthorize("@ss.hasPerm('sys:menu:delete')")

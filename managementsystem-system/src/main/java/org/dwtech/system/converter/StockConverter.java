@@ -13,7 +13,7 @@ import org.mapstruct.Mappings;
 
 import java.util.List;
 /**
- * StockConverter
+ * 库存对象转换器（MapStruct），负责 Entity ↔ DTO ↔ VO 之间的映射
  *
  * @author steve12311
  * @since 2026-02-22
@@ -29,10 +29,7 @@ public interface StockConverter {
                     expression = "java(bo.getCurrentStock() != null && bo.getCurrentStock() > 0)")
     })
     /**
-     * 用途：转换为公开书目分页视图。
-     *
-     * @param bo bo
-     * @return 返回结果
+     * StockBO → PublicBookPageVO
      */
     PublicBookPageVO toPublicPageVo(StockBO bo);
 
@@ -43,82 +40,52 @@ public interface StockConverter {
             @Mapping(source = "cover", target = "bookImage")
     })
     /**
-     * 用途：转换为 page vo。
-     * 
-     * @param bo bo
-     * @return 返回结果
+     * StockBO → StockPageVO
      */
     StockPageVO toPageVo(StockBO bo);
 
     /**
-     * 用途：转换为 bo。
-     * 
-     * @param form form
-     * @return 返回结果
+     * StockForm → StockBO
      */
     StockBO toBo(StockForm form);
 
     /**
-     * 用途：转换为 po。
-     * 
-     * @param bo bo
-     * @return 返回结果
+     * StockBO → StockPO
      */
     StockPO toPo(StockBO bo);
 
     /**
-     * 用途：转换为 po。
-     * 
-     * @param form form
-     * @return 返回结果
+     * StockForm → StockPO
      */
     StockPO toPo(StockForm form);
 
     /**
-     * 用途：转换为 book po。
-     * 
-     * @param bo bo
-     * @return 返回结果
+     * StockBO → BookPO
      */
     BookPO toBookPo(StockBO bo);
 
     /**
-     * 用途：转换为 page vo。
-     * 
-     * @param bo bo
-     * @return 分页结果
+     * Page<StockBO> → Page<StockPageVO>
      */
     Page<StockPageVO> toPageVo(Page<StockBO> bo);
 
     /**
-     * 用途：转换为公开书目分页结果。
-     *
-     * @param bo bo
-     * @return 分页结果
+     * Page<StockBO> → Page<PublicBookPageVO>
      */
     Page<PublicBookPageVO> toPublicPageVo(Page<StockBO> bo);
 
     /**
-     * 用途：转换为 list vo。
-     * 
-     * @param bo bo
-     * @return 结果列表
+     * List<StockBO> → List<StockPageVO>
      */
     List<StockPageVO> toListVo(List<StockBO> bo);
 
     /**
-     * 用途：转换为 form。
-     * 
-     * @param stock stock
-     * @return 返回结果
+     * StockBO → StockForm
      */
     StockForm toForm(StockBO stock);
 
     /**
-     * 用途：规范公开封面访问路径。
-     *
-     * @param cover cover
-     * @return 规范化后的访问路径
+     * 规范化公开封面访问路径
      */
     default String normalizePublicCoverUrl(String cover) {
         if (cover == null || cover.isBlank()) {

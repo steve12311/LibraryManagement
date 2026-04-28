@@ -15,12 +15,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 public class PasswordEncoderConfig {
 
     /**
-     * 用途：执行 password encoder 操作。
-     * 
-     * 密码编码器
-     * 
-     * 入参：无。
-     * @return 返回结果
+     * 密码编码器。
+     *
+     * @return 密码编码器 Bean
      */
     @Bean
     public PasswordEncoder passwordEncoder() {

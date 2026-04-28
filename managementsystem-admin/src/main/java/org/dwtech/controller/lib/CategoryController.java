@@ -29,10 +29,8 @@ public class CategoryController {
     private final CategoryService categoryService;
 
     /**
-     * 用途：查询 categories 列表。
-     * 
-     * @param queryParams query params
-     * @return 返回结果
+     * 查询分类列表，支持按分类名称、层级等条件筛选。
+     * 返回树形分类结构，用于图书分类管理界面展示。
      */
     @GetMapping
     @PreAuthorize("@ss.hasPerm('lib:category:list')")
@@ -42,10 +40,8 @@ public class CategoryController {
     }
 
     /**
-     * 用途：查询 category options 列表。
-     * 
-     * 入参：无。
-     * @return 返回结果
+     * 查询全部分类选项列表。
+     * 返回分类的 ID 和名称键值对，用于前端下拉选择器。
      */
     @GetMapping("/options")
     @PreAuthorize("@ss.hasPerm('lib:category:list')")
@@ -55,10 +51,10 @@ public class CategoryController {
     }
 
     /**
-     * 用途：按父节点懒加载 category options 列表。
+     * 按父节点懒加载分类选项。
+     * 仅返回指定父节点下的直接子分类，用于分类树逐级展开。
      *
-     * @param parentId 父节点 ID，空值视为根节点
-     * @return 返回结果
+     * @param parentId 父节点 ID，空值表示查询根级分类
      */
     @GetMapping("/options/lazy")
     @PreAuthorize("@ss.hasPerm('lib:category:list')")
@@ -68,10 +64,9 @@ public class CategoryController {
     }
 
     /**
-     * 用途：按 ID 查询单个 category option（用于前端回显）。
+     * 按 ID 查询单个分类节点，用于前端表单回显。
      *
      * @param categoryId 分类 ID
-     * @return 返回结果
      */
     @GetMapping("/options/node/{categoryId}")
     @PreAuthorize("@ss.hasPerm('lib:category:view')")

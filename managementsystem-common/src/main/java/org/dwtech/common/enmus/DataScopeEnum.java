@@ -3,13 +3,7 @@ package org.dwtech.common.enmus;
 import lombok.Getter;
 
 /**
- * 数据权限枚举
- *
- * @author steve12311
-* @since 2025-11-18
- */
-/**
- * DataScopeEnum
+ * 数据权限枚举（值越小，数据权限范围越大）。
  *
  * @author steve12311
  * @since 2025-11-18
@@ -30,11 +24,10 @@ public enum DataScopeEnum implements IBaseEnum<Integer> {
     private final String label;
 
     /**
-     * 用途：创建 DataScopeEnum 实例。
-     * 
-     * @param value value
-     * @param label label
-     * 返回：无。
+     * 构造数据权限枚举项。
+     *
+     * @param value 数据权限值（值越小范围越大）
+     * @param label 数据权限描述
      */
     DataScopeEnum(Integer value, String label) {
         this.value = value;

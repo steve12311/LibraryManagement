@@ -23,27 +23,21 @@ import java.nio.charset.StandardCharsets;
 public class WebResponseHelper {
 
     /**
-     * 用途：执行 write error 操作。
-     * 
-     * 写入错误响应
+     * 写入错误响应到客户端。
      *
-     * @param response   HttpServletResponse
-     * @param resultCode 响应结果码
-     * 返回：无。
+     * @param response   HTTP 响应对象
+     * @param resultCode 业务响应码
      */
     public static void writeError(HttpServletResponse response, ResultCode resultCode) {
         writeError(response, resultCode, null);
     }
 
     /**
-     * 用途：执行 write error 操作。
-     * 
-     * 写入错误响应（带自定义消息）
+     * 写入错误响应到客户端（带自定义消息）。
      *
-     * @param response   HttpServletResponse
-     * @param resultCode 响应结果码
-     * @param message    自定义消息
-     * 返回：无。
+     * @param response   HTTP 响应对象
+     * @param resultCode 业务响应码
+     * @param message    自定义错误消息
      */
     public static void writeError(HttpServletResponse response, ResultCode resultCode, String message) {
         try {
@@ -68,12 +62,10 @@ public class WebResponseHelper {
     }
 
     /**
-     * 用途：执行 map http status 操作。
-     * 
-     * 根据业务结果码映射HTTP状态码
+     * 根据业务结果码映射为对应的 HTTP 状态码。
      *
      * @param resultCode 业务结果码
-     * @return HTTP状态码
+     * @return HTTP 状态码
      */
     private static int mapHttpStatus(ResultCode resultCode) {
         return switch (resultCode) {

@@ -16,19 +16,9 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 
 /**
- * IP工具类
+ * IP 工具类：获取客户端 IP 地址和对应的地理位置信息。
  * <p>
- * 获取客户端IP地址和IP地址对应的地理位置信息
- * <p>
- * 使用Nginx等反向代理软件， 则不能通过request.getRemoteAddr()获取IP地址
- * 如果使用了多级反向代理的话，X-Forwarded-For的值并不止一个，而是一串IP地址，X-Forwarded-For中第一个非unknown的有效IP字符串，则为真实IP地址
- * </p>
- *
- * @author steve12311
-* @since 2025-11-18
- */
-/**
- * IPUtils
+ * 使用 Nginx 等反向代理时可通过 X-Forwarded-For 获取真实 IP 地址。
  *
  * @author steve12311
  * @since 2025-11-18
@@ -41,10 +31,7 @@ public class IPUtils {
     private static Searcher searcher;
 
     /**
-     * 用途：初始化 数据。
-     * 
-     * 入参：无。
-     * 返回：无。
+     * 初始化 IP 地理位置查询引擎，加载 ip2region 数据库文件。
      */
     @PostConstruct
     public void init() {
@@ -67,12 +54,10 @@ public class IPUtils {
     }
 
     /**
-     * 用途：获取 ip addr 信息。
-     * 
-     * 获取IP地址
+     * 获取客户端真实 IP 地址（支持反向代理透传）。
      *
-     * @param request HttpServletRequest对象
-     * @return 客户端IP地址
+     * @param request HttpServletRequest 对象
+     * @return 客户端 IP 地址
      */
     public static String getIpAddr(HttpServletRequest request) {
         String ip = null;
@@ -113,10 +98,10 @@ public class IPUtils {
     }
 
     /**
-     * 用途：校验 ip。
-     * 
-     * @param ip ip
-     * @return 操作结果，true 表示成功，false 表示失败
+     * 校验 IP 是否为空或 unknown。
+     *
+     * @param ip IP 地址
+     * @return 无效 IP 返回 true
      */
     private static boolean checkIp(String ip) {
         String unknown = "unknown";
@@ -124,12 +109,9 @@ public class IPUtils {
     }
 
     /**
-     * 用途：获取 local addr 信息。
-     * 
-     * 获取本机的IP地址
+     * 获取本机的 IP 地址。
      *
-     * @return 本机IP地址
-     * 入参：无。
+     * @return 本机 IP 地址
      */
     private static String getLocalAddr() {
         try {
@@ -141,11 +123,9 @@ public class IPUtils {
     }
 
     /**
-     * 用途：获取 region 信息。
-     * 
-     * 根据IP地址获取地理位置信息
+     * 根据 IP 地址获取地理位置信息。
      *
-     * @param ip IP地址
+     * @param ip IP 地址
      * @return 地理位置信息
      */
     public static String getRegion(String ip) {

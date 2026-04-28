@@ -9,7 +9,7 @@ import org.mapstruct.Mappings;
 
 import java.util.List;
 /**
- * BookConverter
+ * 图书对象转换器（MapStruct），负责 Entity ↔ DTO ↔ VO 之间的映射
  *
  * @author steve12311
  * @since 2026-02-22
@@ -18,18 +18,12 @@ import java.util.List;
 @Mapper(componentModel = "spring")
 public interface BookConverter {
     /**
-     * 用途：转换为 po。
-     * 
-     * @param bookForm book form
-     * @return 返回结果
+     * BookForm → BookPO
      */
     BookPO toPo(BookForm bookForm);
 
     /**
-     * 用途：转换为 form。
-     * 
-     * @param bookPO book po
-     * @return 返回结果
+     * BookPO → BookForm
      */
     BookForm toForm(BookPO bookPO);
 
@@ -38,18 +32,12 @@ public interface BookConverter {
             @Mapping(target = "value", source = "isbn"),
     })
     /**
-     * 用途：转换为 option。
-     * 
-     * @param po po
-     * @return 返回结果
+     * BookPO → Option
      */
     Option<Long> toOption(BookPO po);
 
     /**
-     * 用途：转换为 options。
-     * 
-     * @param list list
-     * @return 结果列表
+     * List<BookPO> → List<Option>
      */
     List<Option<Long>> toOptions(List<BookPO> list);
 }

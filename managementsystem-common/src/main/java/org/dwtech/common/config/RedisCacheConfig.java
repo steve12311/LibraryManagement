@@ -26,15 +26,11 @@ import org.springframework.data.redis.serializer.RedisSerializer;
 public class RedisCacheConfig {
 
     /**
-     * 用途：执行 redis cache manager 操作。
-     * 
-     * 自定义 RedisCacheManager
-     * <p>
-     * 修改 Redis 序列化方式，默认 JdkSerializationRedisSerializer
+     * 自定义 RedisCacheManager，修改序列化方式为 JSON。
      *
-     * @param redisConnectionFactory {@link RedisConnectionFactory}
-     * @param cacheProperties        {@link CacheProperties}
-     * @return {@link RedisCacheManager}
+     * @param redisConnectionFactory Redis 连接工厂
+     * @param cacheProperties        缓存配置属性
+     * @return Redis 缓存管理器
      */
     @Bean
     public RedisCacheManager redisCacheManager(RedisConnectionFactory redisConnectionFactory, CacheProperties cacheProperties){
@@ -44,12 +40,10 @@ public class RedisCacheConfig {
     }
 
     /**
-     * 用途：执行 redis cache configuration 操作。
-     * 
-     * 自定义 RedisCacheConfiguration
+     * 自定义 RedisCacheConfiguration，配置缓存 TTL、序列化方式及前缀。
      *
-     * @param cacheProperties {@link CacheProperties}
-     * @return {@link RedisCacheConfiguration}
+     * @param cacheProperties 缓存配置属性
+     * @return Redis 缓存配置
      */
     @Bean
     RedisCacheConfiguration redisCacheConfiguration(CacheProperties cacheProperties) {

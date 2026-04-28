@@ -4,7 +4,8 @@ import org.dwtech.common.core.entity.FileInfo;
 import org.dwtech.system.model.bo.FileDownloadBO;
 import org.springframework.web.multipart.MultipartFile;
 /**
- * FileService
+ * 文件存储服务接口，提供文件上传、下载信息获取和删除功能。
+ * 可根据配置切换本地存储或对象存储实现。
  *
  * @author steve12311
  * @since 2026-02-22
@@ -12,27 +13,28 @@ import org.springframework.web.multipart.MultipartFile;
 
 public interface FileService {
     /**
-     * 用途：执行 upload file 操作。
-     * 
-     * 上传文件
-     * @param file 表单文件对象
-     * @return 文件信息
+     * 上传文件。校验文件类型和大小，计算 SHA-256 指纹进行去重存储，
+     * 写入文件记录并返回访问链接。
+     *
+     * @param file 待上传的文件
+     * @return 文件信息（文件名、访问 URL）
      */
     FileInfo uploadFile(MultipartFile file);
 
     /**
-     * 用途：根据 fileId 获取文件下载信息。
+     * 根据文件 ID 获取文件下载信息，含文件路径、文件名、MIME 类型和大小。
      *
-     * @param fileId 文件ID
+     * @param fileId 文件 ID
      * @return 文件下载信息
      */
     FileDownloadBO getFile(Long fileId);
 
     /**
-     * 用途：删除 file。
+     * 删除文件记录。若文件对象引用计数归零，则同时删除物理文件。
+     * 若为公有书籍封面，需有 sys:stock:edit 权限。
      *
-     * @param fileId 文件ID
-     * @return 删除结果
+     * @param fileId 文件 ID
+     * @return true 表示删除成功，false 表示文件不存在
      */
     boolean deleteFile(Long fileId);
 

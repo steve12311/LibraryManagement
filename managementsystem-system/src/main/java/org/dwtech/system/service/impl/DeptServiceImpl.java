@@ -21,6 +21,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 /**
  * DeptServiceImpl
+ * 部门管理服务实现。通过递归方式构建部门树形列表和下拉选项树。
  *
  * @author steve12311
  * @since 2025-11-18
@@ -32,10 +33,10 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, DeptPO> implements 
     private final DeptConverter deptConverter;
 
     /**
-     * 用途：获取 dept list 信息。
-     * 
-     * @param queryParams query params
-     * @return 结果列表
+     * 查询部门树形列表。按关键词和状态筛选后，计算根节点并递归构建树形结构。
+     *
+     * @param queryParams 查询参数（关键词、状态）
+     * @return 部门树形列表
      */
     @Override
     public List<DeptVO> getDeptList(DeptQuery queryParams) {
@@ -73,10 +74,9 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, DeptPO> implements 
     }
 
     /**
-     * 用途：查询 dept options 列表。
-     * 
-     * 入参：无。
-     * @return 结果列表
+     * 查询所有启用部门的下拉选项树。查询启用部门后，从根节点递归构建带层级的选项列表。
+     *
+     * @return 部门下拉选项树
      */
     @Override
     public List<Option<Long>> listDeptOptions() {
@@ -106,13 +106,11 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, DeptPO> implements 
     }
 
     /**
-     * 用途：执行 recur dept tree options 操作。
-     * 
-     * 递归生成部门表格层级列表
+     * 递归生成部门下拉选项树，从指定父节点开始筛选直接子节点并递归构建 children。
      *
-     * @param parentId 父ID
-     * @param deptList 部门列表
-     * @return 部门表格层级列表
+     * @param parentId 父节点 ID
+     * @param deptList 全量部门列表
+     * @return 部门下拉选项树
      */
     public static List<Option<Long>> recurDeptTreeOptions(long parentId, List<DeptPO> deptList) {
         return CollectionUtil.emptyIfNull(deptList).stream()
@@ -129,12 +127,10 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, DeptPO> implements 
     }
 
     /**
-     * 用途：执行 recur dept list 操作。
-     * 
-     * 递归生成部门树形列表
+     * 递归生成部门树形列表，从指定父节点开始筛选直接子部门并递归构建 children。
      *
-     * @param parentId 父ID
-     * @param deptList 部门列表
+     * @param parentId 父节点 ID
+     * @param deptList 全量部门列表
      * @return 部门树形列表
      */
     public List<DeptVO> recurDeptList(Long parentId, List<DeptPO> deptList) {

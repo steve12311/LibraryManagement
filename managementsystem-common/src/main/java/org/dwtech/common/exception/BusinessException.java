@@ -16,10 +16,9 @@ public class BusinessException extends RuntimeException {
     public IResultCode resultCode;
 
     /**
-     * 用途：创建 BusinessException 实例。
-     * 
-     * @param errorCode error code
-     * 返回：无。
+     * 根据业务错误码构造异常。
+     *
+     * @param errorCode 业务错误码
      */
     public BusinessException(IResultCode errorCode) {
         super(errorCode.getMsg());
@@ -28,11 +27,10 @@ public class BusinessException extends RuntimeException {
 
 
     /**
-     * 用途：创建 BusinessException 实例。
-     * 
-     * @param errorCode error code
-     * @param message message
-     * 返回：无。
+     * 根据业务错误码和自定义消息构造异常。
+     *
+     * @param errorCode 业务错误码
+     * @param message   自定义错误消息
      */
     public BusinessException(IResultCode errorCode, String message) {
         super(message);
@@ -41,43 +39,40 @@ public class BusinessException extends RuntimeException {
 
 
     /**
-     * 用途：创建 BusinessException 实例。
-     * 
-     * @param message message
-     * @param cause cause
-     * 返回：无。
+     * 根据错误消息和异常原因构造异常。
+     *
+     * @param message 错误消息
+     * @param cause   原始异常
      */
     public BusinessException(String message, Throwable cause) {
         super(message, cause);
     }
 
     /**
-     * 用途：创建 BusinessException 实例。
-     * 
-     * @param cause cause
-     * 返回：无。
+     * 根据原始异常构造异常。
+     *
+     * @param cause 原始异常
      */
     public BusinessException(Throwable cause) {
         super(cause);
     }
 
     /**
-     * 用途：创建 BusinessException 实例。
-     * 
-     * @param message message
-     * @param args args
-     * 返回：无。
+     * 根据带占位符的消息模板和参数构造异常。
+     *
+     * @param message 消息模板
+     * @param args    参数列表
      */
     public BusinessException(String message, Object... args) {
         super(formatMessage(message, args));
     }
 
     /**
-     * 用途：执行 format message 操作。
-     * 
-     * @param message message
-     * @param args args
-     * @return 结果字符串
+     * 格式化消息模板，替换占位符。
+     *
+     * @param message 消息模板
+     * @param args    参数列表
+     * @return 格式化后的消息
      */
     private static String formatMessage(String message, Object... args) {
         return MessageFormatter.arrayFormat(message, args).getMessage();

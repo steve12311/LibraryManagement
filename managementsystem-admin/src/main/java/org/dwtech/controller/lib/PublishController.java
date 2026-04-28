@@ -30,10 +30,8 @@ public class PublishController {
     private final PublishService publishService;
 
     /**
-     * 用途：获取 publish page 信息。
-     * 
-     * @param queryParams query params
-     * @return 返回结果
+     * 分页查询出版社列表。
+     * 支持按出版社名称、联系人等条件筛选。
      */
     @GetMapping("/page")
     @PreAuthorize("@ss.hasPerm('lib:publish:view')")
@@ -43,10 +41,8 @@ public class PublishController {
     }
 
     /**
-     * 用途：查询 publish options 列表。
-     * 
-     * 入参：无。
-     * @return 返回结果
+     * 查询出版社选项列表。
+     * 返回出版社的 ID 和名称键值对，用于前端下拉选择器。
      */
     @GetMapping("/options")
     @PreAuthorize("@ss.hasPerm('lib:publish:view')")
@@ -56,10 +52,9 @@ public class PublishController {
     }
 
     /**
-     * 用途：获取 publish form 信息。
-     * 
-     * @param id 主键 ID
-     * @return 返回结果
+     * 根据 ID 获取出版社表单数据，用于编辑时回显。
+     *
+     * @param id 出版社 ID
      */
     @GetMapping("/{id}/form")
     @PreAuthorize("@ss.hasPerm('lib:publish:edit')")
@@ -69,10 +64,8 @@ public class PublishController {
     }
 
     /**
-     * 用途：新增 publish。
-     * 
-     * @param publishForm publish form
-     * @return 返回结果
+     * 新增出版社。
+     * 接收出版社表单数据，校验名称唯一性后写入数据库并记录操作日志。
      */
     @PostMapping
     @PreAuthorize("@ss.hasPerm('lib:publish:add')")
@@ -84,10 +77,8 @@ public class PublishController {
     }
 
     /**
-     * 用途：更新 publish。
-     * 
-     * @param publishForm publish form
-     * @return 返回结果
+     * 更新出版社信息。
+     * 根据表单中的 ID 查找并更新出版社资料，校验名称唯一性并记录操作日志。
      */
     @PutMapping
     @PreAuthorize("@ss.hasPerm('lib:publish:edit')")
@@ -99,10 +90,10 @@ public class PublishController {
     }
 
     /**
-     * 用途：删除 publish。
-     * 
-     * @param ids 主键 ID 列表
-     * @return 返回结果
+     * 批量删除出版社。
+     * 根据主键 ID 列表删除出版社记录，若有关联图书则阻止删除。
+     *
+     * @param ids 出版社 ID 列表，支持批量删除
      */
     @DeleteMapping("/{ids}")
     @PreAuthorize("@ss.hasPerm('lib:publish:delete')")

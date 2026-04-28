@@ -11,7 +11,7 @@ import org.dwtech.system.model.query.StockPageQuery;
 
 import java.util.List;
 /**
- * StockMapper
+ * 库存数据访问层，提供图书库存的分页、查询和变更接口
  *
  * @author steve12311
  * @since 2026-02-22
@@ -20,79 +20,68 @@ import java.util.List;
 @Mapper
 public interface StockMapper extends BaseMapper<StockPO> {
     /**
-     * 用途：获取公开书目分页信息。
+     * 分页查询公开书目列表，供读者浏览
      *
-     * @param page page
-     * @param queryParams query params
      * @return 分页结果
      */
     Page<StockBO> getPublicBookPage(Page<StockBO> page, @Param("queryParams") PublicBookPageQuery queryParams);
 
     /**
-     * 用途：获取 stock page 信息。
-     * 
-     * @param page page
-     * @param queryParams query params
+     * 分页查询库存列表，支持多种筛选条件
+     *
      * @return 分页结果
      */
     Page<StockBO> getStockPage(Page<StockBO> page, @Param("queryParams") StockPageQuery queryParams);
 
     /**
-     * 用途：获取 stock by exacts 信息。
-     * 
-     * @param isbns isbns
-     * @return 结果列表
+     * 根据 ISBN 列表批量查询库存信息
+     *
+     * @return 库存列表
      */
     List<StockBO> getStockByExacts(@Param("isbns") List<String> isbns);
 
     /**
-     * 用途：执行 select stock by id 操作。
-     * 
-     * @param isbn isbn
-     * @return 返回结果
+     * 根据 ISBN 查询单个库存信息
+     *
+     * @return 库存信息
      */
     StockBO selectStockById(String isbn);
 
     /**
-     * 用途：对已存在库存执行原子入库累加。
+     * 对已存在库存执行原子入库累加，同时增加总库存和可用库存
      *
-     * @param isbn isbn
      * @param amount 变更数量
      * @return 影响行数
      */
     int increaseStockAndCurrentStock(@Param("isbn") String isbn, @Param("amount") Integer amount);
 
     /**
-     * 用途：执行带库存校验的原子出库。
+     * 执行带库存校验的原子出库，同时减少总库存和可用库存
      *
-     * @param isbn isbn
      * @param amount 变更数量
      * @return 影响行数
      */
     int decreaseStockAndCurrentStock(@Param("isbn") String isbn, @Param("amount") Integer amount);
 
     /**
-     * 用途：执行带剩余库存校验的原子借出。
+     * 执行带剩余库存校验的原子借出，仅减少可用库存
      *
-     * @param isbn isbn
      * @param amount 变更数量
      * @return 影响行数
      */
     int decreaseCurrentStock(@Param("isbn") String isbn, @Param("amount") Integer amount);
 
     /**
-     * 用途：执行原子还书入库。
+     * 执行原子还书入库，仅增加可用库存
      *
-     * @param isbn isbn
      * @param amount 变更数量
      * @return 影响行数
      */
     int increaseCurrentStock(@Param("isbn") String isbn, @Param("amount") Integer amount);
 
     /**
-     * 用途：执行库存首次入库或已存在库存的原子 upsert。
+     * 执行库存首次入库或已存在库存的原子 upsert
      *
-     * @param isbn isbn
      * @param amount 变更数量
      * @return 影响行数
      */

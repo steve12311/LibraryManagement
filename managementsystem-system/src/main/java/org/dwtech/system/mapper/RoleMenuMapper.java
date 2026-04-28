@@ -8,7 +8,7 @@ import org.dwtech.system.model.entity.RoleMenuPO;
 import java.util.List;
 import java.util.Set;
 /**
- * RoleMenuMapper
+ * 角色-菜单关联数据访问层，提供角色权限查询接口
  *
  * @author steve12311
  * @since 2025-11-18
@@ -17,26 +17,23 @@ import java.util.Set;
 @Mapper
 public interface RoleMenuMapper extends BaseMapper<RoleMenuPO> {
     /**
-     * 用途：获取 role perms list 信息。
-     * 
-     * @param roleCode role code
-     * @return 结果列表
+     * 根据角色编码查询关联的权限列表
+     *
+     * @return 权限列表
      */
     List<RolePermsBO> getRolePermsList(String roleCode);
 
     /**
-     * 用途：查询 menu ids by role id 列表。
-     * 
-     * @param roleId role ID
-     * @return 结果列表
+     * 根据角色 ID 查询关联的菜单 ID 列表
+     *
+     * @return 菜单 ID 列表
      */
     List<Long> listMenuIdsByRoleId(Long roleId);
 
     /**
-     * 用途：查询 role perms 列表。
-     * 
-     * @param roles roles
-     * @return 结果集合
+     * 根据角色编码集合查询对应的权限标识集合
+     *
+     * @return 权限标识集合
      */
     Set<String> listRolePerms(Set<String> roles);
 }

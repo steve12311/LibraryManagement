@@ -10,7 +10,7 @@ import org.mapstruct.Mappings;
 
 import java.util.List;
 /**
- * MenuConverter
+ * 菜单对象转换器（MapStruct），负责 Entity ↔ DTO ↔ VO 之间的映射
  *
  * @author steve12311
  * @since 2025-11-18
@@ -19,18 +19,12 @@ import java.util.List;
 @Mapper(componentModel = "spring")
 public interface MenuConverter {
     /**
-     * 用途：转换为 vo。
-     * 
-     * @param po po
-     * @return 返回结果
+     * MenuPO → MenuVO
      */
     MenuVO toVo(MenuPO po);
 
     /**
-     * 用途：转换为 form。
-     * 
-     * @param entity entity
-     * @return 返回结果
+     * MenuPO → MenuForm
      */
     MenuForm toForm(MenuPO entity);
 
@@ -39,10 +33,7 @@ public interface MenuConverter {
             @Mapping(target = "value", source = "perm")
     })
     /**
-     * 用途：转换为 permit form。
-     * 
-     * @param entity entity
-     * @return 返回结果
+     * MenuPO → PermitForm
      */
     PermitForm toPermitForm(MenuPO entity);
 
@@ -52,34 +43,22 @@ public interface MenuConverter {
             @Mapping(target = "type", expression = "java(org.dwtech.common.enmus.MenuTypeEnum.BUTTON.getValue())")
     })
     /**
-     * 用途：转换为 po。
-     * 
-     * @param permitForm permit form
-     * @return 返回结果
+     * PermitForm → MenuPO
      */
     MenuPO toPo(PermitForm permitForm);
 
     /**
-     * 用途：转换为 pos。
-     * 
-     * @param permitForms permit forms
-     * @return 结果列表
+     * List<PermitForm> → List<MenuPO>
      */
     List<MenuPO> toPos(List<PermitForm> permitForms);
 
     /**
-     * 用途：转换为 permit forms。
-     * 
-     * @param entities entities
-     * @return 结果列表
+     * List<MenuPO> → List<PermitForm>
      */
     List<PermitForm> toPermitForms(List<MenuPO> entities);
 
     /**
-     * 用途：转换为 po。
-     * 
-     * @param menuForm menu form
-     * @return 返回结果
+     * MenuForm → MenuPO
      */
     MenuPO toPo(MenuForm menuForm);
 }

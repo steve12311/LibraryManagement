@@ -18,6 +18,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 /**
  * UserRoleServiceImpl
+ * 用户-角色关联服务实现。支持全量替换角色分配，自动计算变更集，
+ * 权限变化时通过 TokenManager 主动清除用户登录态。
  *
  * @author steve12311
  * @since 2025-11-18
@@ -29,11 +31,11 @@ public class UserRoleServiceImpl extends ServiceImpl<UserRoleMapper, UserRolePO>
     private final TokenManager tokenManager;
 
     /**
-     * 用途：保存 user roles。
-     * 
-     * @param userId user ID
-     * @param roleIds role ID 列表
-     * 返回：无。
+     * 保存用户角色分配（全量替换）。流程：查询现有角色 → 计算新增/删除的变更集 →
+     * 批量保存新增、删除废弃 → 角色变更时清除该用户的登录态。
+     *
+     * @param userId 用户 ID
+     * @param roleIds 待分配的角色 ID 列表
      */
     @Override
     @Transactional
@@ -93,11 +95,11 @@ public class UserRoleServiceImpl extends ServiceImpl<UserRoleMapper, UserRolePO>
     }
 
     /**
-     * 用途：分配 users to role。
-     * 
-     * @param roleId role ID
-     * @param userIds user ID 列表
-     * 返回：无。
+     * 为角色分配用户（全量替换）。流程：查询现有用户 → 计算变更集 →
+     * 清空该角色已有用户关联 → 重新写入用户关联 → 清除受影响用户的登录态。
+     *
+     * @param roleId 角色 ID
+     * @param userIds 待分配的用户 ID 列表
      */
     @Override
     @Transactional
@@ -141,10 +143,9 @@ public class UserRoleServiceImpl extends ServiceImpl<UserRoleMapper, UserRolePO>
     }
 
     /**
-     * 用途：删除 users 对应的 role 关联。
+     * 根据用户 ID 列表删除对应的用户-角色关联记录。通常在删除用户时调用。
      *
-     * @param userIds user ID 列表
-     * 返回：无。
+     * @param userIds 待删除关联的用户 ID 列表
      */
     @Override
     @Transactional
@@ -157,11 +158,10 @@ public class UserRoleServiceImpl extends ServiceImpl<UserRoleMapper, UserRolePO>
     }
 
     /**
-     * 用途：批量保存 user roles。
+     * 批量保存用户-角色关联记录（按指定批次大小提交）。
      *
      * @param userRoles 用户角色关联列表
-     * @param batchSize 批量大小
-     * 返回：无。
+     * @param batchSize 每批提交的条数
      */
     @Override
     @Transactional
@@ -173,10 +173,10 @@ public class UserRoleServiceImpl extends ServiceImpl<UserRoleMapper, UserRolePO>
     }
 
     /**
-     * 用途：判断是否存在 assigned users。
-     * 
-     * @param roleId role ID
-     * @return 操作结果，true 表示成功，false 表示失败
+     * 判断指定角色是否已分配了用户。统计该角色关联的用户数。
+     *
+     * @param roleId 角色 ID
+     * @return true 表示已有用户绑定，false 表示未绑定
      */
     @Override
     public boolean hasAssignedUsers(Long roleId) {

@@ -50,9 +50,7 @@ public class CatalogVectorSyncConsumer {
     private String consumerName;
 
     /**
-     * 用途：启动消费者线程。
-     *
-     * 返回：无。
+     * 启动后台线程，持续消费 Redis Stream 中的向量同步消息。
      */
     @PostConstruct
     public void start() {
@@ -68,9 +66,7 @@ public class CatalogVectorSyncConsumer {
     }
 
     /**
-     * 用途：停止消费者线程。
-     *
-     * 返回：无。
+     * 优雅关闭消费者线程，等待正在处理的任务完成。
      */
     @PreDestroy
     public void stop() {
@@ -86,9 +82,7 @@ public class CatalogVectorSyncConsumer {
     }
 
     /**
-     * 用途：轮询消费 Redis Stream 消息。
-     *
-     * 返回：无。
+     * 消费者主循环：持续轮询 Redis Stream 获取并处理消息。
      */
     void consumeLoop() {
         while (running && !Thread.currentThread().isInterrupted()) {
@@ -107,9 +101,7 @@ public class CatalogVectorSyncConsumer {
     }
 
     /**
-     * 用途：消费一批消息。
-     *
-     * 返回：无。
+     * 从 Redis Stream 读取并处理一批待消费消息。
      */
     void pollOnce() {
         List<MapRecord<String, Object, Object>> records = redisTemplate.opsForStream().read(
@@ -128,10 +120,9 @@ public class CatalogVectorSyncConsumer {
     }
 
     /**
-     * 用途：处理单条消息记录。
+     * 解析并处理单条 Redis Stream 消息记录。
      *
-     * @param record Stream 记录
-     * 返回：无。
+     * @param record Redis Stream 消息记录
      */
     void handleRecord(MapRecord<String, Object, Object> record) {
         CatalogVectorSyncMessage message = parseMessage(record.getValue());
@@ -148,10 +139,9 @@ public class CatalogVectorSyncConsumer {
     }
 
     /**
-     * 用途：按 ISBN 回查权威图书数据并同步或删除向量。
+     * 按 ISBN 回查权威图书数据，根据简介是否存在决定同步或删除向量。
      *
      * @param message 队列消息
-     * 返回：无。
      */
     void handleMessage(CatalogVectorSyncMessage message) {
         BookForm bookForm = bookService.getBookByIsbn(message.isbn());
@@ -168,12 +158,11 @@ public class CatalogVectorSyncConsumer {
     }
 
     /**
-     * 用途：处理消费失败后的重试或终止逻辑。
+     * 处理消费失败后的重试或终止逻辑：未达最大重试次数则重新投递，否则直接确认并记录日志。
      *
-     * @param recordId 记录 ID
-     * @param message 队列消息
+     * @param recordId  记录 ID
+     * @param message   队列消息
      * @param exception 异常
-     * 返回：无。
      */
     private void handleProcessingFailure(RecordId recordId, CatalogVectorSyncMessage message, RuntimeException exception) {
         if (message.retryCount() < queueProperties.getMaxRetries()) {
@@ -212,9 +201,7 @@ public class CatalogVectorSyncConsumer {
     }
 
     /**
-     * 用途：确保 Redis Stream 消费组存在。
-     *
-     * 返回：无。
+     * 检查并创建 Redis Stream 消费组（不存在时自动创建）。
      */
     void ensureConsumerGroup() {
         RecordId bootstrapRecordId = redisTemplate.opsForStream().add(
@@ -239,10 +226,10 @@ public class CatalogVectorSyncConsumer {
     }
 
     /**
-     * 用途：解析 Redis Stream 消息。
+     * 将 Redis Stream 字段 Map 解析为 CatalogVectorSyncMessage 对象。
      *
-     * @param fields Stream 字段
-     * @return 返回结果
+     * @param fields Redis Stream 消息字段
+     * @return 解析后的消息对象，字段不合法时返回 null
      */
     CatalogVectorSyncMessage parseMessage(Map<Object, Object> fields) {
         String isbn = asString(fields.get("isbn"));
@@ -268,10 +255,9 @@ public class CatalogVectorSyncConsumer {
     }
 
     /**
-     * 用途：确认消费完成。
+     * 向 Redis Stream 确认消息已成功消费。
      *
      * @param recordId 记录 ID
-     * 返回：无。
      */
     private void acknowledge(RecordId recordId) {
         redisTemplate.opsForStream().acknowledge(
@@ -282,10 +268,10 @@ public class CatalogVectorSyncConsumer {
     }
 
     /**
-     * 用途：判断是否为消费组已存在异常。
+     * 判断异常是否为消费组已存在（BUSYGROUP）异常。
      *
      * @param exception 异常
-     * @return 返回结果
+     * @return 是 BUSYGROUP 异常返回 true
      */
     private boolean isBusyGroupException(RuntimeException exception) {
         String message = exception.getMessage();
@@ -293,19 +279,17 @@ public class CatalogVectorSyncConsumer {
     }
 
     /**
-     * 用途：将对象转换为字符串。
+     * 将对象安全转换为字符串，null 时返回 null。
      *
-     * @param value 值
-     * @return 返回结果
+     * @param value 待转换对象
+     * @return 字符串或 null
      */
     private String asString(Object value) {
         return value == null ? null : String.valueOf(value);
     }
 
     /**
-     * 用途：在消费异常时短暂让出 CPU。
-     *
-     * 返回：无。
+     * 消费异常时短暂休眠，避免空转导致的 CPU 飙升。
      */
     private void sleepQuietly() {
         try {

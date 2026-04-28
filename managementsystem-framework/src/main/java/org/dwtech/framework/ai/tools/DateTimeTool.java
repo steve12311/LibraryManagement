@@ -13,10 +13,9 @@ import java.time.LocalDateTime;
 
 public class DateTimeTool {
     /**
-     * 用途：获取 current date time 信息。
-     * 
-     * 入参：无。
-     * @return 结果字符串
+     * 获取当前日期时间，供 AI 模型使用。
+     *
+     * @return 当前日期时间的字符串表示
      */
     @Tool(description = "获取当前时间")
     String getCurrentDateTime() {

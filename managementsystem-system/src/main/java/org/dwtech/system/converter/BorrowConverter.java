@@ -11,7 +11,7 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
 /**
- * BorrowConverter
+ * 借阅对象转换器（MapStruct），负责 Entity ↔ DTO ↔ VO 之间的映射
  *
  * @author steve12311
  * @since 2026-02-24
@@ -23,10 +23,7 @@ public interface BorrowConverter {
             @Mapping(source = "id", target = "borrowId")
     })
     /**
-     * 用途：转换为 vo。
-     * 
-     * @param borrowBO borrow bo
-     * @return 返回结果
+     * BorrowBO → BorrowVO
      */
     BorrowVO toVo(BorrowBO borrowBO);
 
@@ -35,42 +32,27 @@ public interface BorrowConverter {
             @Mapping(target = "cover", expression = "java(normalizeCoverUrl(myBorrowBO.getCover()))")
     })
     /**
-     * 用途：转换为当前登录用户借阅订单 vo。
-     *
-     * @param myBorrowBO my borrow bo
-     * @return 返回结果
+     * MyBorrowBO → MyBorrowPageVO
      */
     MyBorrowPageVO toMyBorrowPageVo(MyBorrowBO myBorrowBO);
 
     /**
-     * 用途：转换为 po。
-     * 
-     * @param borrowForm borrow form
-     * @return 返回结果
+     * BorrowForm → BorrowPO
      */
     BorrowPO toPo(BorrowForm borrowForm);
 
     /**
-     * 用途：转换为 page vo。
-     * 
-     * @param borrowPage borrow page
-     * @return 分页结果
+     * Page<BorrowBO> → Page<BorrowVO>
      */
     Page<BorrowVO> toPageVo(Page<BorrowBO> borrowPage);
 
     /**
-     * 用途：转换为当前登录用户借阅订单分页视图。
-     *
-     * @param borrowPage borrow page
-     * @return 分页结果
+     * Page<MyBorrowBO> → Page<MyBorrowPageVO>
      */
     Page<MyBorrowPageVO> toMyBorrowPageVo(Page<MyBorrowBO> borrowPage);
 
     /**
-     * 用途：规范借阅订单中的封面路径。
-     *
-     * @param cover 原始封面路径
-     * @return 可直接访问的封面路径
+     * 规范化借阅订单中的封面路径，确保返回可访问的完整路径
      */
     default String normalizeCoverUrl(String cover) {
         if (cover == null || cover.isBlank()) {

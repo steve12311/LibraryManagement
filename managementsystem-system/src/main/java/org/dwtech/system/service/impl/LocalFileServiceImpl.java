@@ -55,6 +55,9 @@ import java.util.stream.Collectors;
 import javax.imageio.ImageIO;
 /**
  * LocalFileServiceImpl
+ * 本地文件存储服务实现。通过 oss.type=local 条件激活。
+ * 支持文件上传（含 SHA-256 去重）、下载信息获取和删除操作，
+ * 使用 Redis 缓存文件元数据以提升访问性能。
  *
  * @author steve12311
  * @since 2026-02-22
@@ -102,10 +105,11 @@ public class LocalFileServiceImpl implements FileService {
     private final RedisTemplate<String, Object> redisTemplate;
 
     /**
-     * 用途：执行 upload file 操作。
+     * 上传文件。流程：校验文件类型和大小 → 缓存临时文件并计算 SHA-256 → 按指纹去重 →
+     * 创建或复用文件对象 → 写入文件记录 → 缓存元数据 → 返回文件访问信息。
      *
-     * @param file file
-     * @return 返回结果
+     * @param file 待上传的文件
+     * @return 文件信息
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -160,10 +164,11 @@ public class LocalFileServiceImpl implements FileService {
     }
 
     /**
-     * 用途：根据 fileId 获取文件信息。
+     * 根据文件 ID 获取文件下载信息。流程：读取缓存元数据 → 若缓存空值可命中则快速失败 →
+     * 未命中则从数据库加载并写入缓存 → 校验文件存在性和访问权限 → 构造下载信息返回。
      *
-     * @param fileId 文件ID
-     * @return 文件信息
+     * @param fileId 文件 ID
+     * @return 文件下载信息
      */
     @Override
     public FileDownloadBO getFile(Long fileId) {
@@ -203,10 +208,11 @@ public class LocalFileServiceImpl implements FileService {
     }
 
     /**
-     * 用途：删除 file。
+     * 删除文件记录。流程：校验删除权限 → 解除书籍封面绑定 → 删除文件记录 →
+     * 文件对象引用计数减一 → 引用归零时删除物理文件 → 清除并缓存空值到 Redis。
      *
-     * @param fileId 文件ID
-     * @return 操作结果，true 表示成功，false 表示失败
+     * @param fileId 文件 ID
+     * @return true 表示删除成功，false 表示文件不存在
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -255,10 +261,11 @@ public class LocalFileServiceImpl implements FileService {
     }
 
     /**
-     * 解析并校验存储路径，防止目录穿越删除/写入。
+     * 解析并规范化存储路径，防止目录穿越攻击。
+     * 将相对路径拼接存储根目录后规范化，确保结果仍在根目录下。
      *
      * @param relativePath 相对存储根目录的路径
-     * @return 安全、规范化后的绝对路径
+     * @return 规范化后的安全绝对路径
      */
     private Path resolveSafePath(String relativePath) {
         Path storageRoot = getStorageRoot();

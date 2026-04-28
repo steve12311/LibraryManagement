@@ -26,10 +26,10 @@ public class CatalogVectorRebuildService {
     private final CatalogVectorStoreService catalogVectorStoreService;
 
     /**
-     * 用途：分页重建馆藏图书向量文档。
+     * 分页扫描图书数据，逐批重建向量库中的馆藏图书文档。
      *
-     * @param batchSize 批大小
-     * @return 返回结果
+     * @param batchSize 每批处理记录数
+     * @return 重建汇总统计（扫描数、同步数、跳过数、失败数）
      */
     public CatalogVectorRebuildSummary rebuildCatalogVectors(int batchSize) {
         long pageNum = 1L;

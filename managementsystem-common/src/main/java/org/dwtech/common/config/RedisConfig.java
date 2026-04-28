@@ -7,13 +7,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.RedisSerializer;
 
 /**
- * Redis 配置
- *
- * @author steve12311
-* @since 2025-11-18
- */
-/**
- * RedisConfig
+ * Redis 配置：自定义 RedisTemplate 序列化方式。
  *
  * @author steve12311
  * @since 2025-11-18
@@ -22,14 +16,10 @@ import org.springframework.data.redis.serializer.RedisSerializer;
 public class RedisConfig {
 
     /**
-     * 用途：执行 redis template 操作。
-     * 
-     * 自定义 RedisTemplate
-     * <p>
-     * 修改 Redis 序列化方式，默认 JdkSerializationRedisSerializer
+     * 自定义 RedisTemplate，设置 Key 和 Value 的序列化方式为 JSON。
      *
-     * @param redisConnectionFactory {@link RedisConnectionFactory}
-     * @return {@link RedisTemplate}
+     * @param redisConnectionFactory Redis 连接工厂
+     * @return Redis 操作模板
      */
     @Bean
     public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory redisConnectionFactory) {

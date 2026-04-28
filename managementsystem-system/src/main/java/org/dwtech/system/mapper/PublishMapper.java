@@ -7,7 +7,7 @@ import org.apache.ibatis.annotations.Param;
 import org.dwtech.system.model.entity.PublishPO;
 import org.dwtech.system.model.query.PublishPageQuery;
 /**
- * PublishMapper
+ * 出版社数据访问层，提供出版社信息的分页查询接口
  *
  * @author steve12311
  * @since 2026-02-22
@@ -16,10 +16,8 @@ import org.dwtech.system.model.query.PublishPageQuery;
 @Mapper
 public interface PublishMapper extends BaseMapper<PublishPO> {
     /**
-     * 用途：获取 publish page 信息。
-     * 
-     * @param page page
-     * @param queryParams query params
+     * 分页查询出版社列表，支持多种筛选条件
+     *
      * @return 分页结果
      */
     Page<PublishPO> getPublishPage(Page<PublishPO> page, @Param("queryParams") PublishPageQuery queryParams);
