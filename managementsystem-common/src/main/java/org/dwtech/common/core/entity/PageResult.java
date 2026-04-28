@@ -8,13 +8,10 @@ import java.io.Serializable;
 import java.util.List;
 
 /**
- * 分页响应结构体
- *
- * @author steve12311
-* @since 2025-11-18
- */
-/**
- * PageResult
+ * 分页 API 响应体
+ * <p>
+ * 所有分页查询接口统一返回此结构。内嵌 {@link Data} 承载当前页记录列表 {@code list} 和总记录数 {@code total}，
+ * 前端据此渲染分页组件。
  *
  * @author steve12311
  * @since 2025-11-18
@@ -22,18 +19,16 @@ import java.util.List;
 @Data
 public class PageResult<T> implements Serializable {
 
+    /** 业务状态码 */
     private String code;
 
+    /** 分页数据容器，包含当前页列表和总记录数 */
     private Data<T> data;
 
+    /** 响应消息 */
     private String msg;
 
-    /**
-     * 用途：执行 success 操作。
-     * 
-     * @param page page
-     * @return 返回结果
-     */
+    /** 从 MyBatis-Plus 分页对象构建成功响应 */
     public static <T> PageResult<T> success(IPage<T> page) {
         PageResult<T> result = new PageResult<>();
         result.setCode(ResultCode.SUCCESS.getCode());
@@ -47,11 +42,14 @@ public class PageResult<T> implements Serializable {
         return result;
     }
 
+    /** 分页数据内部容器 */
     @lombok.Data
     public static class Data<T> {
 
+        /** 当前页记录列表 */
         private List<T> list;
 
+        /** 总记录数，用于前端计算总页数 */
         private long total;
 
     }

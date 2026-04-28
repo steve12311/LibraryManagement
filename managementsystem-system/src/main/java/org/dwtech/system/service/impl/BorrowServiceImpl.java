@@ -26,12 +26,18 @@ import org.dwtech.system.service.StockService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 /**
- * BorrowServiceImpl
+ * 借阅管理服务实现
+ * <p>
+ * 核心业务流程：
+ * <ol>
+ *   <li>借书（{@link #saveBorrow}）：校验用户 → 查图书 → 创建借阅记录 → 扣减可借库存（悲观锁）</li>
+ *   <li>还书（{@link #updateBorrow}）：查借阅记录 → 校验未还 → 更新归还时间 → 恢复可借库存</li>
+ *   <li>查询：分页查询借阅记录（管理员视角）和我的借阅（用户视角）</li>
+ * </ol>
  *
  * @author steve12311
  * @since 2026-02-24
  */
-
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -40,31 +46,13 @@ public class BorrowServiceImpl extends ServiceImpl<BorrowMapper, BorrowPO> imple
     private final BookService bookService;
     private final StockService stockService;
 
-    /**
-     * 用途：获取 borrow page 信息。
-     * 
-     * @param queryParams query params
-     * @return 分页结果
-     */
     @Override
     public IPage<BorrowVO> getBorrowPage(BorrowPageQuery queryParams) {
-        // 参数构建
-        int pageNum = queryParams.getPageNum();
-        int pageSize = queryParams.getPageSize();
-        Page<BorrowBO> page = new Page<>(pageNum, pageSize);
-
+        Page<BorrowBO> page = new Page<>(queryParams.getPageNum(), queryParams.getPageSize());
         Page<BorrowBO> borrowPage = this.baseMapper.getBorrowPage(page, queryParams);
-
         return borrowConverter.toPageVo(borrowPage);
     }
 
-    /**
-     * 用途：获取当前登录用户的 borrow page 信息。
-     *
-     * @param userId 当前登录用户 ID
-     * @param queryParams query params
-     * @return 分页结果
-     */
     @Override
     public IPage<MyBorrowPageVO> getCurrentUserBorrowPage(Long userId, MyBorrowPageQuery queryParams) {
         Page<MyBorrowBO> page = new Page<>(queryParams.getPageNum(), queryParams.getPageSize());
@@ -73,10 +61,15 @@ public class BorrowServiceImpl extends ServiceImpl<BorrowMapper, BorrowPO> imple
     }
 
     /**
-     * 用途：保存 borrow。
-     * 
-     * @param formData form data
-     * @return 操作结果，true 表示成功，false 表示失败
+     * 创建借阅记录（借书）
+     * <p>
+     * 流程：
+     * <ol>
+     *   <li>校验借书用户 ID 不为空（馆员代借场景）</li>
+     *   <li>根据 ISBN 查询图书信息，不存在则抛异常</li>
+     *   <li>写入借阅记录（UUID 主键，避免分布式自增冲突）</li>
+     *   <li>调用库存服务扣减可借数量（{@link StockService#borrowOut}，悲观锁保证并发安全）</li>
+     * </ol>
      */
     @Override
     @Transactional
@@ -102,11 +95,15 @@ public class BorrowServiceImpl extends ServiceImpl<BorrowMapper, BorrowPO> imple
     }
 
     /**
-     * 用途：更新 borrow。
-     * 
-     * @param borrowId borrow ID
-     * @param formData form data
-     * @return 操作结果，true 表示成功，false 表示失败
+     * 归还借阅（还书）
+     * <p>
+     * 流程：
+     * <ol>
+     *   <li>查询借阅记录，不存在则抛异常</li>
+     *   <li>校验是否已还书（{@code realityReturnTime != null} 即表示已还）</li>
+     *   <li>更新借阅记录（含归还时间）</li>
+     *   <li>若设置了归还时间，调用库存服务恢复可借数量（{@link StockService#borrowEnter}）</li>
+     * </ol>
      */
     @Override
     @Transactional
@@ -130,9 +127,7 @@ public class BorrowServiceImpl extends ServiceImpl<BorrowMapper, BorrowPO> imple
         return this.updateById(borrow);
     }
 
-    /**
-     * Borrow 属于馆员代借域，创建借阅时必须显式指定目标用户。
-     */
+    /** 馆员代借场景下，借阅记录必须关联具体用户 */
     private void validateBorrowUserId(BorrowForm formData) {
         if (formData.getUserId() == null) {
             throw new BusinessException("代借用户不能为空");

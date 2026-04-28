@@ -21,7 +21,12 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 /**
- * GlobalExceptionHandler
+ * 全局异常处理器
+ * <p>
+ * 统一拦截 Controller 层抛出的异常，转换为标准 {@link Result} 响应。
+ * 覆盖场景：参数绑定异常、校验异常、业务异常、认证/授权异常、未知系统异常。
+ * Spring Security 的 {@code AccessDeniedException} 和 {@code AuthenticationException} 会继续向上抛出，
+ * 由框架自带的处理器接管（返回 403/401）。
  *
  * @author steve12311
  * @since 2025-11-18
