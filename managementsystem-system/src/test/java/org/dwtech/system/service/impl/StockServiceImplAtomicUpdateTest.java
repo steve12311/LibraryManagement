@@ -10,6 +10,7 @@ import org.dwtech.system.model.entity.StockPO;
 import org.dwtech.system.model.form.StockForm;
 import org.dwtech.system.mapper.StockMapper;
 import org.dwtech.system.service.BookService;
+import org.dwtech.system.service.RecommendationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -34,13 +35,16 @@ class StockServiceImplAtomicUpdateTest {
     private BookService bookService;
 
     @Mock
+    private RecommendationService recommendationService;
+
+    @Mock
     private StockMapper stockMapper;
 
     private StockServiceImpl stockService;
 
     @BeforeEach
     void setUp() {
-        stockService = new StockServiceImpl(stockConverter, bookService);
+        stockService = new StockServiceImpl(stockConverter, bookService, recommendationService);
         ReflectionTestUtils.setField(stockService, "baseMapper", stockMapper);
     }
 

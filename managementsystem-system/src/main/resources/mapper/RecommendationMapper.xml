@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.dwtech.system.mapper.RecommendationMapper">
+    <select id="selectBookBorrowFrequency" resultType="org.dwtech.system.model.bo.BookBorrowFreqBO">
+        SELECT isbn,
+               COUNT(DISTINCT user_id) AS borrower_count
+        FROM lib_borrow
+        GROUP BY isbn
+    </select>
+
+    <!--
+    共借对查询：自连接按 userId 匹配，isbn_a < isbn_b 避免重复对。
+    子查询先 DISTINCT 去重（同一用户多次借同一本书只计一次），
+    HAVING co_borrow_count >= 2 过滤偶然共现的噪声。
+    -->
+    <select id="selectCoBorrowPairs" resultType="org.dwtech.system.model.bo.CoBorrowCountBO">
+        SELECT l1.isbn AS isbn_a,
+               l2.isbn AS isbn_b,
+               COUNT(*) AS co_borrow_count
+        FROM (
+                 SELECT DISTINCT user_id, isbn
+                 FROM lib_borrow
+             ) AS l1
+                 INNER JOIN (
+                     SELECT DISTINCT user_id, isbn
+                     FROM lib_borrow
+                 ) AS l2 ON l1.user_id = l2.user_id
+            AND l1.isbn &lt; l2.isbn
+        GROUP BY l1.isbn, l2.isbn
+        HAVING co_borrow_count &gt;= 2
+    </select>
+
+    <select id="selectUserBorrowedIsbns" resultType="java.lang.String">
+        SELECT DISTINCT isbn
+        FROM lib_borrow
+        WHERE user_id = #{userId}
+        ORDER BY isbn DESC
+    </select>
+</mapper>

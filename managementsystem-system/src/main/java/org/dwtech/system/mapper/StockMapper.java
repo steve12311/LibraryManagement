@@ -10,6 +10,7 @@ import org.dwtech.system.model.query.PublicBookPageQuery;
 import org.dwtech.system.model.query.StockPageQuery;
 
 import java.util.List;
+import java.util.Set;
 /**
  * 库存数据访问层，提供图书库存的分页、查询和变更接口
  *
@@ -25,6 +26,16 @@ public interface StockMapper extends BaseMapper<StockPO> {
      * @return 分页结果
      */
     Page<StockBO> getPublicBookPage(Page<StockBO> page, @Param("queryParams") PublicBookPageQuery queryParams);
+
+    /**
+     * 按偏移量查询公开书目列表，并排除指定 ISBN。
+     *
+     * @return 公开书目列表
+     */
+    List<StockBO> getPublicBookListExcluding(@Param("queryParams") PublicBookPageQuery queryParams,
+                                             @Param("excludeIsbns") Set<String> excludeIsbns,
+                                             @Param("offset") long offset,
+                                             @Param("limit") int limit);
 
     /**
      * 分页查询库存列表，支持多种筛选条件

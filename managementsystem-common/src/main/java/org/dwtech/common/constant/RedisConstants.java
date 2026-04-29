@@ -6,12 +6,6 @@ package org.dwtech.common.constant;
  * @author steve12311
 * @since 2025-11-18
  */
-/**
- * RedisConstants
- *
- * @author steve12311
- * @since 2025-11-18
- */
 public interface RedisConstants {
 
     /**
@@ -69,6 +63,17 @@ public interface RedisConstants {
         String ROLE_PERMS = "system:role:perms"; // 系统角色和权限映射
         String FILE_META = "system:file:meta:{}"; // 文件元数据缓存
         String FILE_META_NULL = "system:file:meta:null:{}"; // 文件空值缓存
+    }
+
+    /**
+     * 协同过滤推荐模块
+     */
+    interface Cf {
+        String PREFIX = "cf:";
+        String SIMILARITY = PREFIX + "sim:{}"; // 图书相似度 Hash，field=相似 ISBN，value=相似分
+        String USER_RECS = PREFIX + "rec:{}"; // 用户推荐 ISBN 列表
+        String USER_BOOKS = PREFIX + "user-books:{}"; // 用户已借 ISBN 集合
+        String REBUILD_LOCK = PREFIX + "rebuild:lock"; // 相似度矩阵重建锁
     }
 
 }

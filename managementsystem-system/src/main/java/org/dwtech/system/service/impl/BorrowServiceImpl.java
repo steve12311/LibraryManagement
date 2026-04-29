@@ -22,6 +22,7 @@ import org.dwtech.system.converter.BorrowConverter;
 import org.dwtech.system.mapper.BorrowMapper;
 import org.dwtech.system.service.BookService;
 import org.dwtech.system.service.BorrowService;
+import org.dwtech.system.service.RecommendationService;
 import org.dwtech.system.service.StockService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,6 +46,7 @@ public class BorrowServiceImpl extends ServiceImpl<BorrowMapper, BorrowPO> imple
     private final BorrowConverter borrowConverter;
     private final BookService bookService;
     private final StockService stockService;
+    private final RecommendationService recommendationService;
 
     @Override
     public IPage<BorrowVO> getBorrowPage(BorrowPageQuery queryParams) {
@@ -91,6 +93,7 @@ public class BorrowServiceImpl extends ServiceImpl<BorrowMapper, BorrowPO> imple
         stockForm.setIsbn(formData.getIsbn());
         stockForm.setStock(1);
         stockService.borrowOut(stockForm);
+        recommendationService.invalidateUserCache(formData.getUserId());
         return true;
     }
 
@@ -118,13 +121,18 @@ public class BorrowServiceImpl extends ServiceImpl<BorrowMapper, BorrowPO> imple
         formData.setUserId(borrowPO.getUserId());
         BorrowPO borrow = borrowConverter.toPo(formData);
         borrow.setId(borrowId);
-        if (borrow.getRealityReturnTime() != null) {
+        boolean returned = borrow.getRealityReturnTime() != null;
+        if (returned) {
             StockForm stockForm = new StockForm();
             stockForm.setIsbn(borrowPO.getIsbn());
             stockForm.setStock(1);
             stockService.borrowEnter(stockForm);
         }
-        return this.updateById(borrow);
+        boolean updated = this.updateById(borrow);
+        if (updated && returned) {
+            recommendationService.invalidateUserCache(borrowPO.getUserId());
+        }
+        return updated;
     }
 
     /** 馆员代借场景下，借阅记录必须关联具体用户 */

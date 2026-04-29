@@ -13,6 +13,7 @@ import org.dwtech.system.model.query.MyBorrowPageQuery;
 import org.dwtech.system.model.vo.MyBorrowPageVO;
 import org.dwtech.system.service.BookService;
 import org.dwtech.system.service.StockService;
+import org.dwtech.system.service.RecommendationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -43,13 +44,16 @@ class BorrowServiceImplTest {
     private StockService stockService;
 
     @Mock
+    private RecommendationService recommendationService;
+
+    @Mock
     private BorrowMapper borrowMapper;
 
     private BorrowServiceImpl borrowService;
 
     @BeforeEach
     void setUp() {
-        borrowService = new BorrowServiceImpl(borrowConverter, bookService, stockService);
+        borrowService = new BorrowServiceImpl(borrowConverter, bookService, stockService, recommendationService);
         ReflectionTestUtils.setField(borrowService, "baseMapper", borrowMapper);
     }
 
@@ -83,7 +87,7 @@ class BorrowServiceImplTest {
                 .isInstanceOf(BusinessException.class)
                 .hasMessage("代借用户不能为空");
 
-        verifyNoInteractions(bookService, borrowConverter, stockService, borrowMapper);
+        verifyNoInteractions(bookService, borrowConverter, stockService, recommendationService, borrowMapper);
     }
 
     @Test
@@ -102,7 +106,7 @@ class BorrowServiceImplTest {
                 .isInstanceOf(BusinessException.class)
                 .hasMessage("图书不存在");
 
-        verifyNoInteractions(borrowConverter, stockService, borrowMapper);
+        verifyNoInteractions(borrowConverter, stockService, recommendationService, borrowMapper);
     }
 
     @Test
@@ -131,6 +135,7 @@ class BorrowServiceImplTest {
         verify(stockService).borrowOut(stockFormCaptor.capture());
         assertThat(stockFormCaptor.getValue().getIsbn()).isEqualTo("9787300000001");
         assertThat(stockFormCaptor.getValue().getStock()).isEqualTo(1);
+        verify(recommendationService).invalidateUserCache(2002L);
     }
 
     @Test
@@ -153,5 +158,27 @@ class BorrowServiceImplTest {
         verify(borrowConverter).toPo(captor.capture());
         assertThat(captor.getValue().getUserId()).isEqualTo(2002L);
         assertThat(convertedBorrow.getId()).isEqualTo("borrow-2");
+    }
+
+    @Test
+    void shouldInvalidateRecommendationCacheWhenReturnBorrowUpdated() {
+        BorrowPO existingBorrow = new BorrowPO();
+        existingBorrow.setUserId(2002L);
+        existingBorrow.setIsbn("9787300000001");
+        when(borrowMapper.selectById("borrow-3")).thenReturn(existingBorrow);
+
+        BorrowPO convertedBorrow = new BorrowPO();
+        convertedBorrow.setRealityReturnTime(new java.util.Date());
+        when(borrowConverter.toPo(any(BorrowForm.class))).thenReturn(convertedBorrow);
+        when(borrowMapper.updateById(convertedBorrow)).thenReturn(1);
+
+        boolean result = borrowService.updateBorrow("borrow-3", new BorrowForm());
+
+        assertThat(result).isTrue();
+        ArgumentCaptor<StockForm> stockFormCaptor = ArgumentCaptor.forClass(StockForm.class);
+        verify(stockService).borrowEnter(stockFormCaptor.capture());
+        assertThat(stockFormCaptor.getValue().getIsbn()).isEqualTo("9787300000001");
+        assertThat(stockFormCaptor.getValue().getStock()).isEqualTo(1);
+        verify(recommendationService).invalidateUserCache(2002L);
     }
 }

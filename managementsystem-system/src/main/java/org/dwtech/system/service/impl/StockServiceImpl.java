@@ -1,5 +1,6 @@
 package org.dwtech.system.service.impl;
 
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -7,7 +8,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.dwtech.common.enmus.ResultCode;
 import org.dwtech.common.exception.BusinessException;
+import org.dwtech.common.utils.SecurityUtils;
 import org.dwtech.system.converter.StockConverter;
+import org.dwtech.system.mapper.StockMapper;
 import org.dwtech.system.model.bo.StockBO;
 import org.dwtech.system.model.bo.StockAddResult;
 import org.dwtech.system.model.entity.BookPO;
@@ -17,13 +20,18 @@ import org.dwtech.system.model.query.PublicBookPageQuery;
 import org.dwtech.system.model.query.StockPageQuery;
 import org.dwtech.system.model.vo.PublicBookPageVO;
 import org.dwtech.system.model.vo.StockPageVO;
-import org.dwtech.system.mapper.StockMapper;
 import org.dwtech.system.service.BookService;
+import org.dwtech.system.service.RecommendationService;
 import org.dwtech.system.service.StockService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 /**
  * 库存管理服务实现
  * <p>
@@ -42,15 +50,48 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class StockServiceImpl extends ServiceImpl<StockMapper, StockPO> implements StockService {
+    private static final int PUBLIC_BOOK_RECOMMENDATION_LIMIT = 100;
+
     private final StockConverter stockConverter;
     private final BookService bookService;
+    private final RecommendationService recommendationService;
 
+    /**
+     * 获取公开书目分页（集成协同过滤推荐）。
+     * <p>
+     * 三种场景：
+     * <ol>
+     *   <li>匿名用户 / 无推荐数据 → 原样返回默认排序</li>
+     *   <li>已登录 + 关键词搜索 + 有推荐 → 关键词查询结果页内重排，推荐书置顶</li>
+     *   <li>已登录 + 无关键词 + 有推荐 → 推荐书优先展示，常规馆藏填充剩余位</li>
+     * </ol>
+     */
     @Override
     public IPage<PublicBookPageVO> getPublicBookPage(PublicBookPageQuery queryParams) {
         log.info("获取公开书目分页：{}", queryParams);
         Page<StockBO> page = new Page<>(queryParams.getPageNum(), queryParams.getPageSize());
         Page<StockBO> stockPage = this.baseMapper.getPublicBookPage(page, queryParams);
-        return stockConverter.toPublicPageVo(stockPage);
+        Long userId = SecurityUtils.getUserId();
+        // 场景一：匿名用户，直接返回默认排序
+        if (userId == null) {
+            return stockConverter.toPublicPageVo(stockPage);
+        }
+
+        List<String> recommendedIsbns = recommendationService.getRecommendedIsbns(userId, PUBLIC_BOOK_RECOMMENDATION_LIMIT);
+        // 场景一（续）：已登录但无借阅史，走默认排序
+        if (recommendedIsbns.isEmpty()) {
+            return stockConverter.toPublicPageVo(stockPage);
+        }
+
+        // 场景二：关键词搜索 + 有推荐 → 页内重排，推荐项置顶
+        if (hasKeyword(queryParams)) {
+            stockPage.setRecords(reorderByRecommendations(stockPage.getRecords(), recommendedIsbns));
+            return stockConverter.toPublicPageVo(stockPage);
+        }
+
+        // 场景三：无关键词浏览 + 有推荐 → 推荐书优先 + 常规馆藏填充
+        Page<StockBO> personalizedPage = buildPersonalizedPublicBookPage(queryParams, stockPage, recommendedIsbns);
+        return stockConverter.toPublicPageVo(personalizedPage);
     }
 
     @Override
@@ -166,5 +207,96 @@ public class StockServiceImpl extends ServiceImpl<StockMapper, StockPO> implemen
             throw new BusinessException(ResultCode.USER_RESOURCE_NOT_FOUND, "库存记录不存在");
         }
         throw new BusinessException(ResultCode.USER_OPERATION_EXCEPTION, insufficientMessage);
+    }
+
+    /**
+     * 构建个性化分页结果。
+     * <ol>
+     *   <li>按推荐顺序查询图书完整信息</li>
+     *   <li>计算当前页的推荐书窗口：[pageStart, pageStart+pageSize)</li>
+     *   <li>不足 pageSize 条时，从常规馆藏中排除已展示的推荐书并填充</li>
+     *   <li>总数沿用默认查询的 total（全馆藏总量），保证前端分页组件正常</li>
+     * </ol>
+     */
+    private Page<StockBO> buildPersonalizedPublicBookPage(PublicBookPageQuery queryParams,
+                                                          Page<StockBO> defaultPage,
+                                                          List<String> recommendedIsbns) {
+        int pageSize = queryParams.getPageSize();
+        long pageStart = ((long) queryParams.getPageNum() - 1) * pageSize;
+        List<StockBO> recommendedStocks = getOrderedRecommendationStocks(recommendedIsbns);
+        if (recommendedStocks.isEmpty()) {
+            return defaultPage;
+        }
+
+        List<StockBO> records = new ArrayList<>(pageSize);
+        if (pageStart < recommendedStocks.size()) {
+            int recommendationStart = (int) pageStart;
+            int recommendationEnd = (int) Math.min(pageStart + pageSize, recommendedStocks.size());
+            records.addAll(recommendedStocks.subList(recommendationStart, recommendationEnd));
+        }
+
+        int fillCount = pageSize - records.size();
+        if (fillCount > 0) {
+            Set<String> excludeIsbns = collectIsbns(recommendedStocks);
+            long regularOffset = Math.max(0, pageStart - recommendedStocks.size());
+            records.addAll(this.baseMapper.getPublicBookListExcluding(queryParams, excludeIsbns, regularOffset, fillCount));
+        }
+
+        Page<StockBO> personalizedPage = new Page<>(queryParams.getPageNum(), pageSize);
+        personalizedPage.setTotal(defaultPage.getTotal());
+        personalizedPage.setRecords(records);
+        return personalizedPage;
+    }
+
+    private List<StockBO> getOrderedRecommendationStocks(List<String> recommendedIsbns) {
+        List<StockBO> stocks = this.baseMapper.getStockByExacts(recommendedIsbns);
+        Map<String, StockBO> stockMap = new HashMap<>(stocks.size());
+        for (StockBO stock : stocks) {
+            stockMap.putIfAbsent(stock.getIsbn(), stock);
+        }
+
+        List<StockBO> orderedStocks = new ArrayList<>(stocks.size());
+        for (String isbn : recommendedIsbns) {
+            StockBO stock = stockMap.get(isbn);
+            if (stock != null) {
+                orderedStocks.add(stock);
+            }
+        }
+        return orderedStocks;
+    }
+
+    /** 页内重排：推荐书按推荐顺序置顶，其余保持原序 */
+    private List<StockBO> reorderByRecommendations(List<StockBO> records, List<String> recommendedIsbns) {
+        Map<String, Integer> recommendationOrder = new HashMap<>(recommendedIsbns.size());
+        for (int i = 0; i < recommendedIsbns.size(); i++) {
+            recommendationOrder.putIfAbsent(recommendedIsbns.get(i), i);
+        }
+
+        List<StockBO> recommendedRecords = records.stream()
+                .filter(record -> recommendationOrder.containsKey(record.getIsbn()))
+                .sorted((left, right) -> Integer.compare(
+                        recommendationOrder.get(left.getIsbn()),
+                        recommendationOrder.get(right.getIsbn())))
+                .toList();
+        List<StockBO> normalRecords = records.stream()
+                .filter(record -> !recommendationOrder.containsKey(record.getIsbn()))
+                .toList();
+
+        List<StockBO> reorderedRecords = new ArrayList<>(records.size());
+        reorderedRecords.addAll(recommendedRecords);
+        reorderedRecords.addAll(normalRecords);
+        return reorderedRecords;
+    }
+
+    private Set<String> collectIsbns(List<StockBO> stocks) {
+        Set<String> isbns = new HashSet<>(stocks.size());
+        for (StockBO stock : stocks) {
+            isbns.add(stock.getIsbn());
+        }
+        return isbns;
+    }
+
+    private boolean hasKeyword(PublicBookPageQuery queryParams) {
+        return StrUtil.isNotBlank(queryParams.getField()) && StrUtil.isNotBlank(queryParams.getKeyword());
     }
 }
