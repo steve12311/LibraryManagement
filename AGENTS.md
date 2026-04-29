@@ -93,6 +93,7 @@ MapStruct converters under `converter/` (e.g. `BookConverter`, `BorrowConverter`
 - Role/permission changes trigger cache eviction and refresh.
 - File metadata cached by `fileId` in Redis; short-term null-value caching for non-existent files prevents cache penetration.
 - Write endpoints use `@RepeatSubmit` for short-window duplicate prevention.
+- **Collaborative filtering**: Item-based CF using cosine similarity on co-borrowing data. Similarity matrix cached in Redis Hash (`cf:sim:{isbn}`), rebuilt nightly at 3 AM. User recommendation list cached 30 min, invalidated on borrow/return. Falls back to default ordering for cold-start / anonymous users.
 
 ## Security & Configuration Tips
 - Never commit secrets; externalize API keys/passwords via environment variables.

@@ -59,6 +59,7 @@ Controllers are split into sub-packages under `managementsystem-admin`:
 - **Soft delete**: `is_deleted` column (0=normal, 1=deleted), applied manually in mapper XML WHERE clauses
 - **Standard layering**: `Controller → Service (interface) → ServiceImpl → Mapper + XML → entity`
 - **MapStruct converters**: under `managementsystem-system/.../converter/`, e.g. `BookConverter`, `UserConverter` — used for entity↔DTO↔VO mapping
+- **Collaborative filtering**: `RecommendationService` provides personalized book recommendations via item-based CF (cosine similarity on co-borrowing data). Similarity matrix stored in Redis Hash (`cf:sim:{isbn}`), rebuilt nightly by `CollaborativeFilteringTask`, user recommendation cache invalidated on borrow/return events
 - **Model layer** under `managementsystem-system/.../model/`:
   - `entity/` — DB-mapped domain objects
   - `dto/` — internal transfer objects

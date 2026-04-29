@@ -15,7 +15,7 @@
 - 数据权限行级隔离（`@DataPermission`），支持全部/本部门/本部门及子部门/仅本人 四级
 - Spring AI + DeepSeek + Ollama + Milvus 向量检索，Tool Calling（日期/库存/向量工具）
 - SSE 流式对话（`/chat`），支持多轮对话记忆
-- 管理员仪表盘统计与趋势接口（概览/趋势/排行/近期事件）
+- 基于物品的协同过滤推荐（余弦相似度 + 共借矩阵），首页书目个性化排序
 
 ## 2. 技术栈
 
@@ -150,6 +150,7 @@ mvn -pl managementsystem-system -am test -Dtest=RoleMenuServiceImplTest
 - 角色/权限变更后自动清理并刷新相关缓存
 - 文件下载链路支持 Redis 元数据缓存（`fileId → 文件元数据`），对不存在文件做短期空值缓存防穿透
 - 写接口使用 `@RepeatSubmit` 通过 Redisson 分布式锁防止短时间重复提交
+- 协同过滤相似度矩阵缓存（`cf:sim:{isbn}`，Hash），每日凌晨 3 点重建；用户推荐列表缓存 30 分钟，借还书时失效
 
 ## 8. 文件存储说明
 
