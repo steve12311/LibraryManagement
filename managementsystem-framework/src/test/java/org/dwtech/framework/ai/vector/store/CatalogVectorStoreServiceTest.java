@@ -12,10 +12,11 @@ import org.springframework.ai.vectorstore.VectorStore;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -52,24 +53,54 @@ class CatalogVectorStoreServiceTest {
     }
 
     @Test
-    void shouldResolveIsbnFromMetadataWhenSearchingCatalogBooks() {
+    void shouldReturnDocumentResolvedByMetadataIsbnWhenSearchingCatalogBooks() {
+        Document document = new Document("doc-1", "Spring Boot 图书简介", Map.of("isbn", "9787300000001"));
         when(vectorStore.similaritySearch(any(SearchRequest.class))).thenReturn(
-                List.of(new Document("9787300000001", "Spring Boot 图书简介", Map.of("isbn", "9787300000001")))
+                List.of(document)
         );
 
-        Set<String> result = catalogVectorStoreService.searchCatalogBookIsbns(List.of("Spring Boot"));
+        List<Document> result = catalogVectorStoreService.searchCatalogBookDocuments(List.of("Spring Boot"));
 
-        assertThat(result).containsExactly("9787300000001");
+        assertThat(result).containsExactly(document);
+    }
+
+    @Test
+    void shouldDeduplicateDocumentsByIsbnAndKeepFirstHit() {
+        Document first = new Document("doc-1", "第一本简介", Map.of("isbn", "9787300000001"));
+        Document second = new Document("doc-2", "第二本简介", Map.of("isbn", "9787300000002"));
+        Document duplicate = new Document("doc-3", "重复命中简介", Map.of("isbn", "9787300000001"));
+        when(vectorStore.similaritySearch(any(SearchRequest.class)))
+                .thenReturn(List.of(first, second), List.of(duplicate));
+
+        List<Document> result = catalogVectorStoreService.searchCatalogBookDocuments(List.of("Spring Boot", "Java"));
+
+        assertThat(result).containsExactly(first, second);
+        verify(vectorStore, times(2)).similaritySearch(any(SearchRequest.class));
     }
 
     @Test
     void shouldFallbackToDocumentIdWhenMetadataIsbnMissing() {
+        Document document = new Document("9787300000001", "Spring Boot 图书简介", Map.of("source", "catalog-book"));
         when(vectorStore.similaritySearch(any(SearchRequest.class))).thenReturn(
-                List.of(new Document("9787300000001", "Spring Boot 图书简介", Map.of("source", "catalog-book")))
+                List.of(document)
         );
 
-        Set<String> result = catalogVectorStoreService.searchCatalogBookIsbns(List.of("Spring Boot"));
+        List<Document> result = catalogVectorStoreService.searchCatalogBookDocuments(List.of("Spring Boot"));
 
-        assertThat(result).containsExactly("9787300000001");
+        assertThat(result).containsExactly(document);
+    }
+
+    @Test
+    void shouldSkipDocumentWhenIsbnCannotBeResolved() {
+        Document document = mock(Document.class);
+        when(document.getMetadata()).thenReturn(Map.of("source", "catalog-book"));
+        when(document.getId()).thenReturn("");
+        when(vectorStore.similaritySearch(any(SearchRequest.class))).thenReturn(
+                List.of(document)
+        );
+
+        List<Document> result = catalogVectorStoreService.searchCatalogBookDocuments(List.of("Spring Boot"));
+
+        assertThat(result).isEmpty();
     }
 }

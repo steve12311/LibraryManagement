@@ -11,10 +11,9 @@ import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
-import java.util.LinkedHashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * CatalogVectorStoreService
@@ -66,15 +65,15 @@ public class CatalogVectorStoreService {
     }
 
     /**
-     * 根据关键词在向量库中搜索相似图书，返回匹配的 ISBN 集合（已去重）。
+     * 根据关键词在向量库中搜索相似图书，返回按 ISBN 去重后的向量文档。
      *
      * @param keywords 关键词列表
-     * @return 匹配图书的 ISBN 集合
+     * @return 匹配图书的向量文档列表
      */
-    public Set<String> searchCatalogBookIsbns(List<String> keywords) {
-        Set<String> isbns = new LinkedHashSet<>();
+    public List<Document> searchCatalogBookDocuments(List<String> keywords) {
+        Map<String, Document> documentsByIsbn = new LinkedHashMap<>();
         if (keywords == null || keywords.isEmpty()) {
-            return isbns;
+            return List.of();
         }
         for (String keyword : keywords) {
             if (StrUtil.isBlank(keyword)) {
@@ -86,9 +85,9 @@ public class CatalogVectorStoreService {
                             .topK(5)
                             .build()
             );
-            collectIsbns(isbns, documents);
+            collectDocuments(documentsByIsbn, documents);
         }
-        return isbns;
+        return List.copyOf(documentsByIsbn.values());
     }
 
     /**
@@ -114,22 +113,25 @@ public class CatalogVectorStoreService {
     }
 
     /**
-     * 遍历向量搜索结果，提取并收集所有有效的 ISBN。
+     * 遍历向量搜索结果，按 ISBN 收集首次命中的文档。
      *
-     * @param isbns     用于收集 ISBN 的集合
-     * @param documents 文档列表
+     * @param documentsByIsbn 用于收集文档的有序 Map
+     * @param documents       文档列表
      */
-    private void collectIsbns(Set<String> isbns, List<Document> documents) {
+    private void collectDocuments(Map<String, Document> documentsByIsbn, List<Document> documents) {
         if (documents == null || documents.isEmpty()) {
             return;
         }
         for (Document document : documents) {
+            if (document == null) {
+                continue;
+            }
             String isbn = resolveIsbn(document);
             if (StrUtil.isBlank(isbn)) {
                 log.warn("action=search_catalog_vector result=skipped reason=missing_isbn_metadata documentId={}", document.getId());
                 continue;
             }
-            isbns.add(isbn);
+            documentsByIsbn.putIfAbsent(isbn, document);
         }
     }
 
