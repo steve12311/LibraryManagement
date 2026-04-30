@@ -20,6 +20,12 @@ spring:
   ai:
     deepseek:
       api-key: ${DEEPSEEK_API_KEY:}
+      chat:
+        options:
+          model: deepseek-v4-pro
+          thinking:
+            type: enabled
+          reasoning-effort: max
     ollama:
       base-url: http://localhost:11434
       embedding:

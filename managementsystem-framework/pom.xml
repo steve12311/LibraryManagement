@@ -28,6 +28,17 @@
         <dependency>
             <groupId>org.springframework.ai</groupId>
             <artifactId>spring-ai-starter-model-deepseek</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.springframework.ai</groupId>
+                    <artifactId>spring-ai-deepseek</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>org.dwtech</groupId>
+            <artifactId>managementsystem-spring-ai-deepseek-patch</artifactId>
         </dependency>
 
         <dependency>
