@@ -18,6 +18,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * 大屏统计服务实现
@@ -136,31 +137,49 @@ public class DashboardServiceImpl implements DashboardService {
     }
 
     private void applySnapshot(DashboardMetricDayPO metric, DashboardMetricSnapshotBO snapshot) {
-        metric.setBookTotal(valueOrZero(snapshot.getBookTotal()));
-        metric.setStockTotal(valueOrZero(snapshot.getStockTotal()));
-        metric.setAvailableStockTotal(valueOrZero(snapshot.getAvailableStockTotal()));
-        metric.setBorrowingTotal(valueOrZero(snapshot.getBorrowingTotal()));
-        metric.setReturnedTotal(valueOrZero(snapshot.getReturnedTotal()));
-        metric.setOverdueTotal(valueOrZero(snapshot.getOverdueTotal()));
-        metric.setEnabledUserTotal(valueOrZero(snapshot.getEnabledUserTotal()));
-        metric.setLoginSuccessCount(valueOrZero(snapshot.getLoginSuccessCount()));
-        metric.setLoginFailureCount(valueOrZero(snapshot.getLoginFailureCount()));
-        metric.setOperSuccessCount(valueOrZero(snapshot.getOperSuccessCount()));
-        metric.setOperFailureCount(valueOrZero(snapshot.getOperFailureCount()));
+        applySnapshot(new MetricSnapshotSetters(
+                metric::setBookTotal,
+                metric::setStockTotal,
+                metric::setAvailableStockTotal,
+                metric::setBorrowingTotal,
+                metric::setReturnedTotal,
+                metric::setOverdueTotal,
+                metric::setEnabledUserTotal,
+                metric::setLoginSuccessCount,
+                metric::setLoginFailureCount,
+                metric::setOperSuccessCount,
+                metric::setOperFailureCount
+        ), snapshot);
     }
 
     private void applySnapshot(DashboardMetricHourPO metric, DashboardMetricSnapshotBO snapshot) {
-        metric.setBookTotal(valueOrZero(snapshot.getBookTotal()));
-        metric.setStockTotal(valueOrZero(snapshot.getStockTotal()));
-        metric.setAvailableStockTotal(valueOrZero(snapshot.getAvailableStockTotal()));
-        metric.setBorrowingTotal(valueOrZero(snapshot.getBorrowingTotal()));
-        metric.setReturnedTotal(valueOrZero(snapshot.getReturnedTotal()));
-        metric.setOverdueTotal(valueOrZero(snapshot.getOverdueTotal()));
-        metric.setEnabledUserTotal(valueOrZero(snapshot.getEnabledUserTotal()));
-        metric.setLoginSuccessCount(valueOrZero(snapshot.getLoginSuccessCount()));
-        metric.setLoginFailureCount(valueOrZero(snapshot.getLoginFailureCount()));
-        metric.setOperSuccessCount(valueOrZero(snapshot.getOperSuccessCount()));
-        metric.setOperFailureCount(valueOrZero(snapshot.getOperFailureCount()));
+        applySnapshot(new MetricSnapshotSetters(
+                metric::setBookTotal,
+                metric::setStockTotal,
+                metric::setAvailableStockTotal,
+                metric::setBorrowingTotal,
+                metric::setReturnedTotal,
+                metric::setOverdueTotal,
+                metric::setEnabledUserTotal,
+                metric::setLoginSuccessCount,
+                metric::setLoginFailureCount,
+                metric::setOperSuccessCount,
+                metric::setOperFailureCount
+        ), snapshot);
+    }
+
+    private void applySnapshot(MetricSnapshotSetters setters, DashboardMetricSnapshotBO snapshot) {
+        setters.bookTotal().accept(valueOrZero(snapshot.getBookTotal()));
+        setters.stockTotal().accept(valueOrZero(snapshot.getStockTotal()));
+        setters.availableStockTotal().accept(valueOrZero(snapshot.getAvailableStockTotal()));
+        setters.borrowingTotal().accept(valueOrZero(snapshot.getBorrowingTotal()));
+        setters.returnedTotal().accept(valueOrZero(snapshot.getReturnedTotal()));
+        setters.overdueTotal().accept(valueOrZero(snapshot.getOverdueTotal()));
+        setters.enabledUserTotal().accept(valueOrZero(snapshot.getEnabledUserTotal()));
+        setters.loginSuccessCount().accept(valueOrZero(snapshot.getLoginSuccessCount()));
+        setters.loginFailureCount().accept(valueOrZero(snapshot.getLoginFailureCount()));
+        setters.operSuccessCount().accept(valueOrZero(snapshot.getOperSuccessCount()));
+        setters.operFailureCount().accept(valueOrZero(snapshot.getOperFailureCount()));
     }
 
     private DashboardMetricSnapshotBO defaultSnapshot(DashboardMetricSnapshotBO snapshot) {
@@ -201,5 +220,20 @@ public class DashboardServiceImpl implements DashboardService {
             return "/api/v1/files" + cover;
         }
         return cover;
+    }
+
+    private record MetricSnapshotSetters(
+            Consumer<Long> bookTotal,
+            Consumer<Long> stockTotal,
+            Consumer<Long> availableStockTotal,
+            Consumer<Long> borrowingTotal,
+            Consumer<Long> returnedTotal,
+            Consumer<Long> overdueTotal,
+            Consumer<Long> enabledUserTotal,
+            Consumer<Long> loginSuccessCount,
+            Consumer<Long> loginFailureCount,
+            Consumer<Long> operSuccessCount,
+            Consumer<Long> operFailureCount
+    ) {
     }
 }
