@@ -86,7 +86,7 @@
                 </choose>
             </if>
         </where>
-        ORDER BY bw.return_time ASC, bw.id DESC
+        ORDER BY bw.return_time DESC, bw.id DESC
     </select>
 
 </mapper>
