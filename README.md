@@ -1,19 +1,22 @@
 # LibraryManagement
 
-基于 Spring Boot 3 + MyBatis-Plus + Spring Security 的图书管理系统后端项目，支持 RBAC 权限、库存与借阅管理、验证码登录、Redis 缓存、AI 辅助检索。
+基于 Spring Boot 3 + MyBatis-Plus + Spring Security 的图书管理系统后端项目，支持 RBAC 权限、库存与借阅管理、验证码登录、Redis 缓存、AI 辅助检索、用户批量导入导出、协同过滤推荐。
 
 ## 1. 项目特性
 
 - 账号登录、图形验证码、JWT 双令牌（access + refresh）、Token 刷新与注销
 - 用户/角色/菜单/部门（RBAC）权限体系，方法级权限注解 + 行级数据权限隔离
 - 图书、库存、借阅、分类、出版社管理
+- 用户批量导入/导出（Excel 模板 + 行级校验 + 失败明细）
 - 文件上传哈希去重（SHA-256）与 `fileId` 黑盒访问，防路径暴露
 - Redis 缓存（角色权限、菜单路由、下拉选项），变更时自动清理刷新
 - 防重复提交（`@RepeatSubmit` + Redisson 分布式锁）
 - 操作审计日志（`@OperLog`），自动记录操作人、业务标识、结果码
 - 认证事件日志（登录/注销/刷新令牌），记录 IP、会话模式、成败原因
 - 数据权限行级隔离（`@DataPermission`），支持全部/本部门/本部门及子部门/仅本人 四级
+- 后台数据大屏：概览 / 趋势 / 排行 / 近期事件统计接口
 - Spring AI + DeepSeek + Ollama + Milvus 向量检索，Tool Calling（日期/库存/向量工具）
+- DeepSeek V4 thinking mode 支持（`reasoning_effort` + `reasoning_content`）
 - SSE 流式对话（`/chat`），支持多轮对话记忆
 - 基于物品的协同过滤推荐（余弦相似度 + 共借矩阵），首页书目个性化排序
 
@@ -24,23 +27,23 @@
 | Java | 21 |
 | Spring Boot | 3.5.6 |
 | Spring Security | 由 Spring Boot 3.5.6 BOM 管理 |
-| Spring AI | 1.1.4 |
+| Spring AI | 1.1.5 |
 | MyBatis-Plus | 3.5.14 |
 | MySQL | 8+ |
 | Redis / Redisson | 7+ / 4.1.0 |
-| Milvus | 通过 Spring AI VectorStore 集成 |
-| Ollama | Embedding 向量化 |
+| Milvus | 通过 `spring-ai-starter-vector-store-milvus` 集成 |
+| Ollama | 通过 `spring-ai-starter-model-ollama` 提供 Embedding |
 | MapStruct | 1.6.3 |
 | Hutool | 5.8.34 |
-| EasyExcel | 1.3.0 |
+| FastExcel | 1.3.0 |
 
 ## 3. 模块说明
 
 ```
 managementsystem-admin       <- 启动类与控制层（API 入口）
 managementsystem-framework   <- 安全过滤器链、AOP 切面（防重复提交/操作审计）、
-                                Spring AI（DeepSeek 对话 + 向量检索 + Tool Calling）、
-                                向量同步（异步队列 + 启动重建）
+                                Spring AI（DeepSeek 对话 + 向量检索 + Tool Calling）
+managementsystem-spring-ai-deepseek-patch  <- DeepSeek V4 thinking mode 临时补丁
 managementsystem-system      <- 业务层（service / mapper XML / MapStruct converter / model）
 managementsystem-common      <- 通用组件：Result、PageResult、BaseEntity、BaseController、
                                 注解（@RepeatSubmit/@OperLog/@DataPermission）、

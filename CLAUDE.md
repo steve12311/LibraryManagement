@@ -36,10 +36,12 @@ Maven multi-module Spring Boot 3 backend. Request flow (bottom-up dependency):
 managementsystem-admin       <- HTTP entry: controllers, Application, YAML config
     |
 managementsystem-framework   <- Cross-cutting: Security filter chain, AOP (OperLog, RepeatSubmit),
-    |                            AI services (ChatGLM, VectorStore, Tool Calling), AuthService
+    |                             AI services (DeepSeek, VectorStore, Tool Calling), AuthService
     |
 managementsystem-system      <- Business logic: Service/impl, Mapper + XML, MapStruct converters,
-    |                            domain model (entity/dto/vo/bo/query/form), scheduled tasks
+    |                             domain model (entity/dto/vo/bo/query/form), scheduled tasks
+    |
+managementsystem-spring-ai-deepseek-patch  <- Temporary patch: DeepSeek V4 thinking mode tool-calling
     |
 managementsystem-common      <- Shared foundation: Result<T>, PageResult<T>, BaseEntity,
                                  BaseController, annotations, enums, utils, JWT/Redis token mgmt
@@ -82,12 +84,17 @@ Stateless JWT via `OncePerRequestFilter` (`TokenAuthenticationFilter`). Tokens s
 
 ## AI Search & Vector Store
 
-- Calls external DeepSeek API (via Spring AI) for natural-language → structured query conversion
-- Vector store backed by Milvus for catalog similarity search
-- Ollama provides embedding generation
+- Calls external DeepSeek API (via Spring AI + local `managementsystem-spring-ai-deepseek-patch`) for natural-language → structured query conversion
+- DeepSeek V4 thinking mode supported: `reasoning_effort` + `reasoning_content` in tool-call scenarios
+- Vector store backed by Milvus (via `spring-ai-starter-vector-store-milvus`) for catalog similarity search
+- Ollama provides embedding generation (via `spring-ai-starter-model-ollama`)
 - Tool Calling: `DateTimeTool`, `StockTool`, `VectorTool` (loaded via `ToolsLoader`)
 - SSE streaming chat at `GET /chat`
-- Catalog vector sync: async queue (`CatalogVectorSyncPublisher`/`Consumer`) + rebuild runner (`CatalogVectorRebuildRunner`)
+- Vector store package structure under `framework.ai.vector`:
+  - `application/` — orchestration entrypoint for controllers
+  - `store/` — Spring AI `VectorStore` adapter
+  - `queue/` — Redis Stream message model, publish, and consume (`CatalogVectorSync*`)
+  - `rebuild/` — startup + full rebuild runners
 - Rate limited via `AIRateLimitInterceptor`
 
 ## Commit & PR Style
@@ -103,4 +110,4 @@ Conventional Commits: `feat(scope):`, `fix(scope):`, `refactor(scope):`, `docs(s
 
 ## Stage Reviews
 
-Ongoing phase work tracked in `docs/p*-*-stage-review-*.md`. Current phase: P4 Governance Hardening (rate limiting, audit logging, access control for AI endpoints).
+Ongoing phase work tracked in `docs/p*-*-stage-review-*.md`. Completed phases: P1 (boundary alignment), P2 (session auth), P3 (consistency/concurrency), P4 (governance hardening), P5 (dashboard observability), P6 (Spring AI Milvus migration), P7 (vector stream sync), P8 (vector package structure).

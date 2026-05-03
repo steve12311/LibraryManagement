@@ -5,6 +5,7 @@ This repository is a Maven multi-module backend project (`pom.xml` at root) buil
 - `managementsystem-admin`: application entrypoint and REST controllers.
 - `managementsystem-framework`: security filters, AOP, AI services (DeepSeek + VectorStore + Tool Calling).
 - `managementsystem-system`: domain services, MyBatis mapper XMLs, MapStruct converters, business models.
+- `managementsystem-spring-ai-deepseek-patch`: temporary patch for DeepSeek V4 thinking mode tool-calling (upstream Spring AI does not yet support `reasoning_effort` + `reasoning_content`).
 - `managementsystem-common`: shared config, constants, utilities, token management, core abstractions (`Result<T>`, `PageResult<T>`, `BaseEntity`).
 - `docs/sql`: DDL and migration SQL scripts used by business features.
 
@@ -81,11 +82,16 @@ MapStruct converters under `converter/` (e.g. `BookConverter`, `BorrowConverter`
 - Permission evaluation: `PermissionService` (bean name `@ss`) loads role permissions from Redis cache, supports wildcard matching.
 
 ## AI Search & Vector Store
-- DeepSeek API (via Spring AI) for natural-language → structured query with Tool Calling.
-- Milvus vector store for catalog similarity search; Ollama provides embeddings.
+- DeepSeek API (via Spring AI `spring-ai-starter-model-deepseek` + local patch module) for natural-language → structured query with Tool Calling.
+- DeepSeek V4 thinking mode (`reasoning_effort` + `reasoning_content`) supported via `managementsystem-spring-ai-deepseek-patch`.
+- Milvus vector store for catalog similarity search via `spring-ai-starter-vector-store-milvus`; Ollama provides embeddings via `spring-ai-starter-model-ollama`.
 - Tool Calling tools: `DateTimeTool`, `StockTool`, `VectorTool` (loaded via `ToolsLoader`).
 - SSE streaming chat at `GET /chat`.
-- Catalog vector sync: async queue (`CatalogVectorSyncPublisher` / `Consumer`) + startup rebuild runner (`CatalogVectorRebuildRunner`).
+- Vector store package structure organized into four sub-packages under `framework.ai.vector`:
+  - `application/` — orchestration entrypoint for controllers
+  - `store/` — Spring AI `VectorStore` adapter
+  - `queue/` — Redis Stream message model, publish, and consume (`CatalogVectorSync*`)
+  - `rebuild/` — startup + full rebuild runners
 - Rate limited via `AIRateLimitInterceptor`.
 
 ## Caching & Idempotency
