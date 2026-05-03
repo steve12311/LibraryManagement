@@ -25,6 +25,14 @@ public interface CategoryService extends IService<CategoryPO> {
     List<CategoryVO> listCategories(CategoryQuery queryParams);
 
     /**
+     * 按父节点查询直接子分类，供管理表格懒加载使用。
+     *
+     * @param queryParams 查询参数（父节点 ID、状态）
+     * @return 当前父节点下的直接子分类，每项含是否存在子节点标记
+     */
+    List<CategoryVO> listCategoryChildren(CategoryQuery queryParams);
+
+    /**
      * 查询所有可见分类的下拉选项树，供前端级联选择器使用。结果按分类排序字段排列。
      *
      * @return 分类下拉选项树

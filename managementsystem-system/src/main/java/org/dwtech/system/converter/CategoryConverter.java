@@ -20,7 +20,8 @@ public interface CategoryConverter {
     @Mappings({
             @Mapping(source = "id", target = "categoryId"),
             @Mapping(source = "name", target = "categoryName"),
-            @Mapping(source = "type", target = "code")
+            @Mapping(source = "type", target = "code"),
+            @Mapping(target = "hasChildren", ignore = true)
     })
     /**
      * CategoryPO → CategoryVO
