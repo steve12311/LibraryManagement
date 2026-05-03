@@ -40,6 +40,17 @@ public class CategoryController {
     }
 
     /**
+     * 按父节点懒加载分类表格行。
+     * 仅返回指定父节点下的直接子分类，避免管理界面一次性拉取全量分类树。
+     */
+    @GetMapping("/children")
+    @PreAuthorize("@ss.hasPerm('lib:category:list')")
+    public Result<List<CategoryVO>> listCategoryChildren(CategoryQuery queryParams) {
+        List<CategoryVO> categoryList = categoryService.listCategoryChildren(queryParams);
+        return Result.success(categoryList);
+    }
+
+    /**
      * 查询全部分类选项列表。
      * 返回分类的 ID 和名称键值对，用于前端下拉选择器。
      */

@@ -26,5 +26,7 @@ public class CategoryVO extends BaseVO {
 
     private String categoryName;
 
+    private Boolean hasChildren;
+
     private List<CategoryVO> children;
 }

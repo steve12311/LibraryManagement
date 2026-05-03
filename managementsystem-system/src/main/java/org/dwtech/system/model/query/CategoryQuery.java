@@ -10,6 +10,9 @@ import lombok.Data;
 
 @Data
 public class CategoryQuery {
+    private Long parentId;
+
     private String categoryName;
+
     private Integer status;
 }

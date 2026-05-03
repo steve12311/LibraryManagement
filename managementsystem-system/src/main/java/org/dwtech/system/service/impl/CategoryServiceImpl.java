@@ -88,6 +88,48 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, CategoryPO>
     }
 
     /**
+     * 按父节点查询直接子分类。管理端表格通过该方法逐级加载分类节点，避免一次性构建全量分类树。
+     *
+     * @param queryParams 查询参数（父节点 ID、状态）
+     * @return 当前父节点下的直接子分类
+     */
+    @Override
+    @Cacheable(
+            cacheNames = "category",
+            key = "'children:' + (#p0 == null || #p0.parentId == null ? 0 : #p0.parentId) + ':status:' + (#p0 == null || #p0.status == null ? 'all' : #p0.status)",
+            sync = true
+    )
+    public List<CategoryVO> listCategoryChildren(CategoryQuery queryParams) {
+        Long parentId = queryParams == null ? null : queryParams.getParentId();
+        Integer status = queryParams == null ? null : queryParams.getStatus();
+        Long targetParentId = ObjectUtil.defaultIfNull(parentId, SystemConstants.ROOT_NODE_ID);
+
+        List<CategoryPO> children = this.list(new LambdaQueryWrapper<CategoryPO>()
+                .select(CategoryPO::getId, CategoryPO::getParentId, CategoryPO::getTreePath, CategoryPO::getName, CategoryPO::getType, CategoryPO::getSort)
+                .eq(CategoryPO::getParentId, targetParentId)
+                .eq(ObjectUtil.isNotNull(status), CategoryPO::getVisible, status)
+                .orderByAsc(CategoryPO::getSort)
+                .orderByAsc(CategoryPO::getId)
+        );
+        if (CollectionUtil.isEmpty(children)) {
+            return Collections.emptyList();
+        }
+
+        List<Long> childIds = children.stream()
+                .map(CategoryPO::getId)
+                .toList();
+        Set<Long> nonLeafIds = listNonLeafParentIds(childIds, status);
+
+        return children.stream()
+                .map(item -> {
+                    CategoryVO categoryVO = categoryConverter.toVo(item);
+                    categoryVO.setHasChildren(nonLeafIds.contains(item.getId()));
+                    return categoryVO;
+                })
+                .collect(Collectors.toList());
+    }
+
+    /**
      * 查询所有可见分类的下拉选项树。先将分类按父节点分组，然后从根节点递归构建树形选项。
      * 结果被 Spring Cache 缓存。
      *
@@ -135,14 +177,7 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, CategoryPO>
                 .map(CategoryPO::getId)
                 .toList();
 
-        Set<Long> nonLeafIds = this.list(new LambdaQueryWrapper<CategoryPO>()
-                        .select(CategoryPO::getParentId)
-                        .eq(CategoryPO::getVisible, 1)
-                        .in(CategoryPO::getParentId, childIds)
-                        .groupBy(CategoryPO::getParentId)
-                ).stream()
-                .map(CategoryPO::getParentId)
-                .collect(Collectors.toSet());
+        Set<Long> nonLeafIds = listNonLeafParentIds(childIds, 1);
 
         return children.stream()
                 .map(item -> new CategoryOptionVO(item.getId(), item.getType() + " " + item.getName(), !nonLeafIds.contains(item.getId())))
@@ -226,6 +261,28 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, CategoryPO>
             options.add(option);
         }
         return options;
+    }
+
+    /**
+     * 查询给定节点集合中哪些节点仍有直接子分类。
+     *
+     * @param parentIds 待判断的父节点 ID 集合
+     * @param status 状态筛选；空值表示不按状态过滤
+     * @return 存在子分类的父节点 ID 集合
+     */
+    private Set<Long> listNonLeafParentIds(List<Long> parentIds, Integer status) {
+        if (CollectionUtil.isEmpty(parentIds)) {
+            return Collections.emptySet();
+        }
+
+        return this.list(new LambdaQueryWrapper<CategoryPO>()
+                        .select(CategoryPO::getParentId)
+                        .eq(ObjectUtil.isNotNull(status), CategoryPO::getVisible, status)
+                        .in(CategoryPO::getParentId, parentIds)
+                        .groupBy(CategoryPO::getParentId)
+                ).stream()
+                .map(CategoryPO::getParentId)
+                .collect(Collectors.toSet());
     }
 
     /**
