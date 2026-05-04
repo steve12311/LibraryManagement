@@ -1,6 +1,7 @@
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+See also: `AGENTS.md` (comprehensive AI agent guide) and `README.md` (project overview and quick start).
 
 ## Build & Run
 

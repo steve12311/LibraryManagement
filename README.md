@@ -170,6 +170,8 @@ mvn -pl managementsystem-system -am test -Dtest=RoleMenuServiceImplTest
 - **作者标注**：`@author steve12311`，`@since`（首次提交日期）
 - **模型分层**：entity（DB 映射）/ dto（内部传输）/ vo（前端视图）/ bo（业务聚合）/ query（查询参数）/ form（请求表单）
 - **对象映射**：MapStruct Converter 统一处理 Entity ↔ DTO ↔ VO 转换
+- **敏感信息**：密钥、密码等通过环境变量或 `.env` 文件注入，禁止硬编码；`.gitignore` 已配置排除敏感文件类型
+- **文档同步**：功能变更后同步更新 `AGENTS.md`、`CLAUDE.md`、`README.md` 三个项目文档
 
 ## 10. 许可证
 

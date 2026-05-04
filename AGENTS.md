@@ -102,7 +102,9 @@ MapStruct converters under `converter/` (e.g. `BookConverter`, `BorrowConverter`
 - **Collaborative filtering**: Item-based CF using cosine similarity on co-borrowing data. Similarity matrix cached in Redis Hash (`cf:sim:{isbn}`), rebuilt nightly at 3 AM. User recommendation list cached 30 min, invalidated on borrow/return. Falls back to default ordering for cold-start / anonymous users.
 
 ## Security & Configuration Tips
-- Never commit secrets; externalize API keys/passwords via environment variables.
+- Never commit secrets; externalize API keys/passwords via environment variables or `.env` files.
+- Keep `.env`, `application-local*.yml`, and log files out of version control — covered by `.gitignore`.
+- Rotate all credentials on live services before making the repository public.
 - Validate Redis/MySQL connectivity before local runs.
 - For file and auth changes, verify permission checks and cache invalidation paths together.
 - Milvus and Ollama are required only when AI vector search features are enabled.
