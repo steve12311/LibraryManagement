@@ -109,7 +109,7 @@ public class SecurityProperties {
         /**
          * JWT签名密钥
          * <p>HS256算法要求至少32个字符</p>
-         * <p>示例：SecretKey012345678901234567890123456789</p>
+         * <p>示例：your-jwt-secret-key-change-in-production</p>
          */
         @NotNull
         private String secretKey;

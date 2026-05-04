@@ -173,7 +173,7 @@ class JwtTokenManagerTest {
         session.setAccessTokenTimeToLive(1800);
         session.setRefreshTokenTimeToLive(7200);
         SecurityProperties.JwtConfig jwtConfig = new SecurityProperties.JwtConfig();
-        jwtConfig.setSecretKey("SecretKey012345678901234567890123456789");
+        jwtConfig.setSecretKey("test-jwt-secret-key-for-unit-tests-only");
         session.setJwt(jwtConfig);
         properties.setSession(session);
         properties.setIgnoreUrls(new String[]{"/api/v1/auth/**"});
