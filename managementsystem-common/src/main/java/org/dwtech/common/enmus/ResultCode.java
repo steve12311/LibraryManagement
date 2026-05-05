@@ -156,6 +156,8 @@ public enum ResultCode implements IResultCode, Serializable {
     UPLOAD_VIDEO_TOO_LARGE("A0704", "上传视频太大"),
     UPLOAD_COMPRESSED_FILE_TOO_LARGE("A0705", "上传压缩文件太大"),
 
+    AVATAR_MUST_USE_FILE_UPLOAD("A0706", "头像请使用文件上传接口，勿直接传 Base64"),
+
     DELETE_FILE_EXCEPTION("A0710", "删除文件异常"),
 
     /**

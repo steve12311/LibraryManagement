@@ -69,6 +69,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class UserServiceImpl extends ServiceImpl<UserMapper, UserPO> implements UserService {
     private static final int IMPORT_BATCH_SIZE = 100;
+    private static final int MAX_AVATAR_STRING_LENGTH = 500;
     private static final Pattern MOBILE_PATTERN = Pattern.compile(
             "^1(3\\d|4[5-9]|5[0-35-9]|6[2567]|7[0-8]|8\\d|9[0-35-9])\\d{8}$"
     );
@@ -263,6 +264,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserPO> implements 
     @Override
     @Transactional
     public boolean updateUser(Long userId, UserForm userForm) {
+        validateAvatar(userForm.getAvatar());
         String username = userForm.getUsername();
         UserPO currentUser = this.getById(userId);
 
@@ -474,10 +476,23 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserPO> implements 
      */
     @Override
     public boolean updateUserProfile(UserProfileForm formData) {
+        validateAvatar(formData.getAvatar());
         Long userId = SecurityUtils.getUserId();
         UserPO entity = userConverter.toPo(formData);
         entity.setId(userId);
         return this.updateById(entity);
+    }
+
+    private void validateAvatar(String avatar) {
+        if (StrUtil.isBlank(avatar)) {
+            return;
+        }
+        if (avatar.startsWith("data:")) {
+            throw new BusinessException(ResultCode.AVATAR_MUST_USE_FILE_UPLOAD);
+        }
+        if (avatar.length() > MAX_AVATAR_STRING_LENGTH) {
+            throw new BusinessException(ResultCode.AVATAR_MUST_USE_FILE_UPLOAD);
+        }
     }
 
     private List<UserImportDTO> readImportRows(InputStream inputStream) {
