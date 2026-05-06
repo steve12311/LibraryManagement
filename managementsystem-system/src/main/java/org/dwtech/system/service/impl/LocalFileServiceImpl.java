@@ -3,9 +3,7 @@ package org.dwtech.system.service.impl;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.StrUtil;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,14 +11,11 @@ import org.dwtech.common.constant.RedisConstants;
 import org.dwtech.common.core.entity.FileInfo;
 import org.dwtech.common.enmus.ResultCode;
 import org.dwtech.common.exception.BusinessException;
-import org.dwtech.common.service.PermissionService;
 import org.dwtech.common.utils.SecurityUtils;
-import org.dwtech.system.mapper.BookMapper;
 import org.dwtech.system.mapper.FileObjectMapper;
 import org.dwtech.system.mapper.FileRecordMapper;
 import org.dwtech.system.model.bo.FileDownloadBO;
 import org.dwtech.system.model.bo.FileMetaCacheBO;
-import org.dwtech.system.model.entity.BookPO;
 import org.dwtech.system.model.entity.FileObjectPO;
 import org.dwtech.system.model.entity.FileRecordPO;
 import org.dwtech.system.service.FileService;
@@ -36,6 +31,7 @@ import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.imageio.ImageIO;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URLConnection;
@@ -52,7 +48,7 @@ import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-import javax.imageio.ImageIO;
+
 /**
  * LocalFileServiceImpl
  * 本地文件存储服务实现。通过 oss.type=local 条件激活。
@@ -62,7 +58,6 @@ import javax.imageio.ImageIO;
  * @author steve12311
  * @since 2026-02-22
  */
-
 @Component
 @Slf4j
 @RequiredArgsConstructor
@@ -72,7 +67,6 @@ public class LocalFileServiceImpl implements FileService {
     private static final String OBJECT_DIR = ".objects";
     private static final String NULL_CACHE_VALUE = "__NULL__";
     private static final long CACHE_TTL_JITTER_MAX_SECONDS = 600L;
-    private static final String FILE_API_PREFIX = "/api/v1/files/";
 
     @Value("${oss.local.storage-path}")
     private String storagePath;
@@ -100,8 +94,6 @@ public class LocalFileServiceImpl implements FileService {
 
     private final FileObjectMapper fileObjectMapper;
     private final FileRecordMapper fileRecordMapper;
-    private final BookMapper bookMapper;
-    private final PermissionService permissionService;
     private final RedisTemplate<String, Object> redisTemplate;
 
     /**
@@ -158,14 +150,13 @@ public class LocalFileServiceImpl implements FileService {
             log.error("文件上传失败", e);
             throw new RuntimeException("文件上传失败");
         } finally {
-            // 命中去重时仍会生成临时文件，这里统一清理。
             FileUtil.del(uploadDigest.tempFilePath().toFile());
         }
     }
 
     /**
      * 根据文件 ID 获取文件下载信息。流程：读取缓存元数据 → 若缓存空值可命中则快速失败 →
-     * 未命中则从数据库加载并写入缓存 → 校验文件存在性和访问权限 → 构造下载信息返回。
+     * 未命中则从数据库加载并写入缓存 → 校验文件存在性 → 构造下载信息返回。
      *
      * @param fileId 文件 ID
      * @return 文件下载信息
@@ -187,8 +178,6 @@ public class LocalFileServiceImpl implements FileService {
             }
             cacheFileMeta(fileMetaCacheBO);
         }
-        validateFileReadAccess(fileMetaCacheBO);
-
         Path targetPath = resolveSafePath(fileMetaCacheBO.getStoragePath());
         if (!Files.exists(targetPath) || Files.isDirectory(targetPath)) {
             evictFileMeta(fileId);
@@ -208,15 +197,15 @@ public class LocalFileServiceImpl implements FileService {
     }
 
     /**
-     * 删除文件记录。流程：校验删除权限 → 解除书籍封面绑定 → 删除文件记录 →
-     * 文件对象引用计数减一 → 引用归零时删除物理文件 → 清除并缓存空值到 Redis。
+     * 物理删除文件记录（需调用方校验 sys:file:del 权限）。
+     * 无视引用计数，直接删除文件记录、文件对象和物理文件。
      *
      * @param fileId 文件 ID
      * @return true 表示删除成功，false 表示文件不存在
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public boolean deleteFile(Long fileId) {
+    public boolean deleteFilePhysical(Long fileId) {
         if (fileId == null) {
             return false;
         }
@@ -224,9 +213,46 @@ public class LocalFileServiceImpl implements FileService {
         if (fileRecord == null) {
             return false;
         }
-        boolean publicBookCover = isPublicBookCover(fileId);
-        validateFileDeleteAccess(publicBookCover, fileRecord.getOwnerUserId());
-        clearBookCoverBinding(publicBookCover, fileId);
+
+        int removed = fileRecordMapper.deleteById(fileId);
+        if (removed == 0) {
+            return false;
+        }
+
+        Long objectId = fileRecord.getObjectId();
+        if (objectId != null) {
+            FileObjectPO fileObject = fileObjectMapper.selectById(objectId);
+            if (fileObject != null) {
+                fileObjectMapper.deleteById(objectId);
+                Path objectPath = resolveSafePath(fileObject.getStoragePath());
+                FileUtil.del(objectPath.toFile());
+            }
+        }
+
+        runAfterCommitOrNow(() -> {
+            evictFileMeta(fileId);
+            cacheNullFileMeta(fileId);
+        });
+        return true;
+    }
+
+    /**
+     * 引用计数删除文件记录。删除文件记录，文件对象引用计数减一，
+     * 仅当引用归零时才删除物理文件。供消息队列异步调用。
+     *
+     * @param fileId 文件 ID
+     * @return true 表示删除成功，false 表示文件不存在
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean deleteFileByRefCount(Long fileId) {
+        if (fileId == null) {
+            return false;
+        }
+        FileRecordPO fileRecord = fileRecordMapper.selectById(fileId);
+        if (fileRecord == null) {
+            return false;
+        }
 
         int removed = fileRecordMapper.deleteById(fileId);
         if (removed == 0) {
@@ -235,6 +261,10 @@ public class LocalFileServiceImpl implements FileService {
 
         Long objectId = fileRecord.getObjectId();
         if (objectId == null) {
+            runAfterCommitOrNow(() -> {
+                evictFileMeta(fileId);
+                cacheNullFileMeta(fileId);
+            });
             return true;
         }
 
@@ -252,20 +282,34 @@ public class LocalFileServiceImpl implements FileService {
             FileUtil.del(objectPath.toFile());
         }
 
-        Long finalFileId = fileId;
         runAfterCommitOrNow(() -> {
-            evictFileMeta(finalFileId);
-            cacheNullFileMeta(finalFileId);
+            evictFileMeta(fileId);
+            cacheNullFileMeta(fileId);
         });
         return true;
     }
 
     /**
-     * 解析并规范化存储路径，防止目录穿越攻击。
-     * 将相对路径拼接存储根目录后规范化，确保结果仍在根目录下。
+     * 获取文件对象的引用计数。
      *
-     * @param relativePath 相对存储根目录的路径
-     * @return 规范化后的安全绝对路径
+     * @param fileId 文件 ID
+     * @return 引用计数，文件不存在时返回 0
+     */
+    @Override
+    public int getFileRefCount(Long fileId) {
+        if (fileId == null) {
+            return 0;
+        }
+        FileRecordPO fileRecord = fileRecordMapper.selectById(fileId);
+        if (fileRecord == null || fileRecord.getObjectId() == null) {
+            return 0;
+        }
+        FileObjectPO fileObject = fileObjectMapper.selectById(fileRecord.getObjectId());
+        return (fileObject != null && fileObject.getRefCount() != null) ? fileObject.getRefCount() : 0;
+    }
+
+    /**
+     * 解析并规范化存储路径，防止目录穿越攻击。
      */
     private Path resolveSafePath(String relativePath) {
         Path storageRoot = getStorageRoot();
@@ -360,7 +404,6 @@ public class LocalFileServiceImpl implements FileService {
             fileObjectMapper.insert(fileObject);
             return fileObject;
         } catch (DuplicateKeyException e) {
-            // 并发上传同一文件时，走唯一索引兜底。
             FileObjectPO existed = findByHash(uploadDigest.sha256(), uploadDigest.fileSize());
             if (existed == null) {
                 throw e;
@@ -417,7 +460,6 @@ public class LocalFileServiceImpl implements FileService {
         fileMetaCacheBO.setObjectId(fileObject.getId());
         fileMetaCacheBO.setOriginalName(fileRecord.getOriginalName());
         fileMetaCacheBO.setOwnerUserId(fileRecord.getOwnerUserId());
-        fileMetaCacheBO.setPublicBookCover(isPublicBookCover(fileId));
         fileMetaCacheBO.setStoragePath(fileObject.getStoragePath());
         fileMetaCacheBO.setMimeType(fileObject.getMimeType());
         fileMetaCacheBO.setFileSize(fileObject.getFileSize());
@@ -459,7 +501,7 @@ public class LocalFileServiceImpl implements FileService {
         }
     }
 
-    private void evictFileMeta(Long fileId) {
+    void evictFileMeta(Long fileId) {
         if (!fileMetaCacheEnabled || fileId == null) {
             return;
         }
@@ -513,7 +555,6 @@ public class LocalFileServiceImpl implements FileService {
         fileMetaCacheBO.setObjectId(toLong(mapValue.get("objectId")));
         fileMetaCacheBO.setOriginalName(toStringValue(mapValue.get("originalName")));
         fileMetaCacheBO.setOwnerUserId(toLong(mapValue.get("ownerUserId")));
-        fileMetaCacheBO.setPublicBookCover(toBoolean(mapValue.get("publicBookCover")));
         fileMetaCacheBO.setStoragePath(toStringValue(mapValue.get("storagePath")));
         fileMetaCacheBO.setMimeType(toStringValue(mapValue.get("mimeType")));
         fileMetaCacheBO.setFileSize(toLong(mapValue.get("fileSize")));
@@ -558,64 +599,6 @@ public class LocalFileServiceImpl implements FileService {
             return null;
         }
         return mimeType.split(";", 2)[0].trim().toLowerCase(Locale.ROOT);
-    }
-
-    private void validateFileReadAccess(FileMetaCacheBO fileMetaCacheBO) {
-        if (isPublicBookCover(fileMetaCacheBO.getFileId())) {
-            return;
-        }
-        validatePrivateFileAccess(fileMetaCacheBO.getOwnerUserId(), "无权访问该文件");
-    }
-
-    private void validateFileDeleteAccess(boolean publicBookCover, Long ownerUserId) {
-        if (publicBookCover) {
-            if (SecurityUtils.isRoot() || permissionService.hasPerm("sys:stock:edit")) {
-                return;
-            }
-            throw new BusinessException(ResultCode.ACCESS_UNAUTHORIZED, "无权删除书籍封面文件");
-        }
-        validatePrivateFileAccess(ownerUserId, "无权访问该文件");
-    }
-
-    private void validatePrivateFileAccess(Long ownerUserId, String message) {
-        if (SecurityUtils.isRoot()) {
-            return;
-        }
-        Long currentUserId = SecurityUtils.getUserId();
-        if (currentUserId == null || ownerUserId == null || !ownerUserId.equals(currentUserId)) {
-            throw new BusinessException(ResultCode.ACCESS_UNAUTHORIZED, message);
-        }
-    }
-
-    private boolean isPublicBookCover(Long fileId) {
-        if (fileId == null) {
-            return false;
-        }
-        Long count = bookMapper.selectCount(
-                new QueryWrapper<BookPO>()
-                        .and(wrapper -> wrapper
-                                .eq("cover", "/" + fileId)
-                                .or()
-                                .eq("cover", FILE_API_PREFIX + fileId)
-                        )
-        );
-        return count != null && count > 0;
-    }
-
-    private void clearBookCoverBinding(boolean publicBookCover, Long fileId) {
-        if (!publicBookCover) {
-            return;
-        }
-        bookMapper.update(
-                null,
-                new UpdateWrapper<BookPO>()
-                        .and(wrapper -> wrapper
-                                .eq("cover", "/" + fileId)
-                                .or()
-                                .eq("cover", FILE_API_PREFIX + fileId)
-                        )
-                        .set("cover", null)
-        );
     }
 
     private Long toLong(Object value) {

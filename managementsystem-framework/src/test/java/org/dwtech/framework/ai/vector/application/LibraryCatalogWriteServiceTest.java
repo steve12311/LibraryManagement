@@ -3,6 +3,7 @@ package org.dwtech.framework.ai.vector.application;
 import org.dwtech.framework.ai.vector.queue.CatalogVectorSyncMessage;
 import org.dwtech.framework.ai.vector.queue.CatalogVectorSyncPublisher;
 import org.dwtech.framework.ai.vector.queue.CatalogVectorSyncTrigger;
+import org.dwtech.system.file.queue.FileRefCountDeletePublisher;
 import org.dwtech.system.model.bo.StockAddResult;
 import org.dwtech.system.model.form.BookForm;
 import org.dwtech.system.model.form.StockForm;
@@ -16,6 +17,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -32,6 +34,9 @@ class LibraryCatalogWriteServiceTest {
     @Mock
     private CatalogVectorSyncPublisher catalogVectorSyncPublisher;
 
+    @Mock
+    private FileRefCountDeletePublisher fileRefCountDeletePublisher;
+
     private LibraryCatalogWriteService libraryCatalogWriteService;
 
     @BeforeEach
@@ -39,7 +44,8 @@ class LibraryCatalogWriteServiceTest {
         libraryCatalogWriteService = new LibraryCatalogWriteService(
                 bookService,
                 stockService,
-                catalogVectorSyncPublisher
+                catalogVectorSyncPublisher,
+                fileRefCountDeletePublisher
         );
     }
 
@@ -47,6 +53,7 @@ class LibraryCatalogWriteServiceTest {
     void shouldPublishBookUpdatedMessageWhenUpdatingBookSuccessfully() {
         BookForm bookForm = new BookForm();
         bookForm.setIsbn("9787300000001");
+        when(bookService.getById("9787300000001")).thenReturn(null);
         when(bookService.saveOrUpdateBook(bookForm)).thenReturn(true);
 
         boolean result = libraryCatalogWriteService.updateBook(bookForm);
@@ -84,6 +91,6 @@ class LibraryCatalogWriteServiceTest {
         boolean result = libraryCatalogWriteService.addStock(stockForm);
 
         assertThat(result).isTrue();
-        verify(catalogVectorSyncPublisher, never()).publishAfterCommit(org.mockito.ArgumentMatchers.any());
+        verify(catalogVectorSyncPublisher, never()).publishAfterCommit(any());
     }
 }

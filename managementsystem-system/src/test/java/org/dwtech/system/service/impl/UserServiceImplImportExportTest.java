@@ -17,6 +17,7 @@ import org.dwtech.system.model.entity.UserPO;
 import org.dwtech.system.model.entity.UserRolePO;
 import org.dwtech.system.model.query.UserPageQuery;
 import org.dwtech.system.model.vo.UserImportResultVO;
+import org.dwtech.system.file.queue.FileRefCountDeletePublisher;
 import org.dwtech.system.service.RoleService;
 import org.dwtech.system.service.UserRoleService;
 import org.junit.jupiter.api.AfterEach;
@@ -70,6 +71,9 @@ class UserServiceImplImportExportTest {
     private TokenManager tokenManager;
 
     @Mock
+    private FileRefCountDeletePublisher fileRefCountDeletePublisher;
+
+    @Mock
     private UserMapper userMapper;
 
     private UserServiceImpl userService;
@@ -89,7 +93,8 @@ class UserServiceImplImportExportTest {
                 passwordEncoder,
                 userRoleService,
                 permissionService,
-                tokenManager
+                tokenManager,
+                fileRefCountDeletePublisher
         ));
         ReflectionTestUtils.setField(userService, "baseMapper", userMapper);
         authenticateCurrentUser();

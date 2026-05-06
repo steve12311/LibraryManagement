@@ -32,11 +32,6 @@ public class FileMetaCacheBO {
     private Long ownerUserId;
 
     /**
-     * 是否为公开书籍封面
-     */
-    private Boolean publicBookCover;
-
-    /**
      * 存储相对路径
      */
     private String storagePath;

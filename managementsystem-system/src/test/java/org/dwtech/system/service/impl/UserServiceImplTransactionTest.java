@@ -6,6 +6,7 @@ import org.apache.ibatis.builder.MapperBuilderAssistant;
 import org.dwtech.common.service.PermissionService;
 import org.dwtech.common.token.TokenManager;
 import org.dwtech.system.model.form.UserForm;
+import org.dwtech.system.file.queue.FileRefCountDeletePublisher;
 import org.dwtech.system.service.RoleService;
 import org.dwtech.system.service.UserRoleService;
 import org.junit.jupiter.api.BeforeEach;
@@ -50,6 +51,9 @@ class UserServiceImplTransactionTest {
     @Mock
     private TokenManager tokenManager;
 
+    @Mock
+    private FileRefCountDeletePublisher fileRefCountDeletePublisher;
+
     private UserServiceImpl userService;
 
     @BeforeEach
@@ -66,7 +70,8 @@ class UserServiceImplTransactionTest {
                 passwordEncoder,
                 userRoleService,
                 permissionService,
-                tokenManager
+                tokenManager,
+                fileRefCountDeletePublisher
         ));
     }
 

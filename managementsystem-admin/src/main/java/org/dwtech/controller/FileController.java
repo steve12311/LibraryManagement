@@ -81,15 +81,28 @@ public class FileController {
     }
 
     /**
-     * 删除指定文件记录。只能删除当前用户拥有的文件。
+     * 物理删除文件记录（需 sys:file:del 权限）。
+     * 删除文件记录和关联的文件对象，引用归零时同时删除物理文件。
      *
      * @param fileId 文件记录 ID
      */
     @DeleteMapping("/{fileId}")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("@ss.hasPermi('sys:file:del')")
     @OperLog(module = "文件管理", action = "删除文件", bizId = "#p0")
     public Result<Boolean> deleteFile(@PathVariable("fileId") Long fileId) {
-        boolean deleted = fileService.deleteFile(fileId);
+        boolean deleted = fileService.deleteFilePhysical(fileId);
         return Result.success(deleted);
+    }
+
+    /**
+     * 获取文件的引用计数，供前端删除确认弹窗查询。
+     *
+     * @param fileId 文件记录 ID
+     */
+    @GetMapping("/{fileId}/refcount")
+    @PreAuthorize("@ss.hasPermi('sys:file:del')")
+    public Result<Integer> getFileRefCount(@PathVariable("fileId") Long fileId) {
+        int refCount = fileService.getFileRefCount(fileId);
+        return Result.success(refCount);
     }
 }

@@ -7,6 +7,7 @@ import org.dwtech.common.service.PermissionService;
 import org.dwtech.system.converter.UserConverter;
 import org.dwtech.system.model.entity.UserPO;
 import org.dwtech.system.model.form.PasswordUpdateForm;
+import org.dwtech.system.file.queue.FileRefCountDeletePublisher;
 import org.dwtech.system.service.RoleService;
 import org.dwtech.system.service.UserRoleService;
 import org.junit.jupiter.api.BeforeEach;
@@ -45,6 +46,9 @@ class UserServiceImplSessionInvalidationTest {
     @Mock
     private TokenManager tokenManager;
 
+    @Mock
+    private FileRefCountDeletePublisher fileRefCountDeletePublisher;
+
     private UserServiceImpl userService;
 
     @BeforeEach
@@ -61,7 +65,8 @@ class UserServiceImplSessionInvalidationTest {
                 passwordEncoder,
                 userRoleService,
                 permissionService,
-                tokenManager
+                tokenManager,
+                fileRefCountDeletePublisher
         ));
     }
 

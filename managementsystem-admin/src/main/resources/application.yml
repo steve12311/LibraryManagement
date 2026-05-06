@@ -162,6 +162,13 @@ file:
     allowed-mime-types: image/jpeg,image/png,image/gif
   download:
     inline-allowed-mime-types: image/jpeg,image/png,image/gif
+  ref-count-delete-queue:
+    stream-key: "file:ref-count-delete:stream"
+    consumer-group: "file-ref-count-delete-group"
+    consumer-name-prefix: "file-ref-count-delete-consumer"
+    consumer-enabled: true
+    max-retries: 3
+    poll-timeout-seconds: 1
 
 ai:
   catalog-vector-queue:

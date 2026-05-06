@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.metadata.TableInfoHelper;
 import org.apache.ibatis.builder.MapperBuilderAssistant;
 import org.dwtech.common.service.PermissionService;
 import org.dwtech.common.token.TokenManager;
+import org.dwtech.system.file.queue.FileRefCountDeletePublisher;
 import org.dwtech.system.converter.UserConverter;
 import org.dwtech.system.model.entity.UserPO;
 import org.dwtech.system.model.form.UserForm;
@@ -50,6 +51,9 @@ class UserServiceImplUpdateConsistencyTest {
     @Mock
     private TokenManager tokenManager;
 
+    @Mock
+    private FileRefCountDeletePublisher fileRefCountDeletePublisher;
+
     private UserServiceImpl userService;
 
     @BeforeEach
@@ -66,7 +70,8 @@ class UserServiceImplUpdateConsistencyTest {
                 passwordEncoder,
                 userRoleService,
                 permissionService,
-                tokenManager
+                tokenManager,
+                fileRefCountDeletePublisher
         ));
     }
 

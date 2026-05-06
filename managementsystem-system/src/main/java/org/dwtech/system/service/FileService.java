@@ -3,6 +3,7 @@ package org.dwtech.system.service;
 import org.dwtech.common.core.entity.FileInfo;
 import org.dwtech.system.model.bo.FileDownloadBO;
 import org.springframework.web.multipart.MultipartFile;
+
 /**
  * 文件存储服务接口，提供文件上传、下载信息获取和删除功能。
  * 可根据配置切换本地存储或对象存储实现。
@@ -10,8 +11,8 @@ import org.springframework.web.multipart.MultipartFile;
  * @author steve12311
  * @since 2026-02-22
  */
-
 public interface FileService {
+
     /**
      * 上传文件。校验文件类型和大小，计算 SHA-256 指纹进行去重存储，
      * 写入文件记录并返回访问链接。
@@ -30,12 +31,28 @@ public interface FileService {
     FileDownloadBO getFile(Long fileId);
 
     /**
-     * 删除文件记录。若文件对象引用计数归零，则同时删除物理文件。
-     * 若为公有书籍封面，需有 sys:stock:edit 权限。
+     * 物理删除文件记录（需调用方校验 sys:file:del 权限）。
+     * 删除文件记录，文件对象引用计数减一，引用归零时删除物理文件。
      *
      * @param fileId 文件 ID
      * @return true 表示删除成功，false 表示文件不存在
      */
-    boolean deleteFile(Long fileId);
+    boolean deleteFilePhysical(Long fileId);
 
+    /**
+     * 引用计数删除文件记录。删除文件记录，文件对象引用计数减一，
+     * 仅当引用归零时才删除物理文件。供消息队列异步调用。
+     *
+     * @param fileId 文件 ID
+     * @return true 表示删除成功，false 表示文件不存在
+     */
+    boolean deleteFileByRefCount(Long fileId);
+
+    /**
+     * 获取文件对象的引用计数，供前端删除确认弹窗查询。
+     *
+     * @param fileId 文件 ID
+     * @return 引用计数，文件不存在时返回 0
+     */
+    int getFileRefCount(Long fileId);
 }

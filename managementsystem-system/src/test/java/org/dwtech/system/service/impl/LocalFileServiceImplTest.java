@@ -5,8 +5,6 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import cn.hutool.core.util.StrUtil;
 import org.dwtech.common.constant.RedisConstants;
 import org.dwtech.common.core.entity.FileInfo;
-import org.dwtech.common.service.PermissionService;
-import org.dwtech.system.mapper.BookMapper;
 import org.dwtech.system.mapper.FileObjectMapper;
 import org.dwtech.system.mapper.FileRecordMapper;
 import org.dwtech.system.model.bo.FileDownloadBO;
@@ -62,12 +60,6 @@ class LocalFileServiceImplTest {
     private FileRecordMapper fileRecordMapper;
 
     @Mock
-    private BookMapper bookMapper;
-
-    @Mock
-    private PermissionService permissionService;
-
-    @Mock
     private RedisTemplate<String, Object> redisTemplate;
 
     @Mock
@@ -77,7 +69,7 @@ class LocalFileServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        localFileService = new LocalFileServiceImpl(fileObjectMapper, fileRecordMapper, bookMapper, permissionService, redisTemplate);
+        localFileService = new LocalFileServiceImpl(fileObjectMapper, fileRecordMapper, redisTemplate);
         ReflectionTestUtils.setField(localFileService, "storagePath", tempDir.toString());
         org.mockito.Mockito.lenient().when(redisTemplate.opsForValue()).thenReturn(valueOperations);
         SecurityContextHolder.getContext().setAuthentication(
@@ -259,33 +251,6 @@ class LocalFileServiceImplTest {
     }
 
     @Test
-    void shouldCachePublicBookCoverFlagWhenFileBoundToBookCover() {
-        FileRecordPO fileRecordPO = new FileRecordPO();
-        fileRecordPO.setId(9L);
-        fileRecordPO.setObjectId(3L);
-        fileRecordPO.setOriginalName("cover.png");
-        fileRecordPO.setOwnerUserId(1001L);
-        when(fileRecordMapper.selectById(9L)).thenReturn(fileRecordPO);
-
-        FileObjectPO fileObjectPO = new FileObjectPO();
-        fileObjectPO.setId(3L);
-        fileObjectPO.setStoragePath(".objects/aa/bb/abcdef");
-        fileObjectPO.setMimeType("image/png");
-        fileObjectPO.setFileSize(11L);
-        fileObjectPO.setSha256("abcdef");
-        when(fileObjectMapper.selectById(3L)).thenReturn(fileObjectPO);
-        when(bookMapper.selectCount(any())).thenReturn(1L);
-
-        assertThatThrownBy(() -> localFileService.getFile(9L))
-                .isInstanceOf(RuntimeException.class)
-                .hasMessage("文件不存在");
-
-        ArgumentCaptor<FileMetaCacheBO> cacheCaptor = ArgumentCaptor.forClass(FileMetaCacheBO.class);
-        verify(valueOperations).set(eq("system:file:meta:9"), cacheCaptor.capture(), anyLong(), eq(TimeUnit.SECONDS));
-        assertThat(cacheCaptor.getValue().getPublicBookCover()).isTrue();
-    }
-
-    @Test
     void shouldReadFileMetaFromCacheWithoutDbQuery() throws Exception {
         Path objectPath = tempDir.resolve(".objects/aa/bb/from-cache");
         Files.createDirectories(objectPath.getParent());
@@ -328,10 +293,10 @@ class LocalFileServiceImplTest {
     }
 
     @Test
-    void shouldDeleteFileAndPhysicalObjectWhenRefCountReachZero() throws Exception {
-        Path objectPath = tempDir.resolve(".objects/aa/bb/to-delete");
+    void shouldDeleteFilePhysicalIgnoringRefCount() throws Exception {
+        Path objectPath = tempDir.resolve(".objects/aa/bb/force-delete");
         Files.createDirectories(objectPath.getParent());
-        Files.writeString(objectPath, "will-delete");
+        Files.writeString(objectPath, "force-delete");
 
         FileRecordPO fileRecordPO = new FileRecordPO();
         fileRecordPO.setId(7L);
@@ -342,11 +307,11 @@ class LocalFileServiceImplTest {
 
         FileObjectPO fileObjectPO = new FileObjectPO();
         fileObjectPO.setId(88L);
-        fileObjectPO.setStoragePath(".objects/aa/bb/to-delete");
-        fileObjectPO.setRefCount(0);
+        fileObjectPO.setStoragePath(".objects/aa/bb/force-delete");
+        fileObjectPO.setRefCount(5); // 引用计数 > 0，但仍应被物理删除
         when(fileObjectMapper.selectById(88L)).thenReturn(fileObjectPO);
 
-        boolean deleted = localFileService.deleteFile(7L);
+        boolean deleted = localFileService.deleteFilePhysical(7L);
 
         assertThat(deleted).isTrue();
         verify(fileObjectMapper).deleteById(88L);
@@ -355,6 +320,67 @@ class LocalFileServiceImplTest {
         String nullKey = StrUtil.format(RedisConstants.System.FILE_META_NULL, 7L);
         verify(redisTemplate, atLeastOnce()).delete(metaKey);
         verify(valueOperations).set(eq(nullKey), eq("__NULL__"), anyLong(), eq(TimeUnit.SECONDS));
+    }
+
+    @Test
+    void shouldDeleteFileByRefCountAndPhysicalObjectWhenRefCountReachZero() throws Exception {
+        Path objectPath = tempDir.resolve(".objects/aa/bb/refcount-delete");
+        Files.createDirectories(objectPath.getParent());
+        Files.writeString(objectPath, "refcount-content");
+
+        FileRecordPO fileRecordPO = new FileRecordPO();
+        fileRecordPO.setId(8L);
+        fileRecordPO.setObjectId(99L);
+        fileRecordPO.setOwnerUserId(1001L);
+        when(fileRecordMapper.selectById(8L)).thenReturn(fileRecordPO);
+        when(fileRecordMapper.deleteById(8L)).thenReturn(1);
+
+        FileObjectPO fileObjectPO = new FileObjectPO();
+        fileObjectPO.setId(99L);
+        fileObjectPO.setStoragePath(".objects/aa/bb/refcount-delete");
+        fileObjectPO.setRefCount(0);
+        when(fileObjectMapper.selectById(99L)).thenReturn(fileObjectPO);
+
+        boolean deleted = localFileService.deleteFileByRefCount(8L);
+
+        assertThat(deleted).isTrue();
+        verify(fileObjectMapper).deleteById(99L);
+        assertThat(Files.exists(objectPath)).isFalse();
+    }
+
+    @Test
+    void shouldReturnFalseWhenFileRecordNotFoundForDeletePhysical() {
+        when(fileRecordMapper.selectById(999L)).thenReturn(null);
+
+        boolean deleted = localFileService.deleteFilePhysical(999L);
+
+        assertThat(deleted).isFalse();
+    }
+
+    @Test
+    void shouldReturnFalseWhenFileRecordNotFoundForDeleteByRefCount() {
+        when(fileRecordMapper.selectById(999L)).thenReturn(null);
+
+        boolean deleted = localFileService.deleteFileByRefCount(999L);
+
+        assertThat(deleted).isFalse();
+    }
+
+    @Test
+    void shouldGetFileRefCount() {
+        FileRecordPO fileRecordPO = new FileRecordPO();
+        fileRecordPO.setId(15L);
+        fileRecordPO.setObjectId(50L);
+        when(fileRecordMapper.selectById(15L)).thenReturn(fileRecordPO);
+
+        FileObjectPO fileObjectPO = new FileObjectPO();
+        fileObjectPO.setId(50L);
+        fileObjectPO.setRefCount(3);
+        when(fileObjectMapper.selectById(50L)).thenReturn(fileObjectPO);
+
+        int refCount = localFileService.getFileRefCount(15L);
+
+        assertThat(refCount).isEqualTo(3);
     }
 
     @Test

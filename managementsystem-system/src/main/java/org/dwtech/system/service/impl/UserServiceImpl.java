@@ -16,6 +16,8 @@ import org.dwtech.common.constant.SystemConstants;
 import org.dwtech.common.core.entity.UserAuthCredentials;
 import org.dwtech.common.model.Option;
 import org.dwtech.common.enmus.ResultCode;
+import org.dwtech.system.file.queue.FileRefCountDeleteMessage;
+import org.dwtech.system.file.queue.FileRefCountDeletePublisher;
 import org.dwtech.system.model.form.PasswordUpdateForm;
 import org.dwtech.system.model.form.UserProfileForm;
 import org.dwtech.system.model.vo.CurrentUserVO;
@@ -38,6 +40,7 @@ import org.dwtech.system.mapper.UserMapper;
 import org.dwtech.system.service.RoleService;
 import org.dwtech.system.service.UserRoleService;
 import org.dwtech.system.service.UserService;
+import org.dwtech.system.util.FileUrlUtils;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -80,6 +83,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserPO> implements 
     private final UserRoleService userRoleService;
     private final PermissionService permissionService;
     private final TokenManager tokenManager;
+    private final FileRefCountDeletePublisher fileRefCountDeletePublisher;
 
     /**
      * 根据用户名查询认证凭据。流程：从数据库查询用户凭证 → 若存在则获取其角色集合 →
@@ -293,6 +297,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserPO> implements 
             if (statusChanged) {
                 tokenManager.invalidateUserSessions(userId);
             }
+            // 处理头像变更：新头像标记公开访问，旧头像引用计数删除
+            if (currentUser != null) {
+                handleAvatarChange(currentUser.getAvatar(), userForm.getAvatar());
+            }
         }
         return result;
     }
@@ -478,9 +486,17 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserPO> implements 
     public boolean updateUserProfile(UserProfileForm formData) {
         validateAvatar(formData.getAvatar());
         Long userId = SecurityUtils.getUserId();
+        UserPO currentUser = this.getById(userId);
+        String oldAvatarUrl = (currentUser != null) ? currentUser.getAvatar() : null;
+
         UserPO entity = userConverter.toPo(formData);
         entity.setId(userId);
-        return this.updateById(entity);
+        boolean result = this.updateById(entity);
+
+        if (result) {
+            handleAvatarChange(oldAvatarUrl, formData.getAvatar());
+        }
+        return result;
     }
 
     private void validateAvatar(String avatar) {
@@ -492,6 +508,17 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserPO> implements 
         }
         if (avatar.length() > MAX_AVATAR_STRING_LENGTH) {
             throw new BusinessException(ResultCode.AVATAR_MUST_USE_FILE_UPLOAD);
+        }
+    }
+
+    private void handleAvatarChange(String oldAvatarUrl, String newAvatarUrl) {
+        if (StrUtil.isNotBlank(oldAvatarUrl) && !StrUtil.equals(oldAvatarUrl, newAvatarUrl)) {
+            Long oldFileId = FileUrlUtils.extractFileId(oldAvatarUrl);
+            if (oldFileId != null) {
+                fileRefCountDeletePublisher.publishAfterCommit(
+                        FileRefCountDeleteMessage.initial(oldFileId)
+                );
+            }
         }
     }
 
