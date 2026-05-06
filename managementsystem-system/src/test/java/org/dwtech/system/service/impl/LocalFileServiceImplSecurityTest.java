@@ -16,6 +16,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.transaction.PlatformTransactionManager;
 
 import java.nio.file.Path;
 
@@ -35,6 +36,9 @@ class LocalFileServiceImplSecurityTest {
     private FileRecordMapper fileRecordMapper;
 
     @Mock
+    private PlatformTransactionManager transactionManager;
+
+    @Mock
     private RedisTemplate<String, Object> redisTemplate;
 
     @Mock
@@ -47,7 +51,7 @@ class LocalFileServiceImplSecurityTest {
 
     @BeforeEach
     void setUp() {
-        localFileService = new LocalFileServiceImpl(fileObjectMapper, fileRecordMapper, redisTemplate);
+        localFileService = new LocalFileServiceImpl(fileObjectMapper, fileRecordMapper, redisTemplate, transactionManager);
         ReflectionTestUtils.setField(localFileService, "storagePath", tempDir.toString());
         lenient().when(redisTemplate.opsForValue()).thenReturn(valueOperations);
         setRootUser();

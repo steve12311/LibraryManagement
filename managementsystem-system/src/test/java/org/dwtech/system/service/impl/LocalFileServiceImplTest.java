@@ -25,6 +25,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.transaction.PlatformTransactionManager;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -65,11 +66,14 @@ class LocalFileServiceImplTest {
     @Mock
     private ValueOperations<String, Object> valueOperations;
 
+    @Mock
+    private PlatformTransactionManager transactionManager;
+
     private LocalFileServiceImpl localFileService;
 
     @BeforeEach
     void setUp() {
-        localFileService = new LocalFileServiceImpl(fileObjectMapper, fileRecordMapper, redisTemplate);
+        localFileService = new LocalFileServiceImpl(fileObjectMapper, fileRecordMapper, redisTemplate, transactionManager);
         ReflectionTestUtils.setField(localFileService, "storagePath", tempDir.toString());
         org.mockito.Mockito.lenient().when(redisTemplate.opsForValue()).thenReturn(valueOperations);
         SecurityContextHolder.getContext().setAuthentication(
