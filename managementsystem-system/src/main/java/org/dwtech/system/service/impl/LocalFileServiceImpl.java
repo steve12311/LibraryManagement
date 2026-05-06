@@ -29,6 +29,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.imageio.ImageIO;
@@ -95,6 +98,7 @@ public class LocalFileServiceImpl implements FileService {
     private final FileObjectMapper fileObjectMapper;
     private final FileRecordMapper fileRecordMapper;
     private final RedisTemplate<String, Object> redisTemplate;
+    private final PlatformTransactionManager transactionManager;
 
     /**
      * 上传文件。流程：校验文件类型和大小 → 缓存临时文件并计算 SHA-256 → 按指纹去重 →
@@ -404,11 +408,25 @@ public class LocalFileServiceImpl implements FileService {
             fileObjectMapper.insert(fileObject);
             return fileObject;
         } catch (DuplicateKeyException e) {
-            FileObjectPO existed = findByHash(uploadDigest.sha256(), uploadDigest.fileSize());
+            TransactionTemplate txTemplate = new TransactionTemplate(transactionManager);
+            txTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+            FileObjectPO existed = txTemplate.execute(status -> {
+                FileObjectPO found = findByHash(uploadDigest.sha256(), uploadDigest.fileSize());
+                if (found != null) {
+                    return found;
+                }
+                return fileObjectMapper.selectByHashIgnoreDeleted(uploadDigest.sha256(), uploadDigest.fileSize());
+            });
             if (existed == null) {
                 throw e;
             }
-            incrementRefCount(existed.getId());
+            if (existed.getIsDeleted() != null && existed.getIsDeleted() == 1) {
+                fileObjectMapper.reactivateFileObject(existed.getId(), relativePath);
+                existed.setIsDeleted(0);
+                existed.setRefCount(1);
+            } else {
+                incrementRefCount(existed.getId());
+            }
             return existed;
         }
     }
