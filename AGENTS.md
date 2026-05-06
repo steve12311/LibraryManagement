@@ -50,11 +50,11 @@ MapStruct converters under `converter/` (e.g. `BookConverter`, `BorrowConverter`
 
 ### Key Conventions
 - **Response types**: `Result<T>` (single item) or `PageResult<T>` (paginated list).
-- **Permission checks**: `@PreAuthorize("@ss.hasPermi('domain:entity:action')")` for admin endpoints, `@PreAuthorize("isAuthenticated()")` for file/user-owned endpoints.
+- **Permission checks**: `@PreAuthorize("@ss.hasPermi('domain:entity:action')")` for admin endpoints. File delete requires `sys:file:del`; file upload requires `isAuthenticated()`.
 - **Timestamps**: `LocalDateTime` with MyBatis-Plus `@TableField(fill = FieldFill.INSERT/INSERT_UPDATE)`, auto-filled by `MyMetaObjectHandler`.
 - **Audit trail**: entities extend `BaseEntity` for `id`, `createTime`, `updateTime`.
 - **Soft delete**: `is_deleted` column (0=normal, 1=deleted), applied manually in mapper XML WHERE clauses.
-- **File upload**: SHA-256 content-hash dedup; files accessed via `/api/v1/files/{fileId}` (black-box, never expose real path).
+- **File Service**: all files are public (no access control on read). SHA-256 content-hash dedup with `sys_file_object.ref_count` tracking. Dual-mode deletion: `deleteFilePhysical` (admin hard-delete, requires `sys:file:del`) and `deleteFileByRefCount` (decrements ref_count, deletes physical only when reaches 0; used by Redis Stream consumer for async old-file cleanup on avatar/cover change). Queue infrastructure under `system/.../file/queue/` (`FileRefCountDeletePublisher` + `Consumer`).
 
 ### Key Annotations
 - `@RepeatSubmit` — AOP-based duplicate submission prevention via Redisson distributed lock (default 5s window).

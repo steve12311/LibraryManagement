@@ -56,7 +56,7 @@ Controllers are split into sub-packages under `managementsystem-admin`:
 ## Key Conventions
 
 - **Response types**: `Result<T>` (single item) or `PageResult<T>` (paginated list) — both in `org.dwtech.common.core.entity`
-- **Permission checks**: `@PreAuthorize("@ss.hasPermi('domain:entity:action')")` for admin endpoints, `@PreAuthorize("isAuthenticated()")` for file/user-owned endpoints
+- **Permission checks**: `@PreAuthorize("@ss.hasPermi('domain:entity:action')")` for admin endpoints. File upload requires `isAuthenticated()`, file delete requires `sys:file:del`
 - **Timestamps**: `LocalDateTime` with MyBatis-Plus `@TableField(fill = FieldFill.INSERT/INSERT_UPDATE)`, handled by `MyMetaObjectHandler`
 - **Audit trail**: extend `BaseEntity` for `id`, `createTime`, `updateTime` (auto-filled via MetaObjectHandler)
 - **Soft delete**: `is_deleted` column (0=normal, 1=deleted), applied manually in mapper XML WHERE clauses
@@ -78,6 +78,17 @@ Controllers are split into sub-packages under `managementsystem-admin`:
 - `@DataPermission` — row-level data scope filtering, processed by `MyDataPermissionHandler` in MyBatis-Plus interceptor
 - `@ValidField` — custom field validation marker
 - Controllers extend `BaseController` for shared utilities (page helper, etc.)
+
+## File Service
+
+- **All files are public**: `getFile(fileId)` has no access control — any user (including anonymous) can download/view
+- **Upload**: `POST /api/v1/files`, requires authentication, SHA-256 dedup with ref-counting on `sys_file_object`
+- **Physical delete**: `DELETE /api/v1/files/{fileId}` requires `sys:file:del` permission, ignores ref-count and directly removes DB record + physical file
+- **Ref-count delete** (`deleteFileByRefCount`): decrements `ref_count`, only deletes physical file when count reaches 0 — used by Redis Stream consumer for async cleanup
+- **Old file cleanup**: when avatar or book cover changes, `UserServiceImpl` / `LibraryCatalogWriteService` publish the old fileId to Redis Stream `file:ref-count-delete:stream`, consumed by `FileRefCountDeleteConsumer` → calls `deleteFileByRefCount`
+- `FileUrlUtils.extractFileId(url)` parses file ID from URL formats (`/123`, `/api/v1/files/123`)
+- Queue infrastructure under `managementsystem-system/.../file/queue/`: `FileRefCountDeleteMessage`, `FileRefCountDeleteProperties`, `FileRefCountDeletePublisher`, `FileRefCountDeleteConsumer`
+- `FileMetaCacheBO` cached in Redis key `system:file:meta:{fileId}`, invalidated on upload/delete
 
 ## Auth Flow
 
