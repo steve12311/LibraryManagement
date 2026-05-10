@@ -33,10 +33,13 @@
                c.name AS category_name,
                s.stock,
                s.current_stock,
+               s.shelf_id,
+               sh.shelf_no,
                s.create_time,
                s.update_time
         FROM lib_book AS b
                  LEFT JOIN lib_stock AS s ON s.isbn = b.isbn
+                 LEFT JOIN lib_bookshelf AS sh ON sh.id = s.shelf_id
                  LEFT JOIN lib_publish AS p ON p.id = b.press_id
                  LEFT JOIN lib_category AS c ON c.id = b.category_id
     </sql>
@@ -131,10 +134,17 @@
         WHERE isbn = #{isbn}
     </update>
     <insert id="upsertStock">
-        INSERT INTO lib_stock (isbn, stock, current_stock, create_time, update_time)
-        VALUES (#{isbn}, #{amount}, #{amount}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        INSERT INTO lib_stock (isbn, stock, current_stock, shelf_id, create_time, update_time)
+        VALUES (#{isbn}, #{amount}, #{amount}, #{shelfId}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
         ON DUPLICATE KEY UPDATE stock = stock + VALUES(stock),
                                 current_stock = current_stock + VALUES(current_stock),
+                                shelf_id = COALESCE(VALUES(shelf_id), shelf_id),
                                 update_time = CURRENT_TIMESTAMP
     </insert>
+    <update id="updateShelfId">
+        UPDATE lib_stock
+        SET shelf_id = #{shelfId},
+            update_time = CURRENT_TIMESTAMP
+        WHERE isbn = #{isbn}
+    </update>
 </mapper>

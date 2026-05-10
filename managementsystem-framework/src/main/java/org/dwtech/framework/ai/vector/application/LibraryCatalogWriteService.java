@@ -47,6 +47,7 @@ public class LibraryCatalogWriteService {
         boolean result = bookService.saveOrUpdateBook(bookForm);
 
         if (result) {
+            stockService.updateStockShelf(bookForm.getIsbn(), bookForm.getShelfId());
             handleCoverChange(oldCoverUrl, bookForm.getCover());
             publishVectorMessage(bookForm.getIsbn(), CatalogVectorSyncTrigger.BOOK_UPDATED);
         }

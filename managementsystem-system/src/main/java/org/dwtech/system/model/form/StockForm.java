@@ -26,6 +26,8 @@ public class StockForm {
     private Date publishTime;
     private Long categoryId;
     private BigDecimal price;
+    private Long shelfId;
+    private String shelfNo;
     @NotNull(message = "库存不能为空")
     @PositiveOrZero(message = "库存必须为非负数")
     private Integer stock;

@@ -27,6 +27,8 @@ public class StockPageVO extends BaseVO {
     private String categoryName;
     private Integer stockNumber;
     private Integer currentNumber;
+    private Long shelfId;
+    private String shelfNo;
     private BigDecimal price;
     private Date createTime;
 }

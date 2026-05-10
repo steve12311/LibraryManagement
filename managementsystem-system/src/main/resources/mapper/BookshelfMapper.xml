@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.dwtech.system.mapper.BookshelfMapper">
+    <select id="countByFloorId" resultType="int">
+        SELECT COUNT(1)
+        FROM lib_bookshelf
+        WHERE floor_id = #{floorId}
+    </select>
+    <select id="countStockByShelfId" resultType="int">
+        SELECT COUNT(1)
+        FROM lib_stock
+        WHERE shelf_id = #{shelfId}
+    </select>
+    <select id="sumStockByShelfId" resultType="java.lang.Integer">
+        SELECT COALESCE(SUM(stock), 0)
+        FROM lib_stock
+        WHERE shelf_id = #{shelfId}
+    </select>
+    <select id="sumStockByShelfIds" resultType="org.dwtech.system.model.bo.BookshelfUsageBO">
+        SELECT shelf_id AS shelfId,
+               COALESCE(SUM(stock), 0) AS usedStock
+        FROM lib_stock
+        <where>
+            <choose>
+                <when test="shelfIds != null and shelfIds.size() > 0">
+                    shelf_id IN
+                    <foreach item="shelfId" open="(" close=")" separator="," collection="shelfIds">
+                        #{shelfId}
+                    </foreach>
+                </when>
+                <otherwise>
+                    1 = 0
+                </otherwise>
+            </choose>
+        </where>
+        GROUP BY shelf_id
+    </select>
+    <select id="listPublicBooksByShelfIds" resultType="org.dwtech.system.model.vo.PublicShelfBookVO">
+        SELECT s.shelf_id AS shelfId,
+               b.isbn,
+               b.cover AS coverUrl,
+               b.name
+        FROM lib_stock AS s
+                 INNER JOIN lib_book AS b ON b.isbn = s.isbn
+        <where>
+            <choose>
+                <when test="shelfIds != null and shelfIds.size() > 0">
+                    s.shelf_id IN
+                    <foreach item="shelfId" open="(" close=")" separator="," collection="shelfIds">
+                        #{shelfId}
+                    </foreach>
+                </when>
+                <otherwise>
+                    1 = 0
+                </otherwise>
+            </choose>
+        </where>
+        ORDER BY b.name ASC, b.isbn ASC
+    </select>
+    <select id="listShelfOptions" resultType="org.dwtech.system.model.vo.BookshelfOptionVO">
+        SELECT sh.id AS id,
+               sh.id AS value,
+               CONCAT(f.name, ' / ', sh.shelf_no, IF(sh.name IS NULL OR sh.name = '', '', CONCAT(' ', sh.name))) AS label,
+               sh.shelf_no AS shelfNo,
+               sh.name,
+               sh.floor_id AS floorId,
+               f.name AS floorName,
+               sh.capacity,
+               COALESCE(SUM(s.stock), 0) AS usedStock,
+               GREATEST(sh.capacity - COALESCE(SUM(s.stock), 0), 0) AS remainingCapacity,
+               sh.status
+        FROM lib_bookshelf AS sh
+                 INNER JOIN lib_floor AS f ON f.id = sh.floor_id
+                 LEFT JOIN lib_stock AS s ON s.shelf_id = sh.id
+        <where>
+            <if test="enabledOnly">
+                sh.status = 1
+                AND f.status = 1
+            </if>
+        </where>
+        GROUP BY sh.id, sh.shelf_no, sh.name, sh.floor_id, f.name, f.floor_no, f.sort, sh.capacity, sh.status
+        ORDER BY f.sort ASC, f.floor_no ASC, sh.shelf_no ASC
+    </select>
+</mapper>

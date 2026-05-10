@@ -11,13 +11,19 @@ import org.dwtech.common.utils.SecurityUtils;
 import org.dwtech.framework.ai.AISearchService;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.dwtech.system.model.query.PublicBookPageQuery;
+import org.dwtech.system.model.vo.PublicLibraryFloorDetailVO;
+import org.dwtech.system.model.vo.PublicLibraryFloorVO;
 import org.dwtech.system.model.vo.PublicBookPageVO;
+import org.dwtech.system.service.LibraryMapService;
 import org.dwtech.system.service.StockService;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Flux;
+
+import java.util.List;
 /**
  * IndexController
  *
@@ -31,6 +37,7 @@ import reactor.core.publisher.Flux;
 public class IndexController extends BaseController {
     private final AISearchService aiSearchService;
     private final StockService stockService;
+    private final LibraryMapService libraryMapService;
 
     /**
      * 首页接口，返回系统欢迎信息，用于健康检查和访问确认。
@@ -48,6 +55,23 @@ public class IndexController extends BaseController {
     public PageResult<PublicBookPageVO> getPublicBookPage(@Valid PublicBookPageQuery queryParams) {
         IPage<PublicBookPageVO> result = stockService.getPublicBookPage(queryParams);
         return PageResult.success(result);
+    }
+
+    /**
+     * 查询公开楼层列表，用于首页书架地图楼层切换。
+     */
+    @GetMapping("/api/v1/index/library-map/floors")
+    public Result<List<PublicLibraryFloorVO>> listPublicFloors() {
+        return Result.success(libraryMapService.listPublicFloors());
+    }
+
+    /**
+     * 查询公开楼层地图详情。
+     * 返回楼层轮廓、当前层启用书架及每个书架的图书摘要。
+     */
+    @GetMapping("/api/v1/index/library-map/floors/{floorId}")
+    public Result<PublicLibraryFloorDetailVO> getPublicFloorDetail(@PathVariable("floorId") Long floorId) {
+        return Result.success(libraryMapService.getPublicFloorDetail(floorId));
     }
 
     /**

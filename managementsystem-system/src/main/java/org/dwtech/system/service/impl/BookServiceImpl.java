@@ -55,8 +55,7 @@ public class BookServiceImpl extends ServiceImpl<BookMapper, BookPO> implements 
      */
     @Override
     public BookForm getBookByIsbn(String isbn) {
-        BookPO book = this.getById(isbn);
-        return bookConverter.toForm(book);
+        return this.baseMapper.selectBookFormByIsbn(isbn);
     }
 
     /**

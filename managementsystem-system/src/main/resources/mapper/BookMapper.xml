@@ -9,4 +9,21 @@
                 #{book.pressId}, #{book.publishTime}, #{book.categoryId}, #{book.price})
         ON DUPLICATE KEY UPDATE isbn = isbn
     </insert>
+    <select id="selectBookFormByIsbn" resultType="org.dwtech.system.model.form.BookForm">
+        SELECT b.isbn,
+               b.cover,
+               b.name,
+               b.intro,
+               b.author,
+               b.press_id,
+               b.publish_time,
+               b.category_id,
+               b.price,
+               s.shelf_id,
+               sh.shelf_no
+        FROM lib_book AS b
+                 LEFT JOIN lib_stock AS s ON s.isbn = b.isbn
+                 LEFT JOIN lib_bookshelf AS sh ON sh.id = s.shelf_id
+        WHERE b.isbn = #{isbn}
+    </select>
 </mapper>

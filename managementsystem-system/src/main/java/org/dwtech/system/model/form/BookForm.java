@@ -24,4 +24,6 @@ public class BookForm {
     private Date publishTime;
     private Long categoryId;
     private BigDecimal price;
+    private Long shelfId;
+    private String shelfNo;
 }

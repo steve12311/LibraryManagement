@@ -81,4 +81,13 @@ public interface StockService {
      * @return 库存表单
      */
     StockForm getStockFormData(String isbn);
+
+    /**
+     * 更新指定 ISBN 的书架绑定。
+     *
+     * @param isbn    ISBN 编号
+     * @param shelfId 书架 ID，空值表示清空绑定
+     * @return true 表示更新成功
+     */
+    boolean updateStockShelf(String isbn, Long shelfId);
 }

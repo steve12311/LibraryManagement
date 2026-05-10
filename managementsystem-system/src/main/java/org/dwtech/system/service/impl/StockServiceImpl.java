@@ -10,9 +10,11 @@ import org.dwtech.common.enmus.ResultCode;
 import org.dwtech.common.exception.BusinessException;
 import org.dwtech.common.utils.SecurityUtils;
 import org.dwtech.system.converter.StockConverter;
+import org.dwtech.system.mapper.BookshelfMapper;
 import org.dwtech.system.mapper.StockMapper;
 import org.dwtech.system.model.bo.StockBO;
 import org.dwtech.system.model.bo.StockAddResult;
+import org.dwtech.system.model.entity.BookshelfPO;
 import org.dwtech.system.model.entity.BookPO;
 import org.dwtech.system.model.entity.StockPO;
 import org.dwtech.system.model.form.StockForm;
@@ -31,6 +33,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 /**
  * 库存管理服务实现
@@ -51,10 +54,12 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class StockServiceImpl extends ServiceImpl<StockMapper, StockPO> implements StockService {
     private static final int PUBLIC_BOOK_RECOMMENDATION_LIMIT = 100;
+    private static final int ENABLED = 1;
 
     private final StockConverter stockConverter;
     private final BookService bookService;
     private final RecommendationService recommendationService;
+    private final BookshelfMapper bookshelfMapper;
 
     /**
      * 获取公开书目分页（集成协同过滤推荐）。
@@ -126,8 +131,11 @@ public class StockServiceImpl extends ServiceImpl<StockMapper, StockPO> implemen
         log.info("书籍入库开始：{}", stockForm);
         StockBO stockBo = stockConverter.toBo(stockForm);
         StockPO stock = stockConverter.toPo(stockBo);
+        StockPO existingStock = this.getById(stock.getIsbn());
+        Long targetShelfId = resolveTargetShelfId(stockForm.getShelfId(), existingStock);
+        validateShelfCapacityForStockAdd(existingStock, targetShelfId, stock.getStock());
         // 第一步：写入库存（upsert，原子累加）
-        this.baseMapper.upsertStock(stock.getIsbn(), stock.getStock());
+        this.baseMapper.upsertStock(stock.getIsbn(), stock.getStock(), targetShelfId);
         log.info("书籍入库步骤一完成：{}", stock);
         // 第二步：仅首次入库时写入图书主数据
         BookPO book = stockConverter.toBookPo(stockBo);
@@ -197,6 +205,25 @@ public class StockServiceImpl extends ServiceImpl<StockMapper, StockPO> implemen
         return stockConverter.toForm(stock);
     }
 
+    @Override
+    @Transactional
+    public boolean updateStockShelf(String isbn, Long shelfId) {
+        StockPO stock = this.getById(isbn);
+        if (stock == null) {
+            if (shelfId == null) {
+                return true;
+            }
+            throw new BusinessException(ResultCode.USER_RESOURCE_NOT_FOUND, "库存记录不存在");
+        }
+        if (Objects.equals(stock.getShelfId(), shelfId)) {
+            return true;
+        }
+        if (shelfId != null) {
+            validateBookshelfCanHold(shelfId, safeStock(stock.getStock()));
+        }
+        return this.baseMapper.updateShelfId(isbn, shelfId) > 0;
+    }
+
     /**
      * 原子更新失败后的异常诊断：
      * 回查库存记录是否存在，区分"库存记录不存在"和"数量不足"两种错误，返回明确的业务异常。
@@ -207,6 +234,44 @@ public class StockServiceImpl extends ServiceImpl<StockMapper, StockPO> implemen
             throw new BusinessException(ResultCode.USER_RESOURCE_NOT_FOUND, "库存记录不存在");
         }
         throw new BusinessException(ResultCode.USER_OPERATION_EXCEPTION, insufficientMessage);
+    }
+
+    private Long resolveTargetShelfId(Long requestedShelfId, StockPO existingStock) {
+        if (requestedShelfId != null) {
+            return requestedShelfId;
+        }
+        return existingStock == null ? null : existingStock.getShelfId();
+    }
+
+    private void validateShelfCapacityForStockAdd(StockPO existingStock, Long targetShelfId, Integer amount) {
+        if (targetShelfId == null) {
+            return;
+        }
+        int incomingStock = safeStock(amount);
+        Long existingShelfId = existingStock == null ? null : existingStock.getShelfId();
+        int currentBookStock = existingStock == null ? 0 : safeStock(existingStock.getStock());
+        int additionalStock = Objects.equals(existingShelfId, targetShelfId)
+                ? incomingStock
+                : currentBookStock + incomingStock;
+        validateBookshelfCanHold(targetShelfId, additionalStock);
+    }
+
+    private void validateBookshelfCanHold(Long shelfId, int additionalStock) {
+        BookshelfPO shelf = bookshelfMapper.selectById(shelfId);
+        if (shelf == null) {
+            throw new BusinessException(ResultCode.USER_RESOURCE_NOT_FOUND, "书架不存在");
+        }
+        if (!Objects.equals(shelf.getStatus(), ENABLED)) {
+            throw new BusinessException(ResultCode.USER_OPERATION_EXCEPTION, "停用书架不能绑定图书");
+        }
+        int usedStock = safeStock(bookshelfMapper.sumStockByShelfId(shelfId));
+        if (usedStock + additionalStock > safeStock(shelf.getCapacity())) {
+            throw new BusinessException(ResultCode.USER_OPERATION_EXCEPTION, "书架容量不足");
+        }
+    }
+
+    private static int safeStock(Integer stock) {
+        return stock == null ? 0 : stock;
     }
 
     /**

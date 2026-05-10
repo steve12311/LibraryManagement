@@ -96,5 +96,14 @@ public interface StockMapper extends BaseMapper<StockPO> {
      * @param amount 变更数量
      * @return 影响行数
      */
-    int upsertStock(@Param("isbn") String isbn, @Param("amount") Integer amount);
+    int upsertStock(@Param("isbn") String isbn, @Param("amount") Integer amount, @Param("shelfId") Long shelfId);
+
+    /**
+     * 更新指定 ISBN 的书架绑定。
+     *
+     * @param isbn    ISBN
+     * @param shelfId 书架 ID，空值表示清空绑定
+     * @return 影响行数
+     */
+    int updateShelfId(@Param("isbn") String isbn, @Param("shelfId") Long shelfId);
 }

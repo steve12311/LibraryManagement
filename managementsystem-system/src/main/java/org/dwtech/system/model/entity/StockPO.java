@@ -26,6 +26,7 @@ public class StockPO implements Serializable {
     private String isbn;
     private Integer stock;
     private Integer currentStock;
+    private Long shelfId;
     /**
      * 创建时间
      */

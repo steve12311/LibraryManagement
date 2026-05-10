@@ -25,6 +25,8 @@ public class StockBO {
     private String categoryName;
     private Integer stock;
     private Integer currentStock;
+    private Long shelfId;
+    private String shelfNo;
     private BigDecimal price;
     private Date createTime;
     private Date updateTime;
