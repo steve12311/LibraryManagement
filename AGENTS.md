@@ -13,7 +13,7 @@ Code is under `src/main/java`; tests are under `src/test/java` in each module.
 
 Controller sub-packages under `managementsystem-admin`:
 - `controller/` — top-level: AuthController, DashboardController, FileController, IndexController
-- `controller/lib/` — library domain: Book, Borrow, Category, Publish, Stock
+- `controller/lib/` — library domain: Book, Borrow, Category, Publish, Stock, LibraryMap
 - `controller/sys/` — system admin: User, Role, Menu, Dept
 
 Application entrypoint: `org.dwtech.Application`.

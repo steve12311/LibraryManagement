@@ -129,6 +129,7 @@ mvn -pl managementsystem-system -am test -Dtest=RoleMenuServiceImplTest
 - 借阅：`/api/v1/borrow/**`
 - 分类：`/api/v1/category/**`
 - 出版社：`/api/v1/publish/**`
+- 书架地图：`/api/v1/library-map/**`（楼层、书架、公开地图）
 
 ### 仪表盘
 

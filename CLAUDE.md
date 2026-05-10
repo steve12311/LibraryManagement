@@ -109,6 +109,15 @@ Stateless JWT via `OncePerRequestFilter` (`TokenAuthenticationFilter`). Tokens s
   - `rebuild/` — startup + full rebuild runners
 - Rate limited via `AIRateLimitInterceptor`
 
+## Library Map (书架地图)
+
+- Two tables: `lib_floor` (floor outline as JSON), `lib_bookshelf` (shelf position/dimensions, unique shelf_no)
+- `lib_stock.shelf_id` binds stock records to bookshelves; `lib_bookshelf.capacity` enforces max stock
+- Controller: `LibraryMapController` under `controller/lib/` — CRUD for floors and shelves, public `GET /api/v1/index/library-map/**`
+- Service: `LibraryMapServiceImpl` — capacity validation on shelf update, delete guard (shelves with stock or floors with shelves cannot be deleted)
+- Public endpoints: `listPublicFloors()` (enabled only), `getPublicFloorDetail(floorId)` returns outline + shelves with books
+- Mapper: `BookshelfMapper` (stock aggregation queries for usage), `LibraryFloorMapper`
+
 ## Commit & PR Style
 
 Conventional Commits: `feat(scope):`, `fix(scope):`, `refactor(scope):`, `docs(scope):`, `perf(scope):`, `merge:` for merge commits. See `git log --oneline` for examples. Branches from `main`, merge back after verification.
