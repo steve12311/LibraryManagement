@@ -11,6 +11,7 @@ import org.dwtech.framework.config.WebMvcConfig;
 import org.dwtech.framework.security.service.SysUserDetailService;
 import org.dwtech.system.model.query.PublicBookPageQuery;
 import org.dwtech.system.model.vo.PublicBookPageVO;
+import org.dwtech.system.service.LibraryMapService;
 import org.dwtech.system.service.StockService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -70,6 +71,9 @@ class IndexControllerIntegrationTest {
 
     @MockitoBean
     private CodeGenerator codeGenerator;
+
+    @MockitoBean
+    private LibraryMapService libraryMapService;
 
     @Test
     void shouldAllowAnonymousToGetPublicBookPage() throws Exception {
