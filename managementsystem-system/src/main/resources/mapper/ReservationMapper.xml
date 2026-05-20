@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.dwtech.system.mapper.ReservationMapper">
+
+    <sql id="adminReservationView">
+        SELECT r.id, r.isbn, r.book_name, r.user_id,
+               u.nickname, u.username, u.avatar,
+               r.status, r.pickup_deadline, r.create_time
+        FROM lib_reservation r
+                 LEFT JOIN sys_user u ON u.user_id = r.user_id
+    </sql>
+
+    <sql id="myReservationView">
+        SELECT r.id, r.isbn, b.cover, r.book_name,
+               r.status, r.pickup_deadline, r.create_time
+        FROM lib_reservation r
+                 LEFT JOIN lib_book b ON b.isbn = r.isbn
+    </sql>
+
+    <sql id="reservationKeywordFilter">
+        <if test="queryParams.field != null and queryParams.field != '' and queryParams.keyword != null and queryParams.keyword != ''">
+            <choose>
+                <when test="queryParams.field == 'isbn'">
+                    AND r.isbn LIKE CONCAT(#{queryParams.keyword},'%')
+                </when>
+                <when test="queryParams.field == 'username'">
+                    AND (u.username LIKE CONCAT('%',#{queryParams.keyword},'%')
+                         OR u.nickname LIKE CONCAT('%',#{queryParams.keyword},'%'))
+                </when>
+                <when test="queryParams.field == 'status'">
+                    AND r.status = #{queryParams.keyword}
+                </when>
+            </choose>
+        </if>
+    </sql>
+
+    <select id="getReservationPage" resultType="org.dwtech.system.model.bo.ReservationBO">
+        <include refid="adminReservationView"/>
+        <where>
+            <include refid="reservationKeywordFilter"/>
+        </where>
+        ORDER BY r.create_time DESC
+    </select>
+
+    <select id="getMyReservationPage" resultType="org.dwtech.system.model.bo.MyReservationBO">
+        <include refid="myReservationView"/>
+        <where>
+            AND r.user_id = #{userId}
+            <if test="queryParams.status != null">
+                AND r.status = #{queryParams.status}
+            </if>
+        </where>
+        ORDER BY r.create_time DESC
+    </select>
+
+    <select id="getBookReservationQueue" resultType="org.dwtech.system.model.bo.ReservationBO">
+        <include refid="adminReservationView"/>
+        WHERE r.isbn = #{isbn} AND r.status IN (0, 1)
+        ORDER BY r.create_time ASC
+    </select>
+
+    <select id="countActiveByUser" resultType="int">
+        SELECT COUNT(*) FROM lib_reservation
+        WHERE user_id = #{userId} AND status IN (0, 1)
+    </select>
+
+    <select id="countActiveByIsbn" resultType="int">
+        SELECT COUNT(*) FROM lib_reservation
+        WHERE isbn = #{isbn} AND status IN (0, 1)
+    </select>
+
+    <select id="selectFirstPendingByIsbn" resultType="org.dwtech.system.model.entity.ReservationPO">
+        SELECT * FROM lib_reservation
+        WHERE isbn = #{isbn} AND status = 0
+        ORDER BY create_time ASC
+        LIMIT 1
+    </select>
+
+    <select id="selectExpiredReady" resultType="org.dwtech.system.model.entity.ReservationPO">
+        SELECT * FROM lib_reservation
+        WHERE status = 1 AND pickup_deadline &lt; NOW()
+    </select>
+
+</mapper>
