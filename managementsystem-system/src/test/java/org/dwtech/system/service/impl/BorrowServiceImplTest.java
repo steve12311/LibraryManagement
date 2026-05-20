@@ -14,6 +14,7 @@ import org.dwtech.system.model.vo.MyBorrowPageVO;
 import org.dwtech.system.service.BookService;
 import org.dwtech.system.service.StockService;
 import org.dwtech.system.service.RecommendationService;
+import org.dwtech.system.service.ReservationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -47,13 +48,16 @@ class BorrowServiceImplTest {
     private RecommendationService recommendationService;
 
     @Mock
+    private ReservationService reservationService;
+
+    @Mock
     private BorrowMapper borrowMapper;
 
     private BorrowServiceImpl borrowService;
 
     @BeforeEach
     void setUp() {
-        borrowService = new BorrowServiceImpl(borrowConverter, bookService, stockService, recommendationService);
+        borrowService = new BorrowServiceImpl(borrowConverter, bookService, stockService, recommendationService, reservationService);
         ReflectionTestUtils.setField(borrowService, "baseMapper", borrowMapper);
     }
 
