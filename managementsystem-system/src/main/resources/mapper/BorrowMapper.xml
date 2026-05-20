@@ -8,11 +8,15 @@
                bw.isbn,
                bw.book_name,
                bw.return_time,
-               bw.reality_return_time,
                bw.user_id,
                u.nickname,
                u.avatar,
-               u.username
+               u.username,
+               CASE
+                   WHEN bw.reality_return_time IS NOT NULL THEN 0
+                   WHEN bw.return_time >= NOW() THEN 1
+                   ELSE 2
+                   END AS status
         FROM lib_borrow AS bw
                  LEFT JOIN sys_user AS u ON u.id = bw.user_id
     </sql>
