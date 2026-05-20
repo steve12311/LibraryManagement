@@ -94,6 +94,40 @@ MapStruct converters under `converter/` (e.g. `BookConverter`, `BorrowConverter`
   - `rebuild/` — startup + full rebuild runners
 - Rate limited via `AIRateLimitInterceptor`.
 
+## Borrow Status (借阅状态)
+
+- 枚举: `BorrowStatus` — `RETURNED(0)`, `BORROWING(1)`, `OVERDUE(2)`
+- 由 SQL CASE 表达式动态计算，不落库:
+  - `reality_return_time IS NOT NULL` → RETURNED
+  - `return_time >= NOW()` → BORROWING
+  - 其他 → OVERDUE
+- `BorrowVO` / `BorrowBO` 均含 `status(Integer)` 字段，前端无需自行计算
+- 管理端和用户端查询均支持按 status 筛选
+
+## Borrow Notification (借阅通知)
+
+- 定时任务: `BorrowNotificationTask` 每日 08:00 执行，发送三类通知:
+  - 到期前 3 天: `OVERDUE_REMINDER`（去重）
+  - 到期前 1 天: `OVERDUE_REMINDER`（去重）
+  - 已逾期: `OVERDUE`（去重）
+- 管理员手动触发: `POST /api/v1/borrow/{borrowId}/remind`（跳过去重，立即发送）
+  - 自动检测逾期/即将到期并使用正确的 `BizType`
+- Service: `BorrowNotificationService` / `BorrowNotificationServiceImpl`
+- Mapper: `BorrowMapper.selectDueSoon(days)`, `BorrowMapper.selectOverdue()`
+- 去重: `MessageRecordMapper.existsByBizIdAndBizType(bizId, bizType)`
+- 模板: `OVERDUE_REMINDER`（EMAIL/SMS: `${bookName}`, `${dueDate}`, `${daysLeft}`）, `OVERDUE`（EMAIL/SMS: `${bookName}`, `${dueDate}`, `${overdueDays}`）
+- 权限: `lib:borrow:remind`
+
+## Message Center (消息中心)
+
+- 表: `sys_message_record`（发送记录）, `sys_message_template`（消息模板）
+- 用户偏好: `sys_user.notification_preference` JSON 字段（`{"email":true,"sms":false}`）
+- 核心服务: `MessageService` / `MessageServiceImpl` — 所有通知的统一入口
+- 队列: Redis Stream `message:send:stream`, consumer group `message-consumer-group`
+- 渠道发送器: `EmailChannelSender`（Spring Mail）, `SmsChannelSender`（Mock, 可扩展）
+- 集成: `MessageReservationNotificationService` 替代 NoOp，调用 `MessageService`
+- 模板变量: `${bookName}`, `${pickupDeadline}`, `${dueDate}`, `${overdueDays}`
+
 ## Caching & Idempotency
 - Spring Cache + Redis caches menu routes, role permissions, and dropdown options.
 - Role/permission changes trigger cache eviction and refresh.

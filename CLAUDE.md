@@ -118,6 +118,16 @@ Stateless JWT via `OncePerRequestFilter` (`TokenAuthenticationFilter`). Tokens s
 - Public endpoints: `listPublicFloors()` (enabled only), `getPublicFloorDetail(floorId)` returns outline + shelves with books
 - Mapper: `BookshelfMapper` (stock aggregation queries for usage), `LibraryFloorMapper`
 
+## Borrow Status (借阅状态)
+
+- 枚举: `BorrowStatus` — `RETURNED(0, "已归还")`, `BORROWING(1, "借阅中")`, `OVERDUE(2, "已逾期")`
+- 状态由 SQL CASE 表达式在查询时动态计算，不存储在数据库中:
+  - `reality_return_time IS NOT NULL` → RETURNED(0)
+  - `return_time >= NOW()` → BORROWING(1)
+  - 其他 → OVERDUE(2)
+- `BorrowVO` 和 `BorrowBO` 均包含 `status(Integer)` 字段，前端无需自行计算
+- 查询时支持按 status 筛选（`BorrowPageQuery.field = "status"`, `MyBorrowPageQuery.status`）
+
 ## Reservation (图书预约)
 
 - Table: `lib_reservation` (id, isbn, book_name, user_id, status, pickup_deadline, borrow_id)

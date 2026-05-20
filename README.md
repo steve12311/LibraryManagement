@@ -20,6 +20,8 @@
 - SSE 流式对话（`/chat`），支持多轮对话记忆
 - 基于物品的协同过滤推荐（余弦相似度 + 共借矩阵），首页书目个性化排序
 - 图书预约管理（预约/取消、FIFO 排队、自动过期、取书确认）
+- 消息中心（Redis Stream 队列、Email/SMS 多渠道发送、模板变量、用户通知偏好）
+- 借阅逾期通知（每日定时任务 + 管理员手动提醒、去重机制）
 
 ## 2. 技术栈
 
@@ -132,6 +134,8 @@ mvn -pl managementsystem-system -am test -Dtest=RoleMenuServiceImplTest
 - 出版社：`/api/v1/publish/**`
 - 书架地图：`/api/v1/library-map/**`（楼层、书架、公开地图）
 - 预约管理：`/api/v1/reservation/**`（用户预约/取消）、`/api/v1/admin/reservation/**`（管理员确认取书/取消/队列查询）
+- 借阅提醒：`POST /api/v1/borrow/{borrowId}/remind`（管理员手动发送逾期/到期提醒）
+- 消息中心：`/api/v1/messages/**`（用户消息列表/已读/偏好设置）
 
 ### 仪表盘
 
