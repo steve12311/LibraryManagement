@@ -31,4 +31,9 @@ public class UserProfileForm {
 
     private String email;
 
+    /**
+     * 通知偏好 JSON，如 {"email":true,"sms":false}
+     */
+    private String notificationPreference;
+
 }

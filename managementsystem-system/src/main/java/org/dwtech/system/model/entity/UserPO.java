@@ -81,4 +81,9 @@ public class UserPO extends BaseEntity {
      * 微信 OpenID
      */
     private String openid;
+
+    /**
+     * 通知偏好JSON，如 {"email":true,"sms":false}
+     */
+    private String notificationPreference;
 }

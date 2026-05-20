@@ -251,7 +251,8 @@
                u.email,
                d.NAME               AS deptName,
                GROUP_CONCAT(r.NAME) AS roleNames,
-               u.create_time
+               u.create_time,
+               u.notification_preference
         FROM sys_user u
                  LEFT JOIN sys_dept d ON u.dept_id = d.id
                  LEFT JOIN sys_user_role sur ON u.id = sur.user_id

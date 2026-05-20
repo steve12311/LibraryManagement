@@ -49,6 +49,17 @@ spring:
         index-type: IVF_FLAT
         metric-type: COSINE
         index-parameters: '{"nlist":1024}'
+  mail:
+    host: ${MAIL_HOST:localhost}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
   cache:
     enabled: true
     type: redis
@@ -174,6 +185,19 @@ file:
 reservation:
   pickup-days: 3
   max-per-user: 3
+
+message:
+  queue:
+    stream-key: "message:send:stream"
+    consumer-group: "message-consumer-group"
+    consumer-name-prefix: "message-consumer"
+    consumer-enabled: true
+    max-retries: 3
+    poll-timeout-seconds: 1
+  email:
+    from: noreply@library.com
+  sms:
+    mock: true
 
 ai:
   catalog-vector-queue:

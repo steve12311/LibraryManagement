@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.dwtech.system.mapper.MessageRecordMapper">
+    <!-- 更新消息状态和错误信息（Consumer 投递后调用） -->
+    <update id="updateStatusAndError">
+        UPDATE sys_message_record
+        SET status = #{status},
+            error_msg = #{errorMsg},
+            retry_count = #{retryCount},
+            update_time = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <!-- 检查某业务记录是否已发送过某类型通知（去重用） -->
+    <select id="existsByBizIdAndBizType" resultType="boolean">
+        SELECT COUNT(1) > 0
+        FROM sys_message_record
+        WHERE biz_id = #{bizId}
+          AND biz_type = #{bizType}
+        LIMIT 1
+    </select>
+</mapper>

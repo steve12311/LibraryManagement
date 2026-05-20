@@ -67,4 +67,9 @@ public class UserBO {
      * 创建时间
      */
     private LocalDateTime createTime;
+
+    /**
+     * 通知偏好 JSON，如 {"email":true,"sms":false}
+     */
+    private String notificationPreference;
 }

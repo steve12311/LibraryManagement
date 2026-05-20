@@ -40,4 +40,9 @@ public class UserProfileVO {
 
     private Date createTime;
 
+    /**
+     * 通知偏好 JSON，如 {"email":true,"sms":false}
+     */
+    private String notificationPreference;
+
 }

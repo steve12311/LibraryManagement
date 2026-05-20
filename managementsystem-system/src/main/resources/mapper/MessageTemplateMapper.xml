@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.dwtech.system.mapper.MessageTemplateMapper">
+    <!-- 按模板编码+渠道查找启用状态(status=1)的模板 -->
+    <select id="selectByCodeAndChannel" resultType="org.dwtech.system.model.entity.MessageTemplatePO">
+        SELECT id, template_code, channel, subject, content_template, description, status,
+               create_time, update_time
+        FROM sys_message_template
+        WHERE template_code = #{templateCode}
+          AND channel = #{channel}
+          AND status = 1
+    </select>
+</mapper>
