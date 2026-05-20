@@ -19,6 +19,7 @@
 - DeepSeek V4 thinking mode 支持（`reasoning_effort` + `reasoning_content`）
 - SSE 流式对话（`/chat`），支持多轮对话记忆
 - 基于物品的协同过滤推荐（余弦相似度 + 共借矩阵），首页书目个性化排序
+- 图书预约管理（预约/取消、FIFO 排队、自动过期、取书确认）
 
 ## 2. 技术栈
 
@@ -130,6 +131,7 @@ mvn -pl managementsystem-system -am test -Dtest=RoleMenuServiceImplTest
 - 分类：`/api/v1/category/**`
 - 出版社：`/api/v1/publish/**`
 - 书架地图：`/api/v1/library-map/**`（楼层、书架、公开地图）
+- 预约管理：`/api/v1/reservation/**`（用户预约/取消）、`/api/v1/admin/reservation/**`（管理员确认取书/取消/队列查询）
 
 ### 仪表盘
 

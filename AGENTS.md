@@ -13,7 +13,7 @@ Code is under `src/main/java`; tests are under `src/test/java` in each module.
 
 Controller sub-packages under `managementsystem-admin`:
 - `controller/` — top-level: AuthController, DashboardController, FileController, IndexController
-- `controller/lib/` — library domain: Book, Borrow, Category, Publish, Stock, LibraryMap
+- `controller/lib/` — library domain: Book, Borrow, Category, Publish, Stock, LibraryMap, Reservation, AdminReservation
 - `controller/sys/` — system admin: User, Role, Menu, Dept
 
 Application entrypoint: `org.dwtech.Application`.
@@ -31,7 +31,7 @@ Requires JDK 21, Maven 3.9+, MySQL 8+, Redis 7+. Integration tests need live MyS
 
 ## Domain Model Layer
 Business logic in `managementsystem-system` follows a clear model sub-package structure:
-- `model/entity/` — DB-mapped domain objects (e.g. `BorrowPO`, `StockPO`)
+- `model/entity/` — DB-mapped domain objects (e.g. `BorrowPO`, `StockPO`, `ReservationPO`)
 - `model/dto/` — internal transfer objects
 - `model/vo/` — view objects sent to frontend (e.g. `BorrowVO`, `StockPageVO`)
 - `model/bo/` — business objects (aggregates, computed results)

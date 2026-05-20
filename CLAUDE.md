@@ -50,7 +50,7 @@ managementsystem-common      <- Shared foundation: Result<T>, PageResult<T>, Bas
 
 Controllers are split into sub-packages under `managementsystem-admin`:
 - `controller/` — top-level: AuthController, DashboardController, FileController, IndexController
-- `controller/lib/` — library domain: Book, Borrow, Category, Publish, Stock
+- `controller/lib/` — library domain: Book, Borrow, Category, Publish, Stock, Reservation, AdminReservation
 - `controller/sys/` — system admin: User, Role, Menu, Dept
 
 ## Key Conventions
@@ -117,6 +117,19 @@ Stateless JWT via `OncePerRequestFilter` (`TokenAuthenticationFilter`). Tokens s
 - Service: `LibraryMapServiceImpl` — capacity validation on shelf update, delete guard (shelves with stock or floors with shelves cannot be deleted)
 - Public endpoints: `listPublicFloors()` (enabled only), `getPublicFloorDetail(floorId)` returns outline + shelves with books
 - Mapper: `BookshelfMapper` (stock aggregation queries for usage), `LibraryFloorMapper`
+
+## Reservation (图书预约)
+
+- Table: `lib_reservation` (id, isbn, book_name, user_id, status, pickup_deadline, borrow_id)
+- Status: PENDING(0) → READY(1) → FULFILLED(2), or → EXPIRED(3) / CANCELLED(4)
+- User endpoints: `POST /api/v1/reservation` (预约), `GET /api/v1/reservation/page` (我的预约), `DELETE /api/v1/reservation/{id}` (取消)
+- Admin endpoints: `GET /api/v1/admin/reservation/page` (列表), `GET /api/v1/admin/reservation/queue/{isbn}` (队列), `PUT /api/v1/admin/reservation/{id}/pickup` (确认取书), `DELETE /api/v1/admin/reservation/{id}` (取消)
+- Controllers: `ReservationController`, `AdminReservationController` under `controller/lib/`
+- Service: `ReservationService` / `ReservationServiceImpl` — create, cancel, confirmPickup, promoteQueue
+- Scheduled task: `ReservationExpirationTask` — daily at 00:30, expires overdue READY reservations
+- Notification abstraction: `ReservationNotificationService` (no-op impl, extensible for email/SMS)
+- FIFO queue: on borrow return, `promoteQueue()` auto-promotes first PENDING → READY
+- Permissions: `lib:reservation:list`, `lib:reservation:edit`
 
 ## Commit & PR Style
 
