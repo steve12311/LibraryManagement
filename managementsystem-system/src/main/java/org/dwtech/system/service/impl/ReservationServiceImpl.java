@@ -84,7 +84,7 @@ public class ReservationServiceImpl implements ReservationService {
             throw new BusinessException(ResultCode.USER_RESOURCE_NOT_FOUND, "库存记录不存在");
         }
         if (activeByIsbn >= stockBO.getStock()) {
-            throw new BusinessException(ResultCode.USER_OPERATION_EXCEPTION, "预约数量已达上限");
+            throw new BusinessException(ResultCode.USER_OPERATION_EXCEPTION, "该图书预约已满");
         }
 
         // 5. Create reservation
@@ -96,14 +96,18 @@ public class ReservationServiceImpl implements ReservationService {
 
         // 6. If current_stock > 0 -> READY + decrement stock. Else -> PENDING.
         if (stockBO.getCurrentStock() > 0) {
-            reservation.setStatus(ReservationStatus.READY.getValue());
-            reservation.setPickupDeadline(calculatePickupDeadline());
-
-            // Decrement stock
             StockForm stockForm = new StockForm();
             stockForm.setIsbn(isbn);
             stockForm.setStock(1);
-            stockService.borrowOut(stockForm);
+            try {
+                stockService.borrowOut(stockForm);
+                reservation.setStatus(ReservationStatus.READY.getValue());
+                reservation.setPickupDeadline(calculatePickupDeadline());
+            } catch (BusinessException e) {
+                // Stock depleted between check and decrement — fall back to PENDING
+                log.info("库存竞争，降级为排队预约: isbn={}, error={}", isbn, e.getMessage());
+                reservation.setStatus(ReservationStatus.PENDING.getValue());
+            }
         } else {
             reservation.setStatus(ReservationStatus.PENDING.getValue());
         }
@@ -149,7 +153,12 @@ public class ReservationServiceImpl implements ReservationService {
             stockForm.setIsbn(reservation.getIsbn());
             stockForm.setStock(1);
             stockService.borrowEnter(stockForm);
-            promoteQueue(reservation.getIsbn());
+            // promoteQueue runs in same transaction — catch to prevent rollback poisoning
+            try {
+                promoteQueue(reservation.getIsbn());
+            } catch (Exception e) {
+                log.warn("取消预约后队列推进失败，isbn={}: {}", reservation.getIsbn(), e.getMessage());
+            }
         }
 
         // Set CANCELLED
@@ -213,7 +222,7 @@ public class ReservationServiceImpl implements ReservationService {
             stockForm.setStock(1);
             stockService.borrowOut(stockForm);
         } catch (BusinessException e) {
-            log.info("库存不足，无法提升预约队列: isbn={}, error={}", isbn, e.getMessage());
+            log.debug("库存不足，无法提升预约队列: isbn={}, error={}", isbn, e.getMessage());
             return;
         }
 
