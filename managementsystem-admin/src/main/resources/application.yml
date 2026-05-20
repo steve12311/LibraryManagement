@@ -171,6 +171,10 @@ file:
     max-retries: 3
     poll-timeout-seconds: 1
 
+reservation:
+  pickup-days: 3
+  max-per-user: 3
+
 ai:
   catalog-vector-queue:
     stream-key: ai:catalog-vector:stream
