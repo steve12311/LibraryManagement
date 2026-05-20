@@ -23,6 +23,7 @@ import org.dwtech.system.mapper.BorrowMapper;
 import org.dwtech.system.service.BookService;
 import org.dwtech.system.service.BorrowService;
 import org.dwtech.system.service.RecommendationService;
+import org.dwtech.system.service.ReservationService;
 import org.dwtech.system.service.StockService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -47,6 +48,7 @@ public class BorrowServiceImpl extends ServiceImpl<BorrowMapper, BorrowPO> imple
     private final BookService bookService;
     private final StockService stockService;
     private final RecommendationService recommendationService;
+    private final ReservationService reservationService;
 
     @Override
     public IPage<BorrowVO> getBorrowPage(BorrowPageQuery queryParams) {
@@ -131,6 +133,7 @@ public class BorrowServiceImpl extends ServiceImpl<BorrowMapper, BorrowPO> imple
         boolean updated = this.updateById(borrow);
         if (updated && returned) {
             recommendationService.invalidateUserCache(borrowPO.getUserId());
+            reservationService.promoteQueue(borrowPO.getIsbn());
         }
         return updated;
     }
