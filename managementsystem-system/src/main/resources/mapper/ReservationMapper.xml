@@ -9,7 +9,7 @@
                u.nickname, u.username, u.avatar,
                r.status, r.pickup_deadline, r.create_time
         FROM lib_reservation r
-                 LEFT JOIN sys_user u ON u.user_id = r.user_id
+                 LEFT JOIN sys_user u ON u.id = r.user_id
     </sql>
 
     <sql id="myReservationView">
