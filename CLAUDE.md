@@ -179,6 +179,16 @@ Before committing a feature, add detailed comments to all new/modified source fi
 4. **Field comments** — `/** */` for entity fields, enum values, config properties
 5. **SQL comments** — `<!-- -->` for mapper XML queries explaining purpose and conditions
 
+### Documentation Sync (mandatory before commit)
+
+Before committing, check whether `AGENTS.md`, `CLAUDE.md`, `README.md` need updating:
+
+- **New feature** → add to all three: feature list (README), conventions/sections (CLAUDE/AGENTS)
+- **API endpoint change** → update API groups in README
+- **Module/architecture change** → update module structure sections
+- **Convention change** → update Key Conventions sections
+- **Config/dependency change** → update tech stack and config sections
+
 ## Recommended Skills
 
 - `springboot-patterns` — service/controller/mapper patterns
