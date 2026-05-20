@@ -127,13 +127,47 @@ Stateless JWT via `OncePerRequestFilter` (`TokenAuthenticationFilter`). Tokens s
 - Controllers: `ReservationController`, `AdminReservationController` under `controller/lib/`
 - Service: `ReservationService` / `ReservationServiceImpl` — create, cancel, confirmPickup, promoteQueue
 - Scheduled task: `ReservationExpirationTask` — daily at 00:30, expires overdue READY reservations
-- Notification abstraction: `ReservationNotificationService` (no-op impl, extensible for email/SMS)
+- Notification: `ReservationNotificationService` → `MessageReservationNotificationService` delegates to `MessageService`
 - FIFO queue: on borrow return, `promoteQueue()` auto-promotes first PENDING → READY
 - Permissions: `lib:reservation:list`, `lib:reservation:edit`
+
+## Borrow Notification (借阅通知)
+
+- Scheduled task: `BorrowNotificationTask` — daily at 08:00, sends three types of notifications:
+  - Due in 3 days: `OVERDUE_REMINDER` (dedup via `sys_message_record`)
+  - Due in 1 day: `OVERDUE_REMINDER` (dedup)
+  - Already overdue: `OVERDUE` (dedup)
+- Admin manual trigger: `POST /api/v1/borrow/{borrowId}/remind` — bypasses dedup, sends immediately
+  - Auto-detects overdue vs due-soon and uses correct `BizType`
+- Service: `BorrowNotificationService` / `BorrowNotificationServiceImpl`
+- Mapper: `BorrowMapper.selectDueSoon(days)`, `BorrowMapper.selectOverdue()`
+- Dedup: `MessageRecordMapper.existsByBizIdAndBizType(bizId, bizType)`
+- Templates: `OVERDUE_REMINDER` (EMAIL/SMS: `${bookName}`, `${dueDate}`, `${daysLeft}`), `OVERDUE` (EMAIL/SMS: `${bookName}`, `${dueDate}`, `${overdueDays}`)
+- Permission: `lib:borrow:remind`
+
+## Message Center (消息中心)
+
+- Tables: `sys_message_record` (发送记录), `sys_message_template` (消息模板)
+- User preference: `sys_user.notification_preference` JSON field (`{"email":true,"sms":false}`)
+- Core service: `MessageService` / `MessageServiceImpl` — entry point for all notifications
+- Queue: Redis Stream `message:send:stream`, consumer group `message-consumer-group`
+- Channel senders: `EmailChannelSender` (Spring Mail), `SmsChannelSender` (Mock, extensible)
+- Integration: `MessageReservationNotificationService` (replaces NoOp) calls `MessageService`
+- Template variables: `${bookName}`, `${pickupDeadline}`, `${dueDate}`, `${overdueDays}`
 
 ## Commit & PR Style
 
 Conventional Commits: `feat(scope):`, `fix(scope):`, `refactor(scope):`, `docs(scope):`, `perf(scope):`, `merge:` for merge commits. See `git log --oneline` for examples. Branches from `main`, merge back after verification.
+
+### Code Comments (mandatory before commit)
+
+Before committing a feature, add detailed comments to all new/modified source files:
+
+1. **Class-level Javadoc** — purpose, architecture role, key flow overview (numbered steps for complex classes)
+2. **Method Javadoc** — parameters, return values, side effects, exceptions
+3. **Step-by-step inline comments** — `// Step N:` for multi-step business logic (e.g. sendToChannel, consumeLoop, saveBorrow)
+4. **Field comments** — `/** */` for entity fields, enum values, config properties
+5. **SQL comments** — `<!-- -->` for mapper XML queries explaining purpose and conditions
 
 ## Recommended Skills
 
