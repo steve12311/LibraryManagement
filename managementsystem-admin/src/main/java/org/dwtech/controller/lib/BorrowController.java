@@ -67,4 +67,17 @@ public class BorrowController {
         boolean result = borrowService.updateBorrow(borrowId, formData);
         return Result.judge(result);
     }
+
+    /**
+     * 管理员手动发送逾期提醒，无视去重直接发送。
+     * 自动判断：已逾期→OVERDUE，未逾期→OVERDUE_REMINDER。权限：lib:borrow:remind
+     */
+    @PostMapping("/{borrowId}/remind")
+    @RepeatSubmit
+    @PreAuthorize("@ss.hasPerm('lib:borrow:remind')")
+    @OperLog(module = "借阅管理", action = "发送提醒", bizId = "#p0")
+    public Result<?> sendReminder(@PathVariable("borrowId") String borrowId) {
+        borrowService.sendReminder(borrowId);
+        return Result.success();
+    }
 }

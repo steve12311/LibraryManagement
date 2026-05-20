@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.dwtech.system.model.bo.BorrowBO;
+import java.util.List;
 import org.dwtech.system.model.bo.MyBorrowBO;
 import org.dwtech.system.model.entity.BorrowPO;
 import org.dwtech.system.model.query.BorrowPageQuery;
@@ -34,4 +35,20 @@ public interface BorrowMapper extends BaseMapper<BorrowPO> {
     Page<MyBorrowBO> getCurrentUserBorrowPage(Page<MyBorrowBO> page,
                                               @Param("userId") Long userId,
                                               @Param("queryParams") MyBorrowPageQuery queryParams);
+
+    /**
+     * 查询指定天数后到期的未还借阅（用于到期提醒）
+     *
+     * @param days 距到期天数（3 或 1）
+     * @return 待提醒的借阅记录
+     */
+    List<BorrowPO> selectDueSoon(@Param("days") int days);
+
+    /**
+     * 查询已逾期的未还借阅（用于逾期通知）。
+     * SQL: reality_return_time IS NULL AND return_time &lt; CURDATE()
+     *
+     * @return 已逾期的借阅记录
+     */
+    List<BorrowPO> selectOverdue();
 }

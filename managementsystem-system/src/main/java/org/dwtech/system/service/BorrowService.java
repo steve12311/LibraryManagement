@@ -48,4 +48,12 @@ public interface BorrowService {
      * @return true 表示更新成功，false 表示失败
      */
     boolean updateBorrow(String borrowId, @Valid BorrowForm formData);
+
+    /**
+     * 管理员手动发送逾期提醒。
+     *
+     * @param borrowId 借阅记录 ID
+     */
+    /** 管理员手动发送逾期提醒（无视去重，自动判断OVERDUE/OVERDUE_REMINDER） */
+    void sendReminder(String borrowId);
 }

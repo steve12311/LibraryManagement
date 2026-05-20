@@ -23,6 +23,7 @@ import org.dwtech.system.mapper.BorrowMapper;
 import org.dwtech.system.service.BookService;
 import org.dwtech.system.service.BorrowService;
 import org.dwtech.system.service.RecommendationService;
+import org.dwtech.system.service.BorrowNotificationService;
 import org.dwtech.system.service.ReservationService;
 import org.dwtech.system.service.StockService;
 import org.springframework.stereotype.Service;
@@ -49,6 +50,7 @@ public class BorrowServiceImpl extends ServiceImpl<BorrowMapper, BorrowPO> imple
     private final StockService stockService;
     private final RecommendationService recommendationService;
     private final ReservationService reservationService;
+    private final BorrowNotificationService borrowNotificationService;
 
     @Override
     public IPage<BorrowVO> getBorrowPage(BorrowPageQuery queryParams) {
@@ -136,6 +138,12 @@ public class BorrowServiceImpl extends ServiceImpl<BorrowMapper, BorrowPO> imple
             reservationService.promoteQueue(borrowPO.getIsbn());
         }
         return updated;
+    }
+
+    /** 委托给 BorrowNotificationService 执行发送（无视去重） */
+    @Override
+    public void sendReminder(String borrowId) {
+        borrowNotificationService.sendReminder(borrowId);
     }
 
     /** 馆员代借场景下，借阅记录必须关联具体用户 */

@@ -89,4 +89,20 @@
         ORDER BY bw.return_time DESC, bw.id DESC
     </select>
 
+    <!-- 查询剩余 N 天到期的未还借阅（定时通知用） -->
+    <select id="selectDueSoon" resultType="org.dwtech.system.model.entity.BorrowPO">
+        SELECT id, isbn, book_name, user_id, return_time
+        FROM lib_borrow
+        WHERE reality_return_time IS NULL
+          AND DATEDIFF(return_time, CURDATE()) = #{days}
+    </select>
+
+    <!-- 查询已逾期的未还借阅（定时通知用） -->
+    <select id="selectOverdue" resultType="org.dwtech.system.model.entity.BorrowPO">
+        SELECT id, isbn, book_name, user_id, return_time
+        FROM lib_borrow
+        WHERE reality_return_time IS NULL
+          AND return_time &lt; CURDATE()
+    </select>
+
 </mapper>
