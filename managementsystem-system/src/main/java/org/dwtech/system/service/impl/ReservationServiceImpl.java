@@ -113,6 +113,12 @@ public class ReservationServiceImpl implements ReservationService {
         }
 
         reservationMapper.insert(reservation);
+
+        // Notify user immediately when reservation is created as READY (stock was available)
+        if (reservation.getStatus() == ReservationStatus.READY.getValue()) {
+            notificationService.notifyReady(reservation);
+        }
+
         return true;
     }
 
