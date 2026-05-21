@@ -170,7 +170,7 @@ public class MessageStreamConsumer {
 
     private MessageChannelSender resolveSender(String channel) {
         for (MessageChannelSender sender : channelSenders) {
-            if (sender.channel().getValue().equals(channel)) {
+            if (sender.channel().getValue().equalsIgnoreCase(channel)) {
                 return sender;
             }
         }
